@@ -8,9 +8,21 @@ const DEFAULT_MODEL = "qwen3.5-9b-q4_k_m.gguf";
 
 const DEFAULT_CONFIG: GatewayConfig = {
   llamaServer: {
-    endpoint: "http://localhost:8080",
+    endpoint: "http://127.0.0.1:8080",
+    host: "127.0.0.1",
+    port: 8080,
+    binary: "/usr/local/lib/ollama/llama-server",
+    libraryPath: "/usr/local/lib/ollama",
+    modelPath: "~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf",
+    mmprojPath: "~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf",
     model: DEFAULT_MODEL,
     mmproj: "mmproj-f16.gguf",
+    runtime: {
+      ngl: 99,
+      context: 4096,
+      temperature: 0.7,
+      maxTokens: 4096,
+    },
   },
   models: {
     vision: DEFAULT_MODEL,
@@ -43,6 +55,10 @@ function mergeConfig(fileConfig: Partial<GatewayConfig>): GatewayConfig {
     llamaServer: {
       ...DEFAULT_CONFIG.llamaServer,
       ...fileConfig.llamaServer,
+      runtime: {
+        ...DEFAULT_CONFIG.llamaServer.runtime,
+        ...fileConfig.llamaServer?.runtime,
+      },
     },
     models: {
       ...DEFAULT_CONFIG.models,

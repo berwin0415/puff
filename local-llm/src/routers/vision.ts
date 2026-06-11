@@ -43,6 +43,7 @@ export async function routeVision(request: LocalLlmRequest): Promise<LocalLlmSuc
     imageUrls,
     endpoint: config.llamaServer.endpoint,
     timeoutSeconds: config.timeouts.default,
+    maxTokens: config.llamaServer.runtime.maxTokens,
   });
 
   return { success: true, model, content };

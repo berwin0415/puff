@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=__LLAMA_SERVER_BIN__ -m __LLAMA_MODEL_PATH__ --mmproj __LLAMA_MMPROJ_PATH__ --host __LLAMA_HOST__ --port __LLAMA_PORT__
+Environment=LD_LIBRARY_PATH=__LLAMA_LIBRARY_PATH__
+ExecStart=__LLAMA_SERVER_BIN__ -m __LLAMA_MODEL_PATH__ --mmproj __LLAMA_MMPROJ_PATH__ --host __LLAMA_HOST__ --port __LLAMA_PORT__ -ngl __LLAMA_NGL__ -c __LLAMA_CONTEXT__ --temp __LLAMA_TEMPERATURE__
 Restart=on-failure
 RestartSec=3
-Environment=NODE_ENV=production
 
 [Install]
 WantedBy=default.target

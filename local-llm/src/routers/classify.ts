@@ -15,6 +15,7 @@ export async function routeClassify(request: LocalLlmRequest): Promise<LocalLlmS
     prompt,
     endpoint: config.llamaServer.endpoint,
     timeoutSeconds: config.timeouts.default,
+    maxTokens: config.llamaServer.runtime.maxTokens,
   });
 
   return { success: true, model, content };

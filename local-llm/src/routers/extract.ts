@@ -15,6 +15,7 @@ export async function routeExtract(request: LocalLlmRequest): Promise<LocalLlmSu
     prompt,
     endpoint: config.llamaServer.endpoint,
     timeoutSeconds: config.timeouts.default,
+    maxTokens: config.llamaServer.runtime.maxTokens,
   });
 
   return { success: true, model, content };

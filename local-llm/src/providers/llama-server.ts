@@ -56,6 +56,7 @@ export async function invokeLlamaServer(options: LlamaServerInvokeOptions): Prom
             content: buildMessageContent(options),
           },
         ],
+        max_tokens: options.maxTokens,
         stream: false,
       }),
       signal: controller.signal,
@@ -80,6 +81,13 @@ export async function invokeLlamaServer(options: LlamaServerInvokeOptions): Prom
     const content = payload.choices?.[0]?.message?.content;
     if (typeof content !== "string") {
       throw new LocalLlmError("OLLAMA_ERROR", "llama-server response missing choices[0].message.content");
+    }
+
+    if (!content.trim()) {
+      throw new LocalLlmError(
+        "OLLAMA_ERROR",
+        "llama-server response content is empty; increase llamaServer.runtime.maxTokens",
+      );
     }
 
     return content;

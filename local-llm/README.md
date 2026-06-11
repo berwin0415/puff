@@ -24,23 +24,48 @@ npx pnpm@10.23.0 install
 npx pnpm@10.23.0 build
 ```
 
-## Start llama-server
+## llama-server Management
 
-Start `llama-server` separately before calling the MCP tool:
+Start `llama-server` before calling the MCP tool:
 
 ```bash
-llama-server \
-  -m /path/to/qwen3.5-9b-q4_k_m.gguf \
-  --mmproj /path/to/mmproj-f16.gguf \
-  --host 127.0.0.1 \
-  --port 8080
+pnpm llama:start
 ```
 
-Model file paths depend on the local machine and are not hard-coded in this repo.
+Stop it with the graceful `/close` endpoint first, then port PID and pidfile fallback:
+
+```bash
+pnpm llama:stop
+```
+
+Other lifecycle commands:
+
+```bash
+pnpm llama:restart
+pnpm llama:status
+pnpm llama:logs
+```
+
+The managed start command is configured in `config.yaml` and defaults to:
+
+```bash
+LD_LIBRARY_PATH=/usr/local/lib/ollama:$LD_LIBRARY_PATH /usr/local/lib/ollama/llama-server \
+  -m ~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf \
+  --mmproj ~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf \
+  --host 127.0.0.1 --port 8080 \
+  -ngl 99 -c 4096 --temp 0.7
+```
+
+To change the port, update both `llamaServer.port` and `llamaServer.endpoint` in `config.yaml`.
 
 ## MCP Client Mode
 
-This is the recommended mode for Hermes, Codex, Claude Code, Cursor, and other MCP clients. The client starts this stdio server when it needs the tool.
+This is the recommended mode for Hermes, Codex, Claude Code, Cursor, and other MCP clients. Start order:
+
+1. Start `llama-server` with `pnpm llama:start`.
+2. Let the MCP client start this stdio server when it needs `local_llm`.
+
+Manual stdio server start:
 
 ```bash
 pnpm start
@@ -76,13 +101,24 @@ Do not run the same MCP stdio server under PM2 or systemd when Hermes is expecte
 
 ## Configuration
 
-Edit `config.yaml` to update the `llama-server` endpoint, task routing, or timeout:
+Edit `config.yaml` to update the `llama-server` endpoint, runtime, task routing, or timeout:
 
 ```yaml
 llamaServer:
-  endpoint: http://localhost:8080
+  endpoint: http://127.0.0.1:8080
+  host: 127.0.0.1
+  port: 8080
+  binary: /usr/local/lib/ollama/llama-server
+  libraryPath: /usr/local/lib/ollama
+  modelPath: ~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf
+  mmprojPath: ~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf
   model: qwen3.5-9b-q4_k_m.gguf
   mmproj: mmproj-f16.gguf
+  runtime:
+    ngl: 99
+    context: 4096
+    temperature: 0.7
+    maxTokens: 4096
 models:
   vision: qwen3.5-9b-q4_k_m.gguf
   extract: qwen3.5-9b-q4_k_m.gguf
@@ -93,6 +129,8 @@ timeouts:
 ```
 
 `mmproj-f16.gguf` is loaded by the `llama-server` process. The MCP server only calls the OpenAI-compatible HTTP API.
+
+Qwen3.5 may generate `reasoning_content` before final `content`. Keep `llamaServer.runtime.maxTokens` high enough; if it is too low, final `content` can be empty even when reasoning was generated.
 
 ## Deploy Preparation
 
@@ -130,12 +168,18 @@ The service template is `deploy/local-llm.service`. It uses `Restart=on-failure`
 
 ### llama-server with systemd user service
 
-Set paths for your local machine, then install the service:
+Install using `config.yaml` defaults, with optional environment overrides:
 
 ```bash
-export LLAMA_SERVER_BIN=/path/to/llama-server
-export LLAMA_MODEL_PATH=/path/to/qwen3.5-9b-q4_k_m.gguf
-export LLAMA_MMPROJ_PATH=/path/to/mmproj-f16.gguf
+pnpm llama:service:install
+```
+
+Optional overrides:
+
+```bash
+export LLAMA_SERVER_BIN=/usr/local/lib/ollama/llama-server
+export LLAMA_MODEL_PATH=~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf
+export LLAMA_MMPROJ_PATH=~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf
 export LLAMA_HOST=127.0.0.1
 export LLAMA_PORT=8080
 pnpm llama:service:install

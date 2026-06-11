@@ -33,8 +33,20 @@ export type LocalLlmResponse = LocalLlmSuccessResponse | LocalLlmFailureResponse
 export interface GatewayConfig {
   llamaServer: {
     endpoint: string;
+    host: string;
+    port: number;
+    binary: string;
+    libraryPath: string;
+    modelPath: string;
+    mmprojPath: string;
     model: string;
     mmproj: string;
+    runtime: {
+      ngl: number;
+      context: number;
+      temperature: number;
+      maxTokens: number;
+    };
   };
   models: Record<LocalLlmTask, string>;
   timeouts: {
@@ -48,6 +60,7 @@ export interface LlamaServerInvokeOptions {
   imageUrls?: string[];
   endpoint: string;
   timeoutSeconds: number;
+  maxTokens: number;
 }
 
 export class LocalLlmError extends Error {
