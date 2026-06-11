@@ -1,0 +1,36 @@
+{
+  "name": "local-llm",
+  "version": "0.1.0",
+  "description": "Hermes local AI gateway MCP server backed by llama-server",
+  "type": "module",
+  "packageManager": "pnpm@10.23.0",
+  "bin": {
+    "local-llm": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "deploy:local": "bash scripts/deploy.sh",
+    "healthcheck": "bash scripts/healthcheck.sh",
+    "service:install": "bash scripts/install-service.sh",
+    "llama:service:install": "bash scripts/install-llama-service.sh",
+    "pm2:start": "pm2 start deploy/ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop local-llm",
+    "pm2:restart": "pm2 restart local-llm",
+    "pm2:logs": "pm2 logs local-llm"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.1",
+    "yaml": "^2.8.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.6",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

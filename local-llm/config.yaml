@@ -1,0 +1,13 @@
+llamaServer:
+  endpoint: http://localhost:8080
+  model: qwen3.5-9b-q4_k_m.gguf
+  mmproj: mmproj-f16.gguf
+
+models:
+  vision: qwen3.5-9b-q4_k_m.gguf
+  extract: qwen3.5-9b-q4_k_m.gguf
+  summary: qwen3.5-9b-q4_k_m.gguf
+  classify: qwen3.5-9b-q4_k_m.gguf
+
+timeouts:
+  default: 120

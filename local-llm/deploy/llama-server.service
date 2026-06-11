@@ -1,0 +1,13 @@
+[Unit]
+Description=llama-server qwen3.5 multimodal service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=__LLAMA_SERVER_BIN__ -m __LLAMA_MODEL_PATH__ --mmproj __LLAMA_MMPROJ_PATH__ --host __LLAMA_HOST__ --port __LLAMA_PORT__
+Restart=on-failure
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=default.target

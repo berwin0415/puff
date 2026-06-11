@@ -1,0 +1,14 @@
+[Unit]
+Description=local-llm MCP stdio server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=__NODE_BIN__ __PROJECT_DIR__/dist/server.js
+Restart=on-failure
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=default.target
