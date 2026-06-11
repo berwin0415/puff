@@ -1,135 +1,221 @@
 # 本地模型 MCP 调用指南
 
-> 通过 MCP（Model Context Protocol）服务调用本地大模型，无需网络，数据不出本机。
+> 面向其他代码 Agent（Claude Code / Codex / Cursor 等）如何将本地大模型封装为 MCP 服务，实现工具化调用。
 
-## 整体架构
+## 为什么需要 MCP
+
+直接在 Agent 里 `curl http://localhost:11434/api/chat` 太原始了：
+- 每次都要拼 JSON、处理 stream、解析错误
+- Agent 无法感知模型状态（是否在跑、哪个模型可用）
+- 没有工具化的交互界面
+
+MCP（Model Context Protocol）把本地模型包装成 **标准工具**，Agent 像调用其他工具一样调用它。
+
+## 架构
 
 ```
-其他代码 Agent（Claude Code / Codex / Cursor 等）
+代码 Agent（Claude Code / Codex / any MCP client）
         │
         ▼
-    Hermes 网关 ─── MCP Server（ollama-mcp）
-                              │
-                              ▼
-                         Ollama 服务（localhost:11434）
-                              │
-                              ▼
-                    本地模型（qwen3.5-9b / 其他 GGUF）
+  ┌─────────────────────┐
+  │     MCP 服务器       │  ← 你要实现的部分
+  │  （stdin/stdout）     │
+  └──────┬──────────────┘
+         │ HTTP (localhost:11434)
+         ▼
+  ┌──────────────┐
+  │  Ollama 服务  │
+  ├──────────────┤
+  │ qwen3.5-9b   │
+  │ (其他模型...) │
+  └──────────────┘
 ```
 
-## 前提条件
+## 快速上手：Python 实现 MCP 服务器
 
-### 1. 安装 Ollama
+### 1. 安装依赖
 
 ```bash
-# 已安装：/usr/local/bin/ollama v0.30.7
-# 启动服务
-ollama serve
+pip install mcp httpx
 ```
 
-### 2. 安装 ollama-mcp-server
+### 2. 最小实现（ollama-mcp.py）
 
-```bash
-# Hermes 虚拟环境中已安装
-python3 -m ollama_mcp.server
+```python
+import json
+import httpx
+from mcp.server import Server, NotificationOptions
+from mcp.server.models import InitializationOptions
+import mcp.types as types
+
+server = Server("ollama-local")
+
+OLLAMA_BASE = "http://localhost:11434"
+
+@server.list_tools()
+async def handle_list_tools() -> list[types.Tool]:
+    return [
+        types.Tool(
+            name="list_models",
+            description="列出本地已安装的 Ollama 模型",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        types.Tool(
+            name="chat",
+            description="与本地模型对话",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "description": "模型名称，如 qwen3.5-9b, deepseek-r1:7b",
+                    },
+                    "prompt": {"type": "string", "description": "用户输入"},
+                },
+                "required": ["model", "prompt"],
+            },
+        ),
+        types.Tool(
+            name="health",
+            description="检查 Ollama 服务是否正常运行",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+    ]
+
+@server.call_tool()
+async def handle_call_tool(
+    name: str, arguments: dict
+) -> list[types.TextContent]:
+    async with httpx.AsyncClient(timeout=120) as client:
+        if name == "list_models":
+            resp = await client.get(f"{OLLAMA_BASE}/api/tags")
+            return [types.TextContent(
+                type="text", text=json.dumps(resp.json(), indent=2)
+            )]
+
+        if name == "chat":
+            resp = await client.post(
+                f"{OLLAMA_BASE}/api/chat",
+                json={
+                    "model": arguments["model"],
+                    "messages": [{"role": "user", "content": arguments["prompt"]}],
+                    "stream": False,
+                },
+            )
+            result = resp.json()
+            return [types.TextContent(
+                type="text",
+                text=result["message"]["content"],
+            )]
+
+        if name == "health":
+            try:
+                resp = await client.get(f"{OLLAMA_BASE}/api/tags")
+                models = resp.json().get("models", [])
+                return [types.TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "status": "healthy",
+                        "models": len(models),
+                        "model_list": [m["name"] for m in models],
+                    }),
+                )]
+            except Exception as e:
+                return [types.TextContent(
+                    type="text", text=json.dumps({"status": "unhealthy", "error": str(e)})
+                )]
+
+    raise ValueError(f"Unknown tool: {name}")
+
+async def main():
+    async with server.run_stdio():
+        pass
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
 ```
 
-### 3. 注册到 Hermes 配置
+### 3. 注册到代码 Agent
 
-编辑 `~/.hermes/config.yaml`，添加 MCP 服务：
+**Claude Code / Cursor：**
+```json
+// .claude/mcp.json 或 .cursor/mcp.json
+{
+  "mcpServers": {
+    "ollama-local": {
+      "command": "python",
+      "args": ["/path/to/ollama-mcp.py"]
+    }
+  }
+}
+```
 
+**Hermes Agent（~/.hermes/config.yaml）：**
 ```yaml
 mcp_servers:
-  ollama:
+  ollama-local:
     command: /home/berwin/.hermes/hermes-agent/venv/bin/python
     args:
-      - -m
-      - ollama_mcp.server
+      - /path/to/ollama-mcp.py
     enabled: true
 ```
 
-## MCP 工具一览
+## 扩展功能
 
-注册后暴露 9 个工具，通过 `hermes mcp test ollama` 验证：
+基础实现只有 3 个工具，你可以按需添加：
 
-| 工具 | 说明 |
-|------|------|
-| `list_local_models` | 列出本地已安装的模型 |
-| `local_llm_chat` | 与本地模型对话 |
-| `ollama_health_check` | 检查 Ollama 服务健康状态 |
-| `system_resource_check` | 检查系统资源（CPU/内存） |
-| `suggest_models` | 根据需求推荐最适合的本地模型 |
-| `remove_model` | 删除指定模型 |
-| `start_ollama_server` | 启动 Ollama 服务 |
-| `select_chat_model` | 选择对话模型 |
-| `test_model_responsiveness` | 测试模型响应速度 |
+| 工具 | 功能 | Ollama API |
+|------|------|------------|
+| `list_models` | 列出模型 | `GET /api/tags` |
+| `chat` | 对话 | `POST /api/chat` |
+| `generate` | 文本补全 | `POST /api/generate` |
+| `health` | 健康检查 | `GET /api/tags` |
+| `embed` | 文本嵌入 | `POST /api/embed` |
+| `pull_model` | 下载模型 | `POST /api/pull` |
+| `show_model` | 模型详情 | `POST /api/show` |
+| `check_resources` | 系统资源 | 本地 `psutil` |
 
-## 调用方式
+## 完整示例仓库
 
-### 通过 Hermes 工具（本代理直接调用）
+社区已有的 MCP 实现可以直接用：
 
-工具命名规则：`mcp_{server_name}_{tool_name}`
+- **ollama-mcp-server**（已安装）：`pip install ollama-mcp-server` → `python -m ollama_mcp.server`
+- **mcp-ollama**（Node.js）：`npx @tumra/mcp-ollama`
 
-```python
-# Python execute_code 中调用
-from hermes_tools import terminal
-
-# 检查健康
-result = terminal("curl -s http://localhost:11434/api/tags")
-print(result["output"])
-
-# 对话
-result = terminal("""
-curl -s http://localhost:11434/api/chat \\
-  -d '{"model":"qwen3.5-9b","messages":[{"role":"user","content":"你好"}],"stream":false}'
-""")
-```
-
-### 其他代码 Agent 通过 Hermes MCP 调用
-
-其他代码 Agent（Claude Code / Codex）可以通过 Hermes 的 `delegate_task` 间接使用本地模型：
-
-```
-delegate_task(
-    goal="用本地模型 qwen3.5-9b 分析这段代码",
-    context="...代码内容...",
-    toolsets=["terminal"]
-)
-```
-
-或者直接通过 HTTP API 调用 Ollama：
-
-```bash
-# 聊天
-curl http://localhost:11434/api/chat \
-  -d '{"model":"qwen3.5-9b","messages":[{"role":"user","content":"你好"}],"stream":false}'
-
-# 生成
-curl http://localhost:11434/api/generate \
-  -d '{"model":"qwen3.5-9b","prompt":"写一首诗","stream":false}'
-```
-
-## 适用场景
-
-| 场景 | 推荐模型 | 说明 |
-|------|---------|------|
-| 代码生成/审查 | qwen3.5-9b | 9B Q4 适合代码任务，6s 首响应 |
-| 简单问答 | qwen3.5-4b | 可以考虑拉个更轻量的 |
-| 文本分析 | qwen3.5-9b | 上下文 262K，大文档也能处理 |
-| 视觉识别 | 需额外配置 | 需要 mmproj + llama-server |
+两个的区别：
+- `ollama_mcp`（Python）：注册到 Hermes，通过 `mcp_ollama_*` 工具名访问
+- 自己实现：更灵活，可按需定制工具和行为
 
 ## 注意事项
 
-- **Ollama 必须在运行状态**，启动命令：`ollama serve`
-- **GPU 加速**：RTX 5070 Ti 16GB VRAM，模型约占 5.6GB
-- **不支持联网**：本地模型无网络搜索能力
-- **性能**：qwen3.5-9b 约 14 tok/s（GPU 推理）
+1. **Ollama 必须运行**：`ollama serve`（后台）或 systemd 服务
+2. **超时设置**：本地模型推理慢，MCP timeout 建议 ≥ 120s
+3. **GPU 加速**：RTX 5070 Ti 16GB VRAM，qwen3.5-9b Q4 约占 5.6GB
+4. **模型选择**：简单任务用 qwen3.5-4b（更快），复杂任务用 qwen3.5-9b
+5. **stream vs 非 stream**：非 stream 实现简单，stream 能提前显示
 
-## 安装其他模型
+## 测试验证
 
 ```bash
-# 从模型库拉取
-ollama pull qwen3.5-4b     # 4B 轻量版
-ollama pull qwen3.5-14b    # 14B 更强（需要更多 VRAM）
-ollama pull deepseek-r1:7b # DeepSeek R1 7B
+# 1. 启动 Ollama
+ollama serve
+
+# 2. 启动 MCP 服务器（stdio 模式）
+python /path/to/ollama-mcp.py
+
+# 3. 用 mcp-cli 测试
+npx @modelcontextprotocol/inspector python /path/to/ollama-mcp.py
+
+# 4. 或直接用 curl 测 Ollama
+curl http://localhost:11434/api/chat \
+  -d '{"model":"qwen3.5-9b","messages":[{"role":"user","content":"你好"}],"stream":false}'
 ```
+
+## 环境信息
+
+- **系统**：WSL2 (Ubuntu) on Windows 11
+- **Ollama**：v0.30.7，路径 `/usr/local/bin/ollama`
+- **GPU**：NVIDIA RTX 5070 Ti 16GB VRAM
+- **模型**：qwen3.5-9b:latest (Q4_K_M, ~5.3GB)
+- **Python**：3.11.15（Hermes venv）
