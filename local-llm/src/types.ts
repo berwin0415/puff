@@ -31,30 +31,15 @@ export interface LocalLlmFailureResponse {
 export type LocalLlmResponse = LocalLlmSuccessResponse | LocalLlmFailureResponse;
 
 export interface GatewayConfig {
-  llamaServer: {
-    endpoint: string;
-    host: string;
-    port: number;
-    binary: string;
-    libraryPath: string;
-    modelPath: string;
-    mmprojPath: string;
-    model: string;
-    mmproj: string;
-    runtime: {
-      ngl: number;
-      context: number;
-      temperature: number;
-      maxTokens: number;
-    };
-  };
+  endpoint: string;
+  model: string;
   models: Record<LocalLlmTask, string>;
   timeouts: {
     default: number;
   };
 }
 
-export interface LlamaServerInvokeOptions {
+export interface LmStudioInvokeOptions {
   model: string;
   prompt: string;
   imageUrls?: string[];

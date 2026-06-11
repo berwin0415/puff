@@ -4,26 +4,12 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import type { GatewayConfig, LocalLlmTask } from "../types.js";
 
-const DEFAULT_MODEL = "qwen3.5-9b-q4_k_m.gguf";
+const DEFAULT_ENDPOINT = "http://192.168.31.86:1234/v1";
+const DEFAULT_MODEL = "qwen3.5-9b";
 
 const DEFAULT_CONFIG: GatewayConfig = {
-  llamaServer: {
-    endpoint: "http://127.0.0.1:8080",
-    host: "127.0.0.1",
-    port: 8080,
-    binary: "/usr/local/lib/ollama/llama-server",
-    libraryPath: "/usr/local/lib/ollama",
-    modelPath: "~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf",
-    mmprojPath: "~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf",
-    model: DEFAULT_MODEL,
-    mmproj: "mmproj-f16.gguf",
-    runtime: {
-      ngl: 99,
-      context: 4096,
-      temperature: 0.7,
-      maxTokens: 4096,
-    },
-  },
+  endpoint: DEFAULT_ENDPOINT,
+  model: DEFAULT_MODEL,
   models: {
     vision: DEFAULT_MODEL,
     extract: DEFAULT_MODEL,
@@ -36,7 +22,7 @@ const DEFAULT_CONFIG: GatewayConfig = {
 };
 
 const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(CURRENT_DIR, "../../..");
+const PROJECT_ROOT = resolve(CURRENT_DIR, "../..");
 const CONFIG_PATH = resolve(PROJECT_ROOT, "config.yaml");
 
 let cachedConfig: GatewayConfig | undefined;
@@ -52,14 +38,8 @@ function readConfigFile(): Partial<GatewayConfig> {
 
 function mergeConfig(fileConfig: Partial<GatewayConfig>): GatewayConfig {
   return {
-    llamaServer: {
-      ...DEFAULT_CONFIG.llamaServer,
-      ...fileConfig.llamaServer,
-      runtime: {
-        ...DEFAULT_CONFIG.llamaServer.runtime,
-        ...fileConfig.llamaServer?.runtime,
-      },
-    },
+    endpoint: fileConfig.endpoint ?? DEFAULT_CONFIG.endpoint,
+    model: fileConfig.model ?? DEFAULT_CONFIG.model,
     models: {
       ...DEFAULT_CONFIG.models,
       ...fileConfig.models,

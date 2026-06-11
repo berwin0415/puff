@@ -1,13 +1,13 @@
-import { LocalLlmError, type LlamaServerInvokeOptions } from "../types.js";
+import { LocalLlmError, type LmStudioInvokeOptions } from "../types.js";
 
-type LlamaServerMessageContent =
+type LmStudioMessageContent =
   | string
   | Array<
       | { type: "text"; text: string }
       | { type: "image_url"; image_url: { url: string } }
     >;
 
-interface LlamaServerChatResponse {
+interface LmStudioChatResponse {
   choices?: Array<{
     message?: {
       content?: string;
@@ -16,15 +16,14 @@ interface LlamaServerChatResponse {
   error?: string | { message?: string };
 }
 
-function getErrorMessage(payload: LlamaServerChatResponse, fallback: string): string {
+function getErrorMessage(payload: LmStudioChatResponse, fallback: string): string {
   if (typeof payload.error === "string") {
     return payload.error;
   }
-
   return payload.error?.message || fallback;
 }
 
-function buildMessageContent(options: LlamaServerInvokeOptions): LlamaServerMessageContent {
+function buildMessageContent(options: LmStudioInvokeOptions): LmStudioMessageContent {
   if (!options.imageUrls?.length) {
     return options.prompt;
   }
@@ -38,12 +37,13 @@ function buildMessageContent(options: LlamaServerInvokeOptions): LlamaServerMess
   ];
 }
 
-export async function invokeLlamaServer(options: LlamaServerInvokeOptions): Promise<string> {
+export async function invokeLmStudio(options: LmStudioInvokeOptions): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutSeconds * 1000);
 
   try {
-    const response = await fetch(`${options.endpoint.replace(/\/$/, "")}/v1/chat/completions`, {
+    const baseUrl = options.endpoint.replace(/\/$/, "");
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -63,30 +63,30 @@ export async function invokeLlamaServer(options: LlamaServerInvokeOptions): Prom
     });
 
     const responseText = await response.text();
-    let payload: LlamaServerChatResponse;
+    let payload: LmStudioChatResponse;
 
     try {
       payload = responseText ? JSON.parse(responseText) : {};
     } catch {
-      throw new LocalLlmError("OLLAMA_ERROR", "llama-server returned invalid JSON");
+      throw new LocalLlmError("OLLAMA_ERROR", "LM Studio returned invalid JSON");
     }
 
     if (!response.ok) {
       throw new LocalLlmError(
         "OLLAMA_ERROR",
-        getErrorMessage(payload, `llama-server request failed with status ${response.status}`),
+        getErrorMessage(payload, `LM Studio request failed with status ${response.status}`),
       );
     }
 
     const content = payload.choices?.[0]?.message?.content;
     if (typeof content !== "string") {
-      throw new LocalLlmError("OLLAMA_ERROR", "llama-server response missing choices[0].message.content");
+      throw new LocalLlmError("OLLAMA_ERROR", "LM Studio response missing choices[0].message.content");
     }
 
     if (!content.trim()) {
       throw new LocalLlmError(
         "OLLAMA_ERROR",
-        "llama-server response content is empty; increase llamaServer.runtime.maxTokens",
+        "LM Studio returned empty content",
       );
     }
 
@@ -97,10 +97,10 @@ export async function invokeLlamaServer(options: LlamaServerInvokeOptions): Prom
     }
 
     if (error instanceof Error && error.name === "AbortError") {
-      throw new LocalLlmError("MODEL_TIMEOUT", "llama-server request timed out");
+      throw new LocalLlmError("MODEL_TIMEOUT", "LM Studio request timed out");
     }
 
-    const message = error instanceof Error ? error.message : "Unable to reach llama-server";
+    const message = error instanceof Error ? error.message : "Unable to reach LM Studio";
     throw new LocalLlmError("MODEL_UNAVAILABLE", message);
   } finally {
     clearTimeout(timeout);

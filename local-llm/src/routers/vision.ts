@@ -1,7 +1,7 @@
 import { extname } from "node:path";
 import { readFile } from "node:fs/promises";
 import { getConfig, getModelForTask } from "../config/model-map.js";
-import { invokeLlamaServer } from "../providers/llama-server.js";
+import { invokeLmStudio } from "../providers/lm-studio.js";
 import { LocalLlmError, type LocalLlmRequest, type LocalLlmSuccessResponse } from "../types.js";
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -37,13 +37,13 @@ export async function routeVision(request: LocalLlmRequest): Promise<LocalLlmSuc
   const prompt = request.content.trim()
     ? `${request.prompt}\n\n补充上下文：\n${request.content}`
     : request.prompt;
-  const content = await invokeLlamaServer({
+  const content = await invokeLmStudio({
     model,
     prompt,
     imageUrls,
-    endpoint: config.llamaServer.endpoint,
+    endpoint: config.endpoint,
     timeoutSeconds: config.timeouts.default,
-    maxTokens: config.llamaServer.runtime.maxTokens,
+    maxTokens: 4096,
   });
 
   return { success: true, model, content };

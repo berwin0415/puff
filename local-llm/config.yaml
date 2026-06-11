@@ -1,24 +1,11 @@
-llamaServer:
-  endpoint: http://127.0.0.1:8080
-  host: 127.0.0.1
-  port: 8080
-  binary: /usr/local/lib/ollama/llama-server
-  libraryPath: /usr/local/lib/ollama
-  modelPath: ~/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf
-  mmprojPath: ~/models/Qwen3.5-9B-GGUF/mmproj-F16.gguf
-  model: qwen3.5-9b-q4_k_m.gguf
-  mmproj: mmproj-f16.gguf
-  runtime:
-    ngl: 99
-    context: 4096
-    temperature: 0.7
-    maxTokens: 4096
+endpoint: http://192.168.31.86:1234/v1
+model: qwen3.5-9b
 
 models:
-  vision: qwen3.5-9b-q4_k_m.gguf
-  extract: qwen3.5-9b-q4_k_m.gguf
-  summary: qwen3.5-9b-q4_k_m.gguf
-  classify: qwen3.5-9b-q4_k_m.gguf
+  vision: qwen3.5-9b
+  extract: qwen3.5-9b
+  summary: qwen3.5-9b
+  classify: qwen3.5-9b
 
 timeouts:
   default: 120
