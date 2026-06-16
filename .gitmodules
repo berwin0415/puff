@@ -1,0 +1,6 @@
+[submodule "projects/tradingagents"]
+	path = projects/tradingagents
+	url = https://github.com/TauricResearch/TradingAgents.git
+[submodule "projects/dailystockanalysis"]
+	path = projects/dailystockanalysis
+	url = https://github.com/ZhuLinsen/daily_stock_analysis.git
