@@ -1,0 +1,27 @@
+# 行尾统一为 LF：仓库存储与工作区检出都用 LF。
+# 该属性优先于 core.autocrlf / core.eol，团队成员无需各自改本地配置。
+* text=auto eol=lf
+
+# 二进制文件：禁止行尾转换、diff 与合并
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.pdf   binary
+*.zip   binary
+*.gz    binary
+
+# Windows 批处理脚本必须保持 CRLF，否则 cmd 解析可能出错
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Shell 脚本与容器/CI 里执行的文件保持 LF
+*.sh text eol=lf
