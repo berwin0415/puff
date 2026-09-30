@@ -4,6 +4,7 @@ node_modules/
 # build output
 dist/
 build/
+release/
 *.tsbuildinfo
 
 # tests / coverage
@@ -25,6 +26,12 @@ pnpm-debug.log*
 .vite/
 .turbo/
 .rspack-profile-*/
+
+# python (llm-lab)
+.venv/
+__pycache__/
+*.py[cod]
+llm-lab/checkpoints/
 
 # editors / os
 .idea/

@@ -1,0 +1,11 @@
+# 本机显卡是 Blackwell 架构（sm_120），只有 CUDA 12.8 及以上的 PyTorch 构建
+# 才带对应内核；用默认索引装到的老版本会 import 成功，但一运行就报
+# "no kernel image is available for execution on the device"。
+#
+# 下面用 SJTU 镜像而不是官方源 download.pytorch.org：官方源在本机实测会卡死
+# （pip 缓存十几分钟不增长、连接一直处于 Established 但不传数据）。
+# 镜像不可用时，把这一行换回 https://download.pytorch.org/whl/cu128 即可。
+--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu128
+
+torch
+numpy

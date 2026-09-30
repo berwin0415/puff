@@ -2,7 +2,21 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  '@google/genai': false
+  electron: true
+  electron-winstaller: false
+  esbuild: true
+  koffi: true
+  node-pty: true
+  protobufjs: true
+
 # pnpm waits before trusting a just-published version (supply-chain guard);
-# this is the only dependency that currently needs to bypass that wait.
+# only this exact version currently needs to bypass that wait.
 minimumReleaseAgeExclude:
   - '@rsbuild/plugin-react@2.1.1'
+
+# electron-builder 26.15 uses the cache-mode API introduced by @electron/get 5.
+overrides:
+  '@electron/get': 5.1.0

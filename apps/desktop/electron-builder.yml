@@ -1,0 +1,19 @@
+appId: com.puff.desktop
+productName: puff
+electronVersion: 44.0.0
+files:
+  - dist/**
+  - package.json
+asar: true
+afterPack: scripts/after-pack.cjs
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: puff-Setup-${version}-x64.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  deleteAppDataOnUninstall: false

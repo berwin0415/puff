@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>puff</title>
+    <style>
+    :root {
+      color-scheme: dark;
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: #0b1020;
+      color: #e9edf7;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 10%, rgba(77, 107, 254, 0.32), transparent 36rem), #0b1020;
+    }
+
+    main {
+      width: min(28rem, calc(100vw - 4rem));
+      text-align: center;
+    }
+
+    .mark {
+      width: 3.25rem;
+      height: 3.25rem;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      background: #4d6bfe;
+      box-shadow: 0 0 3rem rgba(77, 107, 254, 0.45);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: #9da8c2;
+      line-height: 1.6;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 0.65;
+        transform: scale(0.92);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark"></div>
+      <h1>puff</h1>
+      <p id="message">正在启动 DeepSeek Harness…</p>
+    </main>
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    document.querySelector('#message').textContent =
+      params.get('message') || '正在启动 DeepSeek Harness…';
+    </script>
+  </body>
+</html>

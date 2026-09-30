@@ -8,8 +8,10 @@
 .
 ├─ apps/                 ✅ 可独立构建、部署的应用
 │  ├─ api/               ✅ @puff/api  NestJS 服务端
-│  └─ web/               ✅ @puff/web  React + Rsbuild 前端
+│  ├─ web/               ✅ @puff/web  React + Rsbuild 前端
+│  └─ desktop/           ✅ @puff/desktop  Electron + DeepSeek Harness 桌面薄壳
 ├─ packages/             ➕ 跨应用共享的库/类型包（当前为空）
+├─ llm-lab/              ➕ 个人学习区：从零手写 mini-GPT（独立 Python 环境，不在 workspace 内）
 ├─ docs/                 ✅ 文档
 │  ├─ rules/             ✅ 工程规范（本目录）
 │  └─ *.md               ➕ 设计与方案文档
@@ -31,10 +33,11 @@
 
 | 路径         | 放什么                                            | 不放什么                                                 |
 | ------------ | ------------------------------------------------- | -------------------------------------------------------- |
-| `apps/*`     | 可独立运行/部署的应用（服务端、前端、worker）     | 供别人 `import` 的业务逻辑（应下沉到 packages）          |
+| `apps/*`     | 可独立运行/部署的应用（服务端、前端、桌面端、worker） | 供别人 `import` 的业务逻辑（应下沉到 packages）        |
 | `packages/*` | 被两个以上应用复用的库、类型、工具                | 只有单个消费方的代码（先放应用内，出现第二个使用方再抽） |
 | `docs/`      | 规范、设计、决策记录                              | 生成物、截图大文件、临时笔记                             |
 | `scripts/`   | 跨包复用的自动化脚本（Node/pwsh 脚本 + 说明文档） | 单个应用的构建脚本（放该应用的 `package.json`）          |
+| `llm-lab/`   | 个人学习与实验（Python），自带虚拟环境与依赖      | 业务代码、被 `apps/*` 引用的代码、参与 workspace 的包    |
 
 ## 根脚本
 
@@ -45,6 +48,7 @@
 | `pnpm dev`          | 并行启动所有应用的 dev                      | `pnpm --parallel --filter "./apps/*"` |
 | `pnpm dev:api`      | 只启动服务端                                | `--filter @puff/api`                  |
 | `pnpm dev:web`      | 只启动前端                                  | `--filter @puff/web`                  |
+| `pnpm dev:desktop`  | 只启动桌面客户端                            | `--filter @puff/desktop`              |
 | `pnpm build`        | 按依赖拓扑顺序构建全部                      | `pnpm -r run build`                   |
 | `pnpm typecheck`    | 全量类型检查                                | `pnpm -r run typecheck`               |
 | `pnpm check`        | Biome 全仓库检查：格式 + lint + import 排序 | `biome check .`                       |
@@ -55,6 +59,7 @@
 | `pnpm test`         | 全量测试（没有 `test` 脚本的包自动跳过）    | `pnpm -r run test`                    |
 | `pnpm clean`        | 清理构建产物                                | `pnpm -r run clean`                   |
 | `pnpm start:api`    | 以生产模式启动已构建的 API                  | `--filter @puff/api run start:prod`   |
+| `pnpm package:desktop:win` | 构建 Windows x64 NSIS 安装包        | `--filter @puff/desktop run package:win` |
 
 ### 应用必须对齐的脚本契约
 
@@ -66,7 +71,9 @@ Biome 是例外：`pnpm check` / `pnpm format` / `pnpm format:check` 由根脚�
 ## workspace 配置
 
 - `pnpm-workspace.yaml` 的 `packages` 固定为 `apps/*` 与 `packages/*`，新增应用/包只要落在对应目录即可被识别。
-- `minimumReleaseAgeExclude`：pnpm 默认会等待一段时间才信任刚发布的版本（供应链保护）。目前只有 `@rsbuild/plugin-react@2.1.1` 需要豁免；今后安装依赖被该策略拦下时，**先确认版本来源可信**，再把具体版本加进这个列表，不要整体关掉保护。
+- `minimumReleaseAgeExclude`：pnpm 默认会等待一段时间才信任刚发布的版本（供应链保护）。当前只有 `@rsbuild/plugin-react@2.1.1` 需要豁免；今后安装依赖被该策略拦下时，**先确认版本来源可信**，再把具体版本加进这个列表，不要整体关掉保护。
+- `allowBuilds`：桌面端依赖中的 `@deepseek-ai/dsh-subprocess-local`、`esbuild`、`koffi`、`node-pty`、`protobufjs`、`electron` 需要执行安装脚本；`@google/genai` 与 `electron-winstaller` 明确不执行。新增依赖被拦下时先确认脚本用途和来源，再按包精确放行，禁止 `--all` 式整体放行。
+- `overrides`：`@electron/get` 固定到 `5.1.0`，以匹配 electron-builder 26 实际使用的 cache-mode API，避免打包阶段因缺失 `ElectronDownloadCacheMode` 失败。
 - `.npmrc` 中 `engine-strict=true` 会让 Node 版本不满足 `engines` 时直接安装失败；`save-workspace-protocol=rolling` 让 `pnpm add` 自动写成 `workspace:` 协议。
 - 根 `package.json` 的 `packageManager` 与 `engines` 是唯一的版本声明处，用 corepack 保证团队一致，不要在文档里另写一套版本号。
 - **全仓库只有一个 `pnpm-lock.yaml`**：应用目录里不允许出现 `package-lock.json`、`yarn.lock` 或第二个 `pnpm-lock.yaml`。
@@ -80,6 +87,7 @@ Biome 是例外：`pnpm check` / `pnpm format` / `pnpm format:check` 由根脚�
 - ❌ `.env` 等真实环境变量文件
 - ❌ 构建产物与缓存（`dist/`、`node_modules/`、`*.tsbuildinfo`、`.rspack-profile-*/`）
 - ❌ 为了「方便」在根目录新建的散装示例代码、调试脚本（用 `scripts/` 或应用内目录，并配套说明）
+- ✅ 例外：`llm-lab/` 是个人学习区，自带 `AGENTS.md` 与专属文档，独立环境、不参与 workspace，不属于上述禁止项
 
 ## 新增一个应用
 

@@ -4,8 +4,8 @@
 
 ## 项目概览
 
-- pnpm workspaces 单体仓库，成员是 `apps/api`（`@puff/api`，NestJS 12）与 `apps/web`（`@puff/web`，React 19 + Rsbuild 2）。
-- **当前是脚手架状态**：除了后端的探活/信息接口（`GET /api`、`GET /api/health`）外没有任何业务功能。不要假设存在数据库、鉴权、状态管理、路由等功能。
+- pnpm workspaces 单体仓库，成员是 `apps/api`（`@puff/api`，NestJS 12）、`apps/web`（`@puff/web`，React 19 + Rsbuild 2）与 `apps/desktop`（`@puff/desktop`，Electron + DeepSeek Harness）。
+- **当前只有基础脚手架与 DSH 桌面薄壳**：除后端探活/信息接口（`GET /api`、`GET /api/health`）外没有自研业务功能。桌面端主要原样加载官方 DSH Web UI，不要假设存在自研聊天、鉴权、状态管理或路由。
 - 工程规范在 `docs/rules/`（根目录 / 服务端 / 前端 / 路由），动手前先读相关那篇：改动路由看 `docs/rules/routing.md`，改动目录结构看 `docs/rules/root.md` 等。
 
 ## 环境与安装
@@ -23,6 +23,7 @@
 | ------------------------------- | --------------------------------------------- |
 | `pnpm dev`                      | 并行启动 api(:3000) 与 web(:5173)             |
 | `pnpm dev:api` / `pnpm dev:web` | 只启动其中一端                                |
+| `pnpm dev:desktop`              | 构建并启动 Electron 桌面客户端                |
 | `pnpm build`                    | 递归构建全部                                  |
 | `pnpm typecheck`                | 递归类型检查                                  |
 | `pnpm check`                    | Biome 全仓库检查（格式 + lint + import 排序） |
@@ -32,6 +33,7 @@
 | `pnpm test`                     | 递归测试                                      |
 | `pnpm clean`                    | 清理构建产物                                  |
 | `pnpm start:api`                | 以生产模式启动已构建的 API                    |
+| `pnpm package:desktop:win`      | 构建 Windows x64 NSIS 安装包                  |
 
 单包命令用 `pnpm --filter <包名> run <脚本>`，脚本清单见各包 `package.json` 与其 `AGENTS.md`。
 

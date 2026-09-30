@@ -1,15 +1,18 @@
 # puff
 
 pnpm workspaces 单体仓库：**NestJS** 服务端 + **React (Rsbuild / Rspack)** 前端。
+另含基于 DeepSeek Harness 的 Electron 桌面客户端。
 
 ```
 .
 ├─ apps/
 │  ├─ api/            NestJS 12 服务端（ESM + vitest + Biome）
-│  └─ web/            React 19 + Rsbuild 2（Rspack）前端
+│  ├─ web/            React 19 + Rsbuild 2（Rspack）前端
+│  └─ desktop/        Electron 44 + DeepSeek Harness 桌面薄壳
 ├─ packages/          预留：共享库／类型包放这里
+├─ llm-lab/           个人学习区：从零手写 mini-GPT（独立 Python 环境，见 llm-lab/README.md）
 ├─ docs/
-│  └─ rules/          工程规范：根目录 / 服务端 / 前端 / 路由
+│  └─ rules/          工程规范：根目录 / 服务端 / 前端 / 桌面端 / 路由
 ├─ biome.json         唯一的格式化 + lint 配置（Biome）
 ├─ pnpm-workspace.yaml
 ├─ tsconfig.base.json 各包共用的 TS 严格模式基线
@@ -29,7 +32,7 @@ pnpm install
 # 可选：自定义端口
 Copy-Item apps/api/.env.example apps/api/.env
 
-# 同时启动服务端(:3000) 与前端(:5173)
+# 同时启动服务端(:3000)、前端(:5173) 与桌面客户端
 pnpm dev
 ```
 
@@ -42,6 +45,7 @@ pnpm dev
 ```bash
 pnpm dev:api
 pnpm dev:web
+pnpm dev:desktop
 ```
 
 ## 根目录脚本
@@ -49,6 +53,7 @@ pnpm dev:web
 | 命令                | 作用                                                  |
 | ------------------- | ----------------------------------------------------- |
 | `pnpm dev`          | 并行启动 `apps/*` 的 dev 任务                         |
+| `pnpm dev:desktop`  | 只启动桌面客户端（Electron + DSH Host）              |
 | `pnpm build`        | 递归构建（按依赖拓扑顺序）                            |
 | `pnpm typecheck`    | 递归类型检查                                          |
 | `pnpm check`        | Biome 全仓库检查（格式 + lint + import 排序，CI 用）  |
@@ -59,6 +64,7 @@ pnpm dev:web
 | `pnpm test`         | 递归测试（api 用 vitest；没有 test 脚本的包自动跳过） |
 | `pnpm clean`        | 递归清理 `dist` 等构建产物                            |
 | `pnpm start:api`    | 以生产模式启动已构建的 API                            |
+| `pnpm package:desktop:win` | 构建 Windows x64 按用户安装包                  |
 
 包内脚本用 `--filter` 调用，例如：
 
@@ -66,6 +72,8 @@ pnpm dev:web
 pnpm --filter @puff/api test          # 单元测试 src/**/*.spec.ts
 pnpm --filter @puff/api test:e2e      # e2e 测试 test/**/*.e2e-spec.ts
 pnpm --filter @puff/web preview       # 预览前端构建产物（rsbuild preview，:4173）
+pnpm --filter @puff/desktop test:e2e  # 真实验证固定版 dsh Host 与认证 URL
+pnpm --filter @puff/desktop package:win:dir
 ```
 
 ## 端口与请求代理
@@ -74,10 +82,20 @@ pnpm --filter @puff/web preview       # 预览前端构建产物（rsbuild previ
 - 前端 dev server 固定 `5173`，把 `/api` 代理到 `http://localhost:3000`（`API_PROXY_TARGET` 可覆盖），浏览器始终只访问同源地址。
 - 前端请求地址由 `apps/web/.env` 里的 `PUBLIC_API_BASE_URL` 决定，默认 `/api`。
 
+## 桌面客户端
+
+- `apps/desktop` 固定随包分发 `@deepseek-ai/dsh@0.1.7-rc.2` 与 `pnpm@11.7.0`，不需要全局 Node/pnpm/dsh。
+- 首版面向 Windows x64，通过 `pnpm package:desktop:win` 生成按用户安装的 NSIS 包。
+- 客户端启动 `dsh --profile puff --no-open --port 0`，从 stdout 读取带一次性 token 的 loopback URL 并交给 `BrowserWindow`。
+- DSH Home 默认沿用 `~/.dsh`，使用独立 `puff` profile；默认 workspace 为 `%LOCALAPPDATA%\puff\workspace`。
+- 托盘常驻，关闭窗口只隐藏；开机启动默认关闭，Host 崩溃按 1s/2s/4s 最多重启三次。
+- 首版不做代码签名、自动更新与崩溃上报；详情见 [docs/rules/desktop.md](./docs/rules/desktop.md)。
+- Windows 打包问题与排障步骤见 [docs/desktop-packaging-troubleshooting.md](./docs/desktop-packaging-troubleshooting.md)。
+
 ## 约定
 
-- 目录、命名、分层、注释与提交自检等工程规范见 [docs/rules](./docs/rules/README.md)：[根目录](./docs/rules/root.md)、[服务端](./docs/rules/api.md)、[前端](./docs/rules/web.md)、[路由](./docs/rules/routing.md)。
-- 面向 AI 编码助手的仓库级指令见根 [AGENTS.md](./AGENTS.md)，各应用另有 [apps/api/AGENTS.md](./apps/api/AGENTS.md) 与 [apps/web/AGENTS.md](./apps/web/AGENTS.md)。
+- 目录、命名、分层、注释与提交自检等工程规范见 [docs/rules](./docs/rules/README.md)：[根目录](./docs/rules/root.md)、[服务端](./docs/rules/api.md)、[前端](./docs/rules/web.md)、[桌面端](./docs/rules/desktop.md)、[路由](./docs/rules/routing.md)。
+- 面向 AI 编码助手的仓库级指令见根 [AGENTS.md](./AGENTS.md)，各应用另有 [apps/api/AGENTS.md](./apps/api/AGENTS.md)、[apps/web/AGENTS.md](./apps/web/AGENTS.md) 与 [apps/desktop/AGENTS.md](./apps/desktop/AGENTS.md)。
 - 两个包都是 ESM（`"type": "module"`），API 因为用 `nodenext` 解析，相对导入要写 `.js` 后缀。
 - 类型严格模式来自根目录 `tsconfig.base.json`，各包 `tsconfig` 通过 `extends` 继承。
 - 代码格式化、风格校验、import 排序统一走 Biome：配置只有根目录 `biome.json`，各包不再单独维护格式化/lint 配置。Biome 不处理 Markdown 与 YAML，文档与 `pnpm-workspace.yaml` 需手写保持整洁。
@@ -94,3 +112,4 @@ pnpm --filter @puff/web preview       # 预览前端构建产物（rsbuild previ
 - 修掉 Nest 12 脚手架 e2e 模板里的 `import { App } from 'supertest/types'`：在 `nodenext` 解析下该子路径无法解析（supertest 本身不带 types），会让 `tsc --noEmit` 直接报错。
 - API 的 vitest 配置改用 Vite 8 原生的 `resolve.tsconfigPaths`，去掉 `vite-tsconfig-paths` 插件（同时消除了它对 TypeScript < 7 的 peer 冲突）。
 - 前端替换掉模板演示页，改成一个调用 `/api/health` 的最小页面。
+- 新增 `apps/desktop`：按用户安装的 Windows Electron 薄宿主，固定版 DSH 运行时与内置 pnpm，独立 `puff` profile 与随机 loopback 端口。
