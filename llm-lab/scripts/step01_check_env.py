@@ -1,8 +1,7 @@
-"""Step 1: verify that Python, PyTorch and the GPU actually work together.
+"""第 1 步：确认 Python、PyTorch 和 GPU 三者真的能一起工作。
 
-Nothing here is about language models yet. The point is to make sure the
-foundation is solid before building on it: if the GPU or autograd is broken,
-every later step will look like a bug in *our* code.
+这里还没有任何语言模型的内容。目的只是把地基钉死：如果 GPU 或自动求导
+本身是坏的，后面每一步的报错都会看起来像我们自己代码的 bug。
 """
 
 from __future__ import annotations
@@ -17,13 +16,13 @@ ROUNDS = 20
 
 
 def describe_environment() -> None:
-    """Print which Python and which PyTorch build we actually loaded."""
+    """打印实际加载到的是哪个 Python、哪个 PyTorch 构建。"""
     print(f"python         : {platform.python_version()} on {platform.system()}")
     print(f"torch          : {torch.__version__}")
 
 
 def describe_device() -> torch.device:
-    """Return the GPU device, or stop with a clear message if there is none."""
+    """返回 GPU 设备；如果没有可用的 GPU，就带着明确的提示停下来。"""
     if not torch.cuda.is_available():
         raise SystemExit(
             "CUDA is not available. Check that you installed the cu128 build "
@@ -40,7 +39,7 @@ def describe_device() -> torch.device:
 
 
 def check_cpu_matches_gpu(device: torch.device) -> None:
-    """Matmul results must agree; a fast-but-wrong GPU is worse than none."""
+    """两边矩阵乘法的结果必须一致——又快又错的 GPU 比没有 GPU 更糟。"""
     torch.manual_seed(0)
     a = torch.randn(512, 512)
     b = torch.randn(512, 512)
@@ -56,7 +55,7 @@ def check_cpu_matches_gpu(device: torch.device) -> None:
 
 
 def check_autograd(device: torch.device) -> None:
-    """Autograd is the engine behind every training step we will write."""
+    """自动求导是后面每一次训练的引擎，先确认它是好的。"""
     x = torch.tensor([1.0, 2.0, 3.0], device=device, requires_grad=True)
     y = (x**2).sum()
     y.backward()
@@ -69,11 +68,11 @@ def check_autograd(device: torch.device) -> None:
 
 
 def benchmark_matmul(device: torch.device) -> None:
-    """A rough sense of GPU speed, and a reminder that warm-up matters."""
+    """粗略感受一下 GPU 的速度，顺带提醒预热是必须的。"""
     a = torch.randn(SIZE, SIZE, device=device)
     b = torch.randn(SIZE, SIZE, device=device)
 
-    for _ in range(3):  # the first calls pay for kernel selection and allocation
+    for _ in range(3):  # 头几次调用要承担内核选择和显存分配的开销
         a @ b
     torch.cuda.synchronize()
 
