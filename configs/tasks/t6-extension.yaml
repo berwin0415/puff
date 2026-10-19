@@ -1,0 +1,17 @@
+task_id: t6-extension
+category: extension_cost
+description: Add one tool, one approval node and one state node, then record the change and debugging cost.
+timeout_seconds: 900
+budget_usd: 1.5
+grader: manual_review
+side_effects: idempotent_fixture
+measure:
+  - changed_files
+  - first_run_seconds
+  - event_coverage
+  - debug_path
+assertions:
+  - the new tool is callable through the same execution boundary
+  - the approval node produces a visible event
+  - the new state node survives a runner restart
+  - changed files and debug steps are recorded

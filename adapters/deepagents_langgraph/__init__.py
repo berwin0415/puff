@@ -1,6 +1,7 @@
 """Deep Agents + LangGraph adapter for the local validation harness."""
 
 from .adapter import (
+    CheckpointInspectionError,
     DeepAgentsLangGraphAdapter,
     DeepAgentsLangGraphError,
     SourcePreflight,
@@ -9,6 +10,7 @@ from .adapter import (
 )
 
 __all__ = [
+    "CheckpointInspectionError",
     "DeepAgentsLangGraphAdapter",
     "DeepAgentsLangGraphError",
     "SourcePreflight",

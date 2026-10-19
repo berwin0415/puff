@@ -1,6 +1,12 @@
 {
   "task_id": "T1",
+  "config_task_id": "t1-tools",
   "description": "Read deterministic items and apply a calculation.",
   "fixture": "/api/items?limit=3",
+  "steps": [
+    {"action": "get", "path": "/api/items?limit=3"},
+    {"action": "assert_fields", "expected_count": 3},
+    {"action": "calculate", "expression": "10 + 20 + 30", "expected": 60}
+  ],
   "assertions": ["HTTP 200", "three items", "sum(value) == 60"]
 }

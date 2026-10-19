@@ -2,9 +2,10 @@
 
 The candidate packages stay outside this repository.  The adapter launches a
 worker with the candidate virtualenv's Python executable, captures JSONL event
-summaries, and exposes the common read-side protocol.  Native pause/cancel is
-left explicit until a streaming worker transport is added; SQLite checkpoints
-are nevertheless created by the candidate graph for later resume experiments.
+summaries, and exposes the common read-side protocol.  Checkpoint inspection is
+supported through the candidate SQLite checkpointer.  Native pause/cancel and
+mid-run resume still require a streaming worker transport; the SQLite
+checkpoints are nevertheless retained for later resume experiments.
 """
 
 from __future__ import annotations
@@ -34,6 +35,10 @@ class DeepAgentsLangGraphError(RuntimeError):
 
 class SourcePreflightError(DeepAgentsLangGraphError):
     """Raised when an external source cannot be verified."""
+
+
+class CheckpointInspectionError(DeepAgentsLangGraphError):
+    """Raised when a candidate checkpoint cannot be read."""
 
 
 @dataclass(frozen=True)
@@ -124,6 +129,8 @@ def collect_events(run_id: str, stdout: str, stderr: str, returncode: int, *, ti
         if isinstance(parsed, Mapping) and parsed.get("event_type"):
             event_type = str(parsed["event_type"])
             state = "completed" if event_type == "graph_completed" and returncode == 0 else "running"
+            if event_type in {"interrupt_requested", "graph_interrupted", "pause_requested", "graph_paused"}:
+                state = "paused"
             if event_type == "worker_error":
                 state = "aborted"
             events.append(_event(run_id, sequence, event_type, state, parsed.get("payload") if isinstance(parsed.get("payload"), Mapping) else {"raw": line}))
@@ -134,7 +141,13 @@ def collect_events(run_id: str, stdout: str, stderr: str, returncode: int, *, ti
         for line in stderr.splitlines():
             events.append(_event(run_id, sequence, "worker_stderr", "running", {"text": line[:2000]}))
             sequence += 1
-    final_state = "completed" if returncode == 0 and not timed_out else "aborted"
+    interrupted = any(event["event_type"] in {"graph_interrupted", "graph_paused"} for event in events)
+    if returncode != 0 or timed_out:
+        final_state = "aborted"
+    elif interrupted:
+        final_state = "paused"
+    else:
+        final_state = "completed"
     events.append(
         _event(
             run_id,
@@ -169,6 +182,7 @@ class DeepAgentsLangGraphAdapter:
         expected_deepagents_archive_sha256: str | None = DEFAULT_DEEPAGENTS_ARCHIVE_SHA256,
         worker_path: str | Path | None = None,
         artifact_root: str | Path | None = None,
+        checkpoint_db: str | Path | None = None,
         require_clean_langgraph: bool = True,
     ) -> None:
         self.source_path = Path(source_path).expanduser().resolve()
@@ -189,6 +203,7 @@ class DeepAgentsLangGraphAdapter:
         self.expected_deepagents_archive_sha256 = expected_deepagents_archive_sha256
         self.worker_path = Path(worker_path or Path(__file__).with_name("worker.py")).resolve()
         self.artifact_root = Path(artifact_root or os.environ.get("HARNESS_LAB_ARTIFACT_ROOT", "~/harness-lab-data/runs")).expanduser().resolve()
+        self.checkpoint_db = Path(checkpoint_db).expanduser() if checkpoint_db is not None else None
         self.require_clean_langgraph = require_clean_langgraph
         self.version = f"deepagents@{expected_deepagents_commit};langgraph@{expected_langgraph_commit}"
         self._runs: dict[str, _RecordedRun] = {}
@@ -260,8 +275,7 @@ class DeepAgentsLangGraphAdapter:
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("task_spec.prompt must be a non-empty string")
         run_id = run_id or str(uuid.uuid4())
-        checkpoint_db = self.artifact_root / "candidate-state" / "deepagents-langgraph.sqlite"
-        request = {"run_id": run_id, "prompt": prompt, "checkpoint_db": str(checkpoint_db), "timeout_seconds": timeout or task.get("timeout_seconds") or 120}
+        request = {"run_id": run_id, "prompt": prompt, "checkpoint_db": str(self._checkpoint_db()), "timeout_seconds": timeout or task.get("timeout_seconds") or 120}
         process_env = os.environ.copy()
         if env:
             process_env.update({str(key): str(value) for key, value in env.items()})
@@ -274,6 +288,153 @@ class DeepAgentsLangGraphAdapter:
             result = RunResult(run_id, -9, stdout, stderr, collect_events(run_id, stdout, stderr, -9, timed_out=True), True)
         self._runs.setdefault(run_id, _RecordedRun(task)).result = result
         self._runs[run_id].events = list(result.events)
+        return result
+
+    def run_interruptible(
+        self,
+        task_spec: Mapping[str, Any] | str,
+        *,
+        run_id: str | None = None,
+        interrupt_on: Sequence[str] = ("fixture_lookup",),
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
+    ) -> RunResult:
+        """Start a graph that pauses natively before the listed tools execute."""
+
+        task = {"prompt": task_spec} if isinstance(task_spec, str) else dict(task_spec)
+        prompt = task.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("task_spec.prompt must be a non-empty string")
+        run_id = run_id or str(uuid.uuid4())
+        request = {
+            "mode": "run",
+            "run_id": run_id,
+            "prompt": prompt,
+            "checkpoint_db": str(self._checkpoint_db()),
+            "interrupt_on": list(interrupt_on),
+            "timeout_seconds": timeout or task.get("timeout_seconds") or 120,
+        }
+        return self._execute_worker(request, run_id, task, timeout, env)
+
+    def run_paused(
+        self,
+        task_spec: Mapping[str, Any] | str,
+        *,
+        run_id: str | None = None,
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
+    ) -> RunResult:
+        """Start a graph that pauses at the next model-node safe point.
+
+        No approval is involved.  The graph checkpoints after the model turn,
+        the process may exit, and ``resume_paused`` continues the same thread.
+        """
+
+        task = {"prompt": task_spec} if isinstance(task_spec, str) else dict(task_spec)
+        prompt = task.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("task_spec.prompt must be a non-empty string")
+        run_id = run_id or str(uuid.uuid4())
+        request = {
+            "mode": "run",
+            "run_id": run_id,
+            "prompt": prompt,
+            "checkpoint_db": str(self._checkpoint_db()),
+            "pause_after_model": True,
+            "timeout_seconds": timeout or task.get("timeout_seconds") or 120,
+        }
+        return self._execute_worker(request, run_id, task, timeout, env)
+
+    def resume_paused(
+        self,
+        run_id: str,
+        *,
+        checkpoint_id: str | None = None,
+        pause_after_model: bool = False,
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
+    ) -> RunResult:
+        """Resume a non-approval model-safe-point pause.
+
+        With ``pause_after_model=False`` (the default) the graph runs to
+        completion.  Set it to true to stop again at the next model boundary.
+        """
+
+        request = {
+            "mode": "resume",
+            "run_id": run_id,
+            "checkpoint_db": str(self._checkpoint_db()),
+            "checkpoint_id": checkpoint_id,
+            "resume": True,
+            "pause_after_model": pause_after_model,
+            "timeout_seconds": timeout or 120,
+        }
+        return self._execute_worker(request, run_id, {"run_id": run_id}, timeout, env)
+
+    def resume_run(
+        self,
+        run_id: str,
+        *,
+        decision: str = "approve",
+        checkpoint_id: str | None = None,
+        interrupt_on: Sequence[str] = ("fixture_lookup",),
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
+    ) -> RunResult:
+        """Resume an interrupted thread from its SQLite checkpoint.
+
+        A new adapter instance or process can call this method because the only
+        shared state is the checkpoint database and ``thread_id``.
+        """
+
+        request = {
+            "mode": "resume",
+            "run_id": run_id,
+            "checkpoint_db": str(self._checkpoint_db()),
+            "checkpoint_id": checkpoint_id,
+            "interrupt_on": list(interrupt_on),
+            "resume": {"decisions": [{"type": decision}]},
+            "timeout_seconds": timeout or 120,
+        }
+        return self._execute_worker(request, run_id, {"run_id": run_id}, timeout, env)
+
+    def _execute_worker(
+        self,
+        request: Mapping[str, Any],
+        run_id: str,
+        task: Mapping[str, Any],
+        timeout: float | None,
+        env: Mapping[str, str] | None,
+    ) -> RunResult:
+        process_env = os.environ.copy()
+        if env:
+            process_env.update({str(key): str(value) for key, value in env.items()})
+        limit = timeout or float(request.get("timeout_seconds") or 120)
+        try:
+            completed = subprocess.run(
+                [str(self.python_executable), str(self.worker_path), "--request", json.dumps(dict(request), ensure_ascii=False)],
+                cwd=self.worker_path.parent,
+                env=process_env,
+                capture_output=True,
+                text=True,
+                timeout=limit,
+                check=False,
+            )
+            result = RunResult(
+                run_id,
+                completed.returncode,
+                completed.stdout,
+                completed.stderr,
+                collect_events(run_id, completed.stdout, completed.stderr, completed.returncode),
+                False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            stdout = _decode(exc.stdout)
+            stderr = _decode(exc.stderr)
+            result = RunResult(run_id, -9, stdout, stderr, collect_events(run_id, stdout, stderr, -9, timed_out=True), True)
+        record = self._runs.setdefault(run_id, _RecordedRun(dict(task)))
+        record.result = result
+        record.events = list(result.events)
         return result
 
     def stream_events(self, run_id: str, after_seq: int = 0) -> tuple[int, Iterable[Mapping[str, Any]]]:
@@ -291,16 +452,48 @@ class DeepAgentsLangGraphAdapter:
     def artifacts(self, run_id: str) -> Sequence[Mapping[str, Any]]:
         if run_id not in self._runs:
             raise KeyError(run_id)
-        return ({"kind": "checkpoint_db", "path": str(self.artifact_root / "candidate-state" / "deepagents-langgraph.sqlite")},)
+        return ({"kind": "checkpoint_db", "path": str(self._checkpoint_db())},)
+
+    def inspect_checkpoint(self, run_id: str, *, timeout: float = 30) -> Mapping[str, Any]:
+        """Read the latest candidate checkpoint for *run_id* without a model call."""
+
+        request = {"mode": "inspect", "run_id": run_id, "checkpoint_db": str(self._checkpoint_db())}
+        try:
+            completed = subprocess.run(
+                [str(self.python_executable), str(self.worker_path), "--request", json.dumps(request, ensure_ascii=False)],
+                cwd=self.worker_path.parent,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise CheckpointInspectionError(f"checkpoint inspection failed: {exc}") from exc
+        for line in completed.stdout.splitlines():
+            try:
+                parsed = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, Mapping) and parsed.get("event_type") == "checkpoint_inspected":
+                payload = parsed.get("payload")
+                if isinstance(payload, Mapping):
+                    return payload
+        raise CheckpointInspectionError(
+            f"no checkpoint found for {run_id!r} (returncode={completed.returncode}, stderr={completed.stderr[-500:]!r})"
+        )
+
+    def snapshot(self, run_id: str) -> str:
+        payload = self.inspect_checkpoint(run_id)
+        checkpoint_id = payload.get("checkpoint_id")
+        if not isinstance(checkpoint_id, str) or not checkpoint_id:
+            raise CheckpointInspectionError(f"checkpoint for {run_id!r} has no checkpoint_id")
+        return checkpoint_id
 
     def pause(self, run_id: str) -> str:
         raise NotImplementedError("worker is one-shot; native pause requires a live streaming transport")
 
     def resume(self, run_id: str, checkpoint_id: str | None = None) -> None:
         raise NotImplementedError("resume transport is not wired; SQLite checkpoint is retained for the next worker")
-
-    def snapshot(self, run_id: str) -> str:
-        raise NotImplementedError("snapshot transport is not wired")
 
     def restore(self, run_id: str, checkpoint_id: str) -> None:
         raise NotImplementedError("restore transport is not wired")
@@ -313,6 +506,11 @@ class DeepAgentsLangGraphAdapter:
 
     def approve(self, run_id: str, approval_id: str, decision: str) -> None:
         raise NotImplementedError("approval transport is not wired")
+
+    def _checkpoint_db(self) -> Path:
+        if self.checkpoint_db is not None:
+            return self.checkpoint_db
+        return self.artifact_root / "candidate-state" / "deepagents-langgraph.sqlite"
 
 
 def _project_version(path: Path) -> str | None:
@@ -338,4 +536,11 @@ def _decode(value: str | bytes | None) -> str:
     return value.decode(errors="replace") if isinstance(value, bytes) else value
 
 
-__all__ = ["DeepAgentsLangGraphAdapter", "DeepAgentsLangGraphError", "SourcePreflight", "SourcePreflightError", "collect_events"]
+__all__ = [
+    "CheckpointInspectionError",
+    "DeepAgentsLangGraphAdapter",
+    "DeepAgentsLangGraphError",
+    "SourcePreflight",
+    "SourcePreflightError",
+    "collect_events",
+]

@@ -17,7 +17,10 @@ checkpoint 和产物分别放入 `state/`、`artifacts/`。
 当前候选报告：
 
 - [DeepSeek Harness](reports/2026-10-19-deepseek-harness.md)
+- [hsi-desktop 浏览器迁移评估](reports/2026-10-19-hsi-desktop-browser-migration.md)
 - [OpenClaw](reports/2026-10-19-openclaw.md)
 - [Deep Agents + LangGraph](reports/2026-10-19-deepagents-langgraph.md)
+- [统一 Runner 生命周期与故障恢复基线](reports/2026-10-19-runner-lifecycle-baseline.md)
+- [中断恢复、OpenClaw 适配器与云浏览器验证](reports/2026-10-19-interrupt-resume-and-cloud-browser.md)
 
 阶段性结论：[P0 云端 Harness 调研结论与推荐](decisions/2026-10-19-p0-conclusion.md)。

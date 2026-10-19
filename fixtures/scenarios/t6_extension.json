@@ -1,0 +1,16 @@
+{
+  "task_id": "T6",
+  "config_task_id": "t6-extension",
+  "description": "Measure the cost of adding one tool, one approval node and one state node.",
+  "steps": [
+    {"action": "register_tool", "name": "fixture_extension"},
+    {"action": "add_approval_node", "approval_id": "t6-approval"},
+    {"action": "add_state_node", "node": "summarize"},
+    {"action": "record_metrics"}
+  ],
+  "assertions": [
+    "the extension is callable through the unified execution boundary",
+    "approval and state events are visible in the stream",
+    "changed files, first-run time and debug path are recorded"
+  ]
+}

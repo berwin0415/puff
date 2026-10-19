@@ -37,7 +37,39 @@ The worker completed a real remote-model task with `fixture_lookup("alpha")`:
 - run ID: `52921584-baec-47cf-a4eb-acd9cb041781`
 - candidate run IDs and the SQLite checkpoint file are retained under the configured external artifact root
 
-The adapter records a SQLite checkpoint, but its current worker is one-shot. Native
-pause/cancel/live approval transport is therefore explicitly pending the lifecycle
-phase; the current result only establishes import, model, tool, graph event, and
-checkpoint backend viability.
+## Checkpoint inspection
+
+`worker.py --mode inspect` reads the candidate SQLite checkpointer without a
+model call or API key. The adapter exposes `inspect_checkpoint()` and
+`snapshot()`; `tests/adapters/test_deepagents_snapshot.py` seeds a model-free
+LangGraph checkpoint with the external environment and verifies that the
+adapter returns the same `checkpoint_id`, checkpoint count and state summary.
+This proves checkpoint readability, not task resumption.
+
+## Non-approval pause and cross-process resume
+
+A cloud Harness pause does not require human approval. The primary mechanism is
+a model-node safe point: the worker recompiles the graph with
+`interrupt_after=["model"]`, emits `pause_requested` / `graph_paused`, and
+exits after the checkpoint is written. A new process resumes the same
+`thread_id` with `Command(resume=True)` and runs to completion.
+
+Real-model evidence run
+`deepagents-pause-d25e50a2-caec-4826-9ef3-6a566e6c93cb`:
+
+- first process: `graph_paused`, `pause_kind=after_model_safe_point`,
+  `approval_required=false`, checkpoint recorded;
+- resume process: `graph_completed`, answer `fixture-alpha`;
+- both processes exited with code 0.
+
+The pause happens after a model turn, not mid-call; `cancel`, live `send_input`
+and container-level recovery are still unverified. `scripts/run_deepagents_pause.py`
+reproduces the cycle, and the live test is opt-in via `RUN_LIVE_MODEL_TESTS=1`.
+
+Approval interrupts remain available as an optional capability via
+`interrupt_on` (`scripts/run_deepagents_interrupt.py`), but they are not the
+cloud lifecycle requirement.
+
+The adapter records a SQLite checkpoint and supports offline inspection plus
+tool-approval interrupt/resume. Arbitrary pause/cancel/live input and unified
+browser bridging remain pending.

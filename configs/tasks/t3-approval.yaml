@@ -1,0 +1,20 @@
+task_id: t3-approval
+category: human_in_loop
+description: Run a multi-step task that requests a user decision, accepts an extra instruction and continues.
+timeout_seconds: 300
+budget_usd: 0.5
+grader: event_and_result
+side_effects: idempotent_fixture
+requires:
+  - streaming_events
+  - send_input
+  - approval
+approval:
+  approval_id: t3-step-1
+  prompt: Confirm the fixture write before it is applied.
+input:
+  message: Use the approved value and finish the task.
+assertions:
+  - approval request is visible in the event stream
+  - the decision is recorded before the side effect
+  - the extra instruction is associated with the same run_id

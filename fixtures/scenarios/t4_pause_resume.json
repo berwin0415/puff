@@ -1,0 +1,17 @@
+{
+  "task_id": "T4",
+  "config_task_id": "t4-pause-resume",
+  "description": "Pause a run, recreate the runner, resume from the persisted checkpoint and complete the task.",
+  "steps": [
+    {"action": "submit", "prompt": "Run the fixture task and pause at the safe point."},
+    {"action": "pause"},
+    {"action": "recreate_runner"},
+    {"action": "resume"}
+  ],
+  "assertions": [
+    "the checkpoint stores the task and adapter checkpoint id",
+    "resume works from a new runner instance",
+    "no event sequence is reused after the restart",
+    "the final state is completed with a result"
+  ]
+}
