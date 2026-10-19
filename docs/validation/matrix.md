@@ -24,5 +24,7 @@
 - [OpenClaw 报告](reports/2026-10-19-openclaw.md)
 - [Deep Agents + LangGraph 报告](reports/2026-10-19-deepagents-langgraph.md)
 
-当前不能据此做最终选型。下一阶段按统一 T3-T6 验证暂停恢复、Runner/容器重启、
-人工介入、失败重试、新增工具和维护成本；每项结论继续引用外部 `run_id`。
+当前可以形成阶段性推荐，但不能据此做生产最终选型。下一阶段按统一 T3-T6
+验证暂停恢复、Runner/容器重启、人工介入、失败重试、新增工具和维护成本；每项
+结论继续引用外部 `run_id`。正式推荐与阻断条件见
+[P0 调研结论](decisions/2026-10-19-p0-conclusion.md)。

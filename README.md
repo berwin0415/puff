@@ -6,6 +6,8 @@
 
 实施方案：[LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)
 
+阶段性结论：[P0 调研结论与推荐](./docs/validation/decisions/2026-10-19-p0-conclusion.md)
+
 当前进度：M0/M1/M2 的本地环境、统一 Runner、Fixture、Playwright 执行基线和
 Compose 拓扑已完成；DeepSeek Harness、OpenClaw、Deep Agents/LangGraph 已完成来源、
 依赖和最小远程模型冒烟，DeepSeek T1 工具任务和浏览器能力阻断也已留证。

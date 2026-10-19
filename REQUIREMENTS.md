@@ -1,6 +1,6 @@
 # 云端 Agent Harness 调研需求
 
-更新日期：2026-10-19。状态：需求已确认；本地验证的 M0/M1/M2 已完成，正在进入 DeepSeek Harness 适配。详见 [LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)。
+更新日期：2026-10-19。状态：需求已确认；P0 候选已完成来源、依赖和最小运行验证，阶段性推荐与阻断条件见 [P0 调研结论](./docs/validation/decisions/2026-10-19-p0-conclusion.md)，生命周期专项仍按实施计划推进。详见 [LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)。
 
 ## 1. 已确认的需求
 

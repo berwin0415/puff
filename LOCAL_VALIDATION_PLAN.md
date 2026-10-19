@@ -236,7 +236,7 @@ docs/validation/
 | M3：DeepSeek Harness | 已完成（有能力阻断） | T1 工具任务通过；统一 Playwright 基线通过；headless 原生浏览器能力明确阻断；暂停/恢复等生命周期能力未提供 |
 | M4：OpenClaw | 已完成最小冒烟 | pinned checkout、依赖安装、构建、Gateway health/ready、远程模型 API 调用通过；统一 T1/T2 适配和恢复能力待补齐 |
 | M5：Deep Agents/LangGraph | 已完成最小冒烟 | MIT 来源、外部 Python 依赖、SQLite checkpoint 后端、fixture 工具和远程 API 调用通过；浏览器和可恢复 worker 待补齐 |
-| M6 及以后 | 未完成 | 进入统一生命周期、透明度、定制成本和候选矩阵比较 |
+| M6 及以后 | 结论已形成，专项待执行 | 推荐 Deep Agents + LangGraph 进入下一阶段；OpenClaw 保留为业务基线/控制平面对照；DeepSeek headless 浏览器能力为当前阻断 |
 
 当前验证已证明本地基础设施、统一执行基线和三个 P0 候选的最小远程模型链路可运行；DeepSeek T1 工具任务也已通过，不能据此推断候选框架的完整浏览器任务效果、恢复能力或成本排名。
 
@@ -281,6 +281,9 @@ DeepSeek Harness、OpenClaw、Deep Agents/LangGraph 的来源、依赖和最小�
 M0/M1/M2 的本地条件和三个 P0 候选的最小运行证据已经满足。下一步进入统一 T3-T6 生命周期、透明度、定制成本和恢复专项；来源确认、依赖安装和首次运行继续分别留存证据，不能用源码存在替代运行成功。
 
 ## 10. 结论判定
+
+当前 P0 阶段性结论、推荐路线和阻断条件见
+[docs/validation/decisions/2026-10-19-p0-conclusion.md](docs/validation/decisions/2026-10-19-p0-conclusion.md)。
 
 每个候选最终输出以下四类结论：
 
