@@ -1,6 +1,6 @@
 # 云端 Agent Harness 本地验证实施方案
 
-更新日期：2026-10-19。状态：M0/M1/M2 已完成；DeepSeek Harness 的 M3 适配器已完成离线接入，远程模型实验因本地未配置凭证暂缓。
+更新日期：2026-10-19。状态：M0/M1/M2 已完成；DeepSeek Harness 已完成适配和远程模型 API 冒烟，统一 T1/T2 任务验证待继续。
 
 关联需求文档：[REQUIREMENTS.md](./REQUIREMENTS.md)
 
@@ -233,10 +233,10 @@ docs/validation/
 | M0：实施前收敛 | 已完成 | 候选来源、许可证、源码 commit、基础镜像、协议和 T1/T2 配置已写入 `configs/` 与本文件；环境检查脚本通过 |
 | M1：最小骨架 | 已完成 | `contracts/`、`runner/`、SQLite+JSONL、checkpoint、manifest、JSONL AdapterProcess、Compose 拓扑；协议测试通过 |
 | M2：统一执行基线 | 已完成 | Fixture 幂等副作用、fail-once、确定性工具、Playwright/Chromium 浏览器轨道；Compose 构建和健康检查通过 |
-| M3：DeepSeek Harness | 部分完成/待凭证 | 本地 `pnpm dsh --version/help`、源码预检、headless 命令和事件采集已通过；真实远程模型任务待凭证 |
+| M3：DeepSeek Harness | 部分完成 | 本地 `pnpm dsh --version/help`、源码预检、headless 命令、事件采集和真实远程模型 API 冒烟已通过；统一 T1/T2 工具/浏览器任务及恢复能力待验证 |
 | M4 及以后 | 未开始 | 等待 P0 候选按顺序推进 |
 
-当前验证只证明本地基础设施和统一执行基线可运行，不能据此推断候选框架的任务效果、恢复能力或成本排名。
+当前验证已证明本地基础设施、统一执行基线和 DeepSeek Harness 的远程模型 API 链路可运行，不能据此推断候选框架的工具/浏览器任务效果、恢复能力或成本排名。
 
 | 里程碑 | 工作内容 | 交付物 | 继续条件 |
 | --- | --- | --- | --- |
@@ -265,7 +265,7 @@ docs/validation/
 
 | 材料 | 官方来源 | 当前本地状态 | 已核对版本/许可证 | 运行验证状态 |
 | --- | --- | --- | --- | --- |
-| DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | `../deepseek-harness` 已存在；工作区干净 | 本地 commit `dd6322d604e00eec1ba5e0c8541159906a21094a`；本地 LICENSE 为 MIT；远程 HEAD `687f282e8625c6b8d11ff58211a90524be2e4317` | Node `24.22.0`、pnpm `11.7.0`；`pnpm dsh --version/help` 和适配器 help subprocess 冒烟通过；远程模型 API 凭证未配置，模型/工具/浏览器任务待运行 |
+| DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | `../deepseek-harness` 已存在；工作区干净 | 本地 commit `dd6322d604e00eec1ba5e0c8541159906a21094a`；本地 LICENSE 为 MIT；远程 HEAD `687f282e8625c6b8d11ff58211a90524be2e4317` | Node `24.22.0`、pnpm `11.7.0`；`pnpm dsh --version/help`、适配器 help subprocess 和真实远程模型 API 冒烟通过；统一工具/浏览器任务待运行 |
 | OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | 当前工作区未发现 OpenClaw 源码 checkout；Hogee 仅作为业务基线 | 远程 HEAD `b6e0872bdb7228e22fac7608345e0529a35ec46e`；仓库许可证元数据为 MIT | 尚未运行；M0 需在仓库外 checkout 并锁定 commit |
 | Deep Agents | [langchain-ai/deepagents](https://github.com/langchain-ai/deepagents) | 未 checkout | 远程 HEAD `0089e635dce525055272883b53bc222f385beac1`；许可证元数据为 MIT | 尚未运行 |
 | LangGraph | [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) | 未 checkout | 远程 HEAD `98043c37abc60374030f960a03a6e0d4c0112643`；许可证元数据为 MIT | 尚未运行 |
@@ -274,9 +274,9 @@ docs/validation/
 
 当前主机环境检查结果：Colima 已启动，Docker context 为 `colima`，Docker server `29.5.2`，分配 4 CPU、约 8 GiB 内存和 100 GiB 磁盘；Docker Compose `5.6.0` 可用，`hello-world` 容器验证通过。仓库 `.venv` 使用 Python `3.12.13`，已安装 Pydantic、HTTPX、PyYAML、pytest、Docker SDK 和 Playwright；Chromium 已下载，页面启动冒烟通过。Node `24.22.0` 可用。`./scripts/check-environment.sh` 通过；本仓库全量测试当前为 11 passed；Compose 配置校验、镜像构建、四服务启动和 Fixture `/healthz`、`/api/items` 访问均已通过。
 
-DeepSeek Harness 的本地 CLI 入口和首个适配器已完成版本、帮助信息、源码预检及事件采集冒烟，证明本地 checkout 的 Node 依赖可加载；这不等同于远程模型 API、工具调用、浏览器执行或暂停恢复已验证。详细记录见 [`docs/validation/reports/2026-10-19-deepseek-harness.md`](docs/validation/reports/2026-10-19-deepseek-harness.md)。
+DeepSeek Harness 的本地 CLI 入口和首个适配器已完成版本、帮助信息、源码预检、事件采集及真实远程模型 API 冒烟；这不等同于工具调用、浏览器执行或暂停恢复已验证。详细记录见 [`docs/validation/reports/2026-10-19-deepseek-harness.md`](docs/validation/reports/2026-10-19-deepseek-harness.md)。
 
-M0/M1/M2 的本地条件已经满足。进入 M3 的远程模型任务前仍需完成 API 凭证的环境变量注入、候选源码 commit 写入运行 manifest、适配器事件映射和 T1/T2 的真实运行记录。来源确认、依赖安装和首次运行都必须各自留存证据，不能用源码存在替代运行成功。
+M0/M1/M2 的本地条件和 M3 的远程模型 API 冒烟已经满足。继续完成 T1/T2 前仍需把统一任务输入、候选源码 commit、适配器事件映射和工具/浏览器结果写入运行 manifest。来源确认、依赖安装和首次运行都必须各自留存证据，不能用源码存在替代运行成功。
 
 ## 10. 结论判定
 
