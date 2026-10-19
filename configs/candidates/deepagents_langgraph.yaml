@@ -9,5 +9,13 @@ licenses:
 source_commits:
   deepagents: 0089e635dce525055272883b53bc222f385beac1
   langgraph: 98043c37abc60374030f960a03a6e0d4c0112643
+source_artifacts:
+  deepagents_archive_url: https://github.com/langchain-ai/deepagents/archive/0089e635dce525055272883b53bc222f385beac1.tar.gz
+  deepagents_archive_sha256: 2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548
+  external_root: ~/harness-lab-sources
 runtime: python
+runtime_versions:
+  python: "3.12"
+  deepagents: "0.7.28"
+  langgraph: "1.2.16"
 status: p0

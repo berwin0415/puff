@@ -7,7 +7,8 @@
 实施方案：[LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)
 
 当前进度：M0/M1/M2 的本地环境、统一 Runner、Fixture、Playwright 执行基线和
-Compose 拓扑已完成；DeepSeek Harness 已完成离线适配和远程模型 API 冒烟，统一 T1/T2 任务待验证。
+Compose 拓扑已完成；DeepSeek Harness、OpenClaw、Deep Agents/LangGraph 已完成来源、
+依赖和最小远程模型冒烟，DeepSeek T1 工具任务和浏览器能力阻断也已留证。
 
 本地环境检查：
 

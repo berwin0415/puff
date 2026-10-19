@@ -5,7 +5,7 @@
 checkpoint 和产物分别放入 `state/`、`artifacts/`。
 
 当前运行证据根目录由 `HARNESS_LAB_ARTIFACT_ROOT` 指定，默认使用仓库外的
-`var/artifacts`；真实 API key、Cookie、Authorization header、业务数据、原始大日志
+`~/harness-lab-data/runs`；真实 API key、Cookie、Authorization header、业务数据、原始大日志
 和截图不得提交到 Git。报告只引用 `run_id` 及外部证据路径或哈希。
 
 运行状态使用 `planned`、`running`、`blocked`、`completed`、`aborted`。任何候选版本、
@@ -13,3 +13,9 @@ checkpoint 和产物分别放入 `state/`、`artifacts/`。
 推断、未知项、框架原生缺口和适配层补偿。
 
 统一留存流程和目录约定见 [LOCAL_VALIDATION_PLAN.md](../../LOCAL_VALIDATION_PLAN.md)。
+
+当前候选报告：
+
+- [DeepSeek Harness](reports/2026-10-19-deepseek-harness.md)
+- [OpenClaw](reports/2026-10-19-openclaw.md)
+- [Deep Agents + LangGraph](reports/2026-10-19-deepagents-langgraph.md)
