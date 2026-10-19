@@ -1,0 +1,63 @@
+name: harness-lab
+
+services:
+  fixtures:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.fixtures
+    environment:
+      FIXTURE_HOST: 0.0.0.0
+      FIXTURE_PORT: 8080
+      FIXTURE_STATE_FILE: /data/fixture-state.json
+    volumes:
+      - ../var/fixtures:/data
+    ports:
+      - "18080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  execution:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.execution
+    command: ["python", "-m", "http.server", "8080", "--directory", "/workspace"]
+    volumes:
+      - ../var/execution:/workspace
+    ports:
+      - "18082:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/')"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  runner:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.runner
+    environment:
+      FIXTURE_URL: http://fixtures:8080
+      EXECUTION_URL: http://execution:8080
+    depends_on:
+      fixtures:
+        condition: service_healthy
+      execution:
+        condition: service_healthy
+    ports:
+      - "18081:8081"
+
+  adapter:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.adapter
+    environment:
+      FIXTURE_URL: http://fixtures:8080
+      EXECUTION_URL: http://execution:8080
+    depends_on:
+      fixtures:
+        condition: service_healthy
+      execution:
+        condition: service_healthy

@@ -1,0 +1,8 @@
+candidate: openclaw
+display_name: OpenClaw
+source: https://github.com/openclaw/openclaw
+license: MIT
+source_path: external/openclaw
+source_commit: b6e0872bdb7228e22fac7608345e0529a35ec46e
+runtime: node
+status: p0

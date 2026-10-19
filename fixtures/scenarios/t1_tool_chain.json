@@ -1,0 +1,6 @@
+{
+  "task_id": "T1",
+  "description": "Read deterministic items and apply a calculation.",
+  "fixture": "/api/items?limit=3",
+  "assertions": ["HTTP 200", "three items", "sum(value) == 60"]
+}

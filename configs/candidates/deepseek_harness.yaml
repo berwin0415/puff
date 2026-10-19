@@ -1,0 +1,10 @@
+candidate: deepseek_harness
+display_name: DeepSeek Harness
+source: https://github.com/deepseek-ai/deepseek-harness
+license: MIT
+source_path: ../deepseek-harness
+source_commit: dd6322d604e00eec1ba5e0c8541159906a21094a
+runtime: node
+package_manager: pnpm@11.7.0
+command: [pnpm, dsh]
+status: p0

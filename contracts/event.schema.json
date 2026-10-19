@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness-lab.local/contracts/event.schema.json",
+  "title": "Harness Lab Event",
+  "description": "Append-only normalized event emitted by the runner or a candidate adapter.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "event_id",
+    "run_id",
+    "event_seq",
+    "occurred_at",
+    "event_type",
+    "state"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "event_seq": {"type": "integer", "minimum": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "candidate": {"type": ["string", "null"]},
+    "candidate_version": {"type": ["string", "null"]},
+    "event_type": {"type": "string", "minLength": 1},
+    "previous_state": {"type": ["string", "null"]},
+    "state": {"type": "string", "minLength": 1},
+    "parent_event_id": {"type": ["string", "null"]},
+    "candidate_event_id": {"type": ["string", "null"]},
+    "tool_call": {"type": ["object", "null"], "additionalProperties": true},
+    "model_call": {"type": ["object", "null"], "additionalProperties": true},
+    "error": {"type": ["object", "null"], "additionalProperties": true},
+    "payload": {"type": "object", "additionalProperties": true}
+  }
+}

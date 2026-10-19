@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY adapters /app/adapters
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app
+# M1 placeholder: each candidate will replace this command with its own RPC
+# adapter entry point.  Keep a long-lived process so the local topology can be
+# started before any candidate SDK is available.
+CMD ["python", "-m", "http.server", "8090", "--directory", "/app"]

@@ -1,0 +1,13 @@
+candidate: deepagents_langgraph
+display_name: Deep Agents + LangGraph
+sources:
+  - https://github.com/langchain-ai/deepagents
+  - https://github.com/langchain-ai/langgraph
+licenses:
+  deepagents: MIT
+  langgraph: MIT
+source_commits:
+  deepagents: 0089e635dce525055272883b53bc222f385beac1
+  langgraph: 98043c37abc60374030f960a03a6e0d4c0112643
+runtime: python
+status: p0

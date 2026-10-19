@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness-lab.local/contracts/task.schema.json",
+  "title": "Harness Lab Task Specification",
+  "description": "Language-neutral task contract shared by the runner and candidate adapters.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["task_id", "tenant_scope", "session_scope", "prompt"],
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1},
+    "tenant_scope": {"type": ["string", "object"]},
+    "session_scope": {"type": ["string", "object"]},
+    "prompt": {"type": "string", "minLength": 1},
+    "tools": {
+      "type": "array",
+      "items": {"type": "object", "additionalProperties": true}
+    },
+    "browser": {"type": ["object", "null"], "additionalProperties": true},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "budget": {"type": "object", "additionalProperties": true},
+    "checkpoint_policy": {"type": "object", "additionalProperties": true},
+    "metadata": {"type": "object", "additionalProperties": true}
+  }
+}

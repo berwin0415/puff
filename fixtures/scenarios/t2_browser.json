@@ -1,0 +1,7 @@
+{
+  "task_id": "T2",
+  "description": "Open the local fixture page and submit a name.",
+  "url_path": "/browser/",
+  "form": {"selector": "#name", "value": "harness-lab"},
+  "assertions": ["title contains Harness Fixture", "result is accepted:harness-lab"]
+}
