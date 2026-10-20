@@ -24,3 +24,5 @@ checkpoint 和产物分别放入 `state/`、`artifacts/`。
 - [中断恢复、OpenClaw 适配器与云浏览器验证](reports/2026-10-19-interrupt-resume-and-cloud-browser.md)
 
 阶段性结论：[P0 云端 Harness 调研结论与推荐](decisions/2026-10-19-p0-conclusion.md)。
+
+P0 收口：[P0 云端 Harness 调研收口](decisions/2026-10-19-p0-closeout.md)。

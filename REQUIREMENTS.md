@@ -1,6 +1,6 @@
 # 云端 Agent Harness 调研需求
 
-更新日期：2026-10-19。状态：需求已确认；P0 候选已完成来源、依赖和最小运行验证，阶段性推荐与阻断条件见 [P0 调研结论](./docs/validation/decisions/2026-10-19-p0-conclusion.md)，生命周期专项仍按实施计划推进。详见 [LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)。
+更新日期：2026-10-19。状态：**P0 调研已收口**。推荐 Deep Agents + LangGraph 作为下一阶段主实现候选，OpenClaw 保留为业务基线/控制平面对照，DeepSeek 作为专项参考；P1 暂不启动。收口结论和未验证边界见 [P0 调研收口](./docs/validation/decisions/2026-10-19-p0-closeout.md)，实施计划见 [LOCAL_VALIDATION_PLAN.md](./LOCAL_VALIDATION_PLAN.md)。
 
 ## 1. 已确认的需求
 
@@ -140,5 +140,6 @@ OpenClaw 需要重点验证三件事：长驻 Gateway 是否适合云端任务�
 | 日期 | 已确认内容 | 仍待确认 |
 | --- | --- | --- |
 | 2026-10-19 | 调研各种 Agent 框架实现云端 Harness 的优劣；当前暂无具体业务场景，先按通用 Agent 能力做框架比较；以 Hogee 中基于 OpenClaw 的云端助手作为现有业务基线，并重点验证流程透明度和自定义成本问题；模型走远程 API 且不要求跨厂商切换；Harness 和工具环境先本地容器化验证；可接受自研但研发时间有限；必须支持暂停后恢复；当前个人验证、未来多租户且租户体系由产品后端负责；候选 Harness 必须开源；将 DeepSeek Harness、OpenClaw 纳入 P0；将 Pi Agent Core、Google ADK、OpenAI Codex SDK 纳入开源候选池；当前仅维护需求和实施规划文档 | 代表性验证任务、首轮并发量、任务最长时长、暂停等待时长、恢复时限、评估权重 |
+| 2026-10-19 | P0 调研收口：推荐 Deep Agents + LangGraph 作为下一阶段主实现候选；OpenClaw 保留为业务基线/控制平面对照；DeepSeek 作为专项参考；P1 暂不启动 | 统一浏览器桥、容器级恢复、即时抢占/cancel、T6 成本、OpenClaw T2 与多租户隔离 |
 
 候选定位和许可证已对照上文链接及本地 DeepSeek Harness 仓库核对。具体版本能力、限制、费用和实际运行表现，应在后续调研中重新验证。

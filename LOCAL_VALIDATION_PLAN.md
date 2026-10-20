@@ -1,6 +1,6 @@
 # 云端 Agent Harness 本地验证实施方案
 
-更新日期：2026-10-19。状态：M0/M1/M2 已完成；三个 P0 候选均完成来源、依赖和远程模型冒烟；统一 Runner 级 T3-T5、Deep Agents 非审批模型安全点暂停/跨进程恢复、OpenClaw 统一 T1 适配器和无 Electron 的 Chromium + Playwright MCP 已验证。剩余：即时抢占、cancel/live input、容器级恢复、OpenClaw T2、DSH 云浏览器接入和成本专项。
+更新日期：2026-10-19。状态：**P0 调研已收口**。M0-M5 完成；M6/M7 部分完成（容器级恢复、即时抢占、T6 成本未执行）；M8 已完成。推荐 Deep Agents + LangGraph 进入下一阶段，OpenClaw 保留为业务基线/控制平面对照，DeepSeek 作为专项参考，P1 暂不启动。收口结论见 [P0 调研收口](docs/validation/decisions/2026-10-19-p0-closeout.md)。
 
 关联需求文档：[REQUIREMENTS.md](./REQUIREMENTS.md)
 
@@ -236,9 +236,11 @@ docs/validation/
 | M1：最小骨架 | 已完成 | `contracts/`、`runner/`、SQLite+JSONL、checkpoint、manifest、JSONL AdapterProcess、Compose 拓扑；协议测试通过 |
 | M2：统一执行基线 | 已完成 | Fixture 幂等副作用、fail-once、确定性工具、Playwright/Chromium 浏览器轨道；Compose 构建和健康检查通过 |
 | M3：DeepSeek Harness | 已完成（DSH 云浏览器接入待验证） | T1 工具任务通过；统一 Playwright 基线通过；headless 直连无 browser Connection；hsi-desktop MCP/CDP 轨道解除绝对阻断；独立 Chromium + Playwright MCP 已验证；DSH 任务/scope 接入和生命周期能力未提供 |
-| M4：OpenClaw | 已完成适配器与 T1 | pinned checkout、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具任务通过；T2 浏览器因扩展 relay 环境不可用而阻断；恢复能力待补齐 |
+| M4：OpenClaw | 已完成适配器与 T1 | pinned checkout、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具任务通过；T2 浏览器托管 profile 可选，但 loopback 导航策略仍阻断；恢复能力待补齐 |
 | M5：Deep Agents/LangGraph | 已完成最小冒烟与原生恢复 | MIT 来源、外部 Python 依赖、SQLite checkpoint、fixture 工具和远程 API 通过；adapter 可离线读取 checkpoint；非审批模型安全点 pause + 跨进程 resume 已通过；统一浏览器、容器级恢复和即时抢占待补齐 |
-| M6 及以后 | 已部分完成 | 推荐 Deep Agents + LangGraph 进入下一阶段；OpenClaw 保留为业务基线/控制平面对照；DeepSeek 云浏览器可迁移但需 DSH 接入；统一 Runner T3-T5、非审批模型安全点恢复和云 Chromium/MCP 已落地；容器级恢复、即时抢占、cancel、T6 成本和 OpenClaw T2 待续 |
+| M6：生命周期专项 | 部分完成 | Runner 级 T3-T5、Deep Agents 非审批模型安全点 pause + 跨进程 resume 通过；容器级重启、即时抢占、cancel/live input 未完成 |
+| M7：透明度、定制和成本 | 部分完成 | 事件透明度和适配器结构成本已记录；T6 实际改动量、按成功任务归一化的 token/费用未执行 |
+| M8：结论与下一步 | 已完成 | [P0 调研收口](docs/validation/decisions/2026-10-19-p0-closeout.md)：主路线 Deep Agents + LangGraph，OpenClaw 对照，DeepSeek 参考，P1 暂不启动 |
 
 当前验证已证明本地基础设施、统一执行基线和三个 P0 候选的最小远程模型链路可运行；DeepSeek T1 工具任务也已通过，不能据此推断候选框架的完整浏览器任务效果、恢复能力或成本排名。
 
@@ -270,7 +272,7 @@ docs/validation/
 | 材料 | 官方来源 | 当前本地状态 | 已核对版本/许可证 | 运行验证状态 |
 | --- | --- | --- | --- | --- |
 | DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | `../deepseek-harness` 已存在；工作区干净 | 本地 commit `dd6322d604e00eec1ba5e0c8541159906a21094a`；本地 LICENSE 为 MIT | Node `24.22.0`、pnpm `11.7.0`；CLI、适配器 help、真实 API、T1 工具和统一 Playwright 基线通过；headless 直连无浏览器；hsi-desktop 轨道可迁移，独立 Chromium + Playwright MCP 已验证，DSH 接入待补 |
-| OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | `../openclaw` detached、工作区干净 | commit `b6e0872bdb7228e22fac7608345e0529a35ec46e`；`package.json`/LICENSE 为 MIT | Node `24.22.0`、pnpm `12.11.1`；依赖安装、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具通过；T2 因浏览器扩展 relay 不可用而阻断 |
+| OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | `../openclaw` detached、工作区干净 | commit `b6e0872bdb7228e22fac7608345e0529a35ec46e`；`package.json`/LICENSE 为 MIT | Node `24.22.0`、pnpm `12.11.1`；依赖安装、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具通过；T2 因 loopback 浏览器导航策略阻断（非 relay） |
 | Deep Agents | [langchain-ai/deepagents](https://github.com/langchain-ai/deepagents) | `~/harness-lab-sources/deepagents` 为官方 archive 解包 | ref `0089e635dce525055272883b53bc222f385beac1`；archive SHA-256 `2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548`；许可证 MIT | Python 3.12、依赖、SQLite checkpoint、fixture 工具、真实远程 API、离线 snapshot、非审批模型安全点 pause + 跨进程 resume 通过，工具审批中断为可选能力 |
 | LangGraph | [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) | `~/harness-lab-sources/langgraph` 已 checkout 且干净 | commit `98043c37abc60374030f960a03a6e0d4c0112643`；许可证 MIT | LangGraph `1.2.16` 导入和 Deep Agents 适配器图运行通过；统一浏览器和可恢复 worker 待补齐 |
 | P1 候选 | OpenAI Agents SDK、Google ADK、Pi Agent Core、OpenAI Codex SDK、OpenHands 的官方 GitHub 仓库 | 均未 checkout | 远程仓库可达；许可证元数据分别为 MIT、Apache-2.0、MIT、Apache-2.0、MIT；具体 commit 进入对应阶段再锁定 | 尚未运行，暂不进入 P0 |
@@ -284,7 +286,9 @@ M0/M1/M2 的本地条件和三个 P0 候选的最小运行证据已经满足；�
 
 ## 10. 结论判定
 
-当前 P0 阶段性结论、推荐路线和阻断条件见
+当前 P0 收口结论、T1-T6 证据状态、推荐路线、阻断条件和 P1 决策见
+[docs/validation/decisions/2026-10-19-p0-closeout.md](docs/validation/decisions/2026-10-19-p0-closeout.md)。
+阶段性推导过程见
 [docs/validation/decisions/2026-10-19-p0-conclusion.md](docs/validation/decisions/2026-10-19-p0-conclusion.md)。
 
 每个候选最终输出以下四类结论：

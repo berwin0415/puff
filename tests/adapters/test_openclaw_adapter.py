@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from adapters.openclaw import OpenClawAdapter, collect_events
+from adapters.openclaw import OpenClawAdapter, build_config, collect_events
 
 
 def _fake_source(tmp_path: Path) -> Path:
@@ -46,6 +46,17 @@ def test_preflight_accepts_a_pinned_checkout(tmp_path: Path) -> None:
     assert report.version == "2026.10.5"
     assert report.license_present
     assert report.commit
+
+
+def test_build_config_uses_managed_browser_without_relay() -> None:
+    config = build_config("model-x", "http://example.invalid/v1", enable_browser=True)
+    assert config["tools"]["profile"] == "full"
+    assert config["browser"]["defaultProfile"] == "openclaw"
+    assert config["browser"]["headless"] is True
+    assert config["browser"]["ssrfPolicy"]["dangerouslyAllowPrivateNetwork"] is True
+    assert config["browser"]["ssrfPolicy"]["allowedHostnames"] == ["127.0.0.1"]
+    assert "chrome" not in config["browser"]["defaultProfile"]
+    assert config["models"]["providers"]["lab"]["apiKey"] == "${MODEL_API_KEY}"
 
 
 def test_event_mapping_marks_success_and_failure() -> None:

@@ -72,12 +72,17 @@ resume process (new adapter/process, same SQLite db + thread_id):
 证据目录：
 `~/harness-lab-data/runs/2026-10-19/openclaw/agent-smoke/<run_id>/`
 
-### T2 浏览器阻断
+### T2 浏览器：修正此前的 relay 判断
 
-尝试 `agent exec` + `tools.alsoAllow: ["browser"]` 访问本地 Fixture 页面，240 秒超时。
-运行状态目录出现 `credentials/browser-extension-relay.secret`，说明该环境的浏览器能力
-依赖扩展 relay，而不是内置的无头浏览器。当前无头验证环境没有该扩展，故 T2 记为
-**阻断（环境条件不满足）**，没有把超时计为通过。
+此前把 T2 阻断归因于“缺少浏览器扩展 relay”，这个判断不准确。OpenClaw 内置了
+托管 `openclaw` headless profile，extension relay 只用于接管已登录的用户 Chrome。
+适配器已能生成托管浏览器配置；agent 调用已到达导航策略层。
+
+但 agent 导航到 loopback fixture 时仍返回
+`browser navigation blocked by policy`，即使设置
+`dangerouslyAllowPrivateNetwork: true` 和 `allowedHostnames: ["127.0.0.1"]`。
+模型最终回退到 curl。因此 T2 仍未通过，阻断点是浏览器导航/SSRF 策略，
+**不是 relay**。要补齐需要继续定位该策略的实际生效层，或改用非 loopback 的测试站点。
 
 ## 3. 云 Chromium + Playwright MCP
 

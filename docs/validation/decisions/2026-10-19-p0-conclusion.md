@@ -1,5 +1,8 @@
 # P0 云端 Harness 调研结论与推荐
 
+> 本文是阶段性结论。最终收口、T1-T6 证据状态和 P1 决策见
+> [P0 云端 Harness 调研收口](2026-10-19-p0-closeout.md)。
+
 日期：2026-10-19
 
 这份结论基于三个 P0 候选的固定源码、依赖安装和远程模型最小运行证据。它回答的是“下一步应该沿哪条路线做云端 Harness 原型”，不把尚未完成的暂停恢复、故障恢复和真实业务效果验证描述成已通过。
@@ -17,7 +20,7 @@
 | 路线 | 已确认 | 仍未确认 | 当前定位 |
 | --- | --- | --- | --- |
 | Deep Agents + LangGraph | MIT 来源；Python 3.12 依赖；远程 API；`fixture_lookup`；9 个结构化事件；SQLite checkpoint；非审批模型安全点 pause + 跨进程 resume 已通过 | 统一 Playwright；容器重启恢复；即时抢占、cancel、live input；多租户作用域 | 主实现候选 |
-| OpenClaw | MIT 来源；OpenClaw 2026.10.5 构建；Gateway health/ready；20 个插件加载；远程 API `OPENCLAW_API_OK`；统一 adapter + T1 工具任务返回 `60` | T2 浏览器（扩展 relay 环境不可用）；checkpoint；暂停恢复；多租户边界 | 业务基线/控制平面对照 |
+| OpenClaw | MIT 来源；OpenClaw 2026.10.5 构建；Gateway health/ready；20 个插件加载；远程 API `OPENCLAW_API_OK`；统一 adapter + T1 工具任务返回 `60` | T2 浏览器（托管 profile 可选，但 loopback 导航策略阻断）；checkpoint；暂停恢复；多租户边界 | 业务基线/控制平面对照 |
 | DeepSeek Harness | MIT 来源；Node CLI；远程 API；T1 bash/curl 和幂等副作用；统一 Playwright 基线；hsi-desktop 标准 MCP/CDP 链路；独立 Chromium + Playwright MCP 已验证 | `headless` 直连浏览器仍缺失；DSH 任务/scope 接入云浏览器；持久会话；暂停恢复；审批和实时输入 | 专项参考，浏览器可迁移但不作为主路线 |
 
 证据报告：

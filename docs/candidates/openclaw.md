@@ -18,10 +18,15 @@
   package metadata and license.
 - T1 tool smoke: passed through the adapter. The prompt asked the agent to use
   the shell/curl against the Fixture; the final answer was `60`.
-- T2 browser: blocked in this environment. `tools.alsoAllow: ["browser"]` was
-  enabled, but the run timed out after 240s and the state directory exposed a
-  `browser-extension-relay.secret`, indicating the browser tool expects an
-  interactive extension relay that is not available in the headless lab.
+- Browser profiles: OpenClaw ships a managed `openclaw` headless profile; the
+  Chrome extension relay is only for a signed-in user browser, not a
+  prerequisite for the managed profile. The adapter can emit that config and select the managed profile; agent
+  browser calls then reach the navigation policy layer.
+- T2 browser: still unverified, but **not because of the relay**. Agent-driven
+  navigation to the loopback fixture is rejected with `browser navigation
+  blocked by policy` even with `dangerouslyAllowPrivateNetwork: true` and
+  `allowedHostnames: ["127.0.0.1"]`; the agent fell back to curl. The remaining
+  blocker is the browser navigation/SSRF policy, not the extension relay.
 - Pause/resume: `agent exec` is one-shot; no native checkpoint/resume or live
   approval evidence yet. These remain explicit gaps.
 

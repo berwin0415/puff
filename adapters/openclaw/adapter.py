@@ -65,6 +65,7 @@ class RunResult:
     events: tuple[Mapping[str, Any], ...]
     envelope: Mapping[str, Any] | None = None
     timed_out: bool = False
+    cleanup_timed_out: bool = False
 
     @property
     def ok(self) -> bool:
@@ -177,10 +178,23 @@ def collect_events(
     return tuple(events)
 
 
-def build_config(model: str, base_url: str, *, provider_id: str = DEFAULT_PROVIDER_ID) -> dict[str, Any]:
-    """Build a pinned OpenClaw config for an OpenAI-compatible provider."""
+def build_config(
+    model: str,
+    base_url: str,
+    *,
+    provider_id: str = DEFAULT_PROVIDER_ID,
+    enable_browser: bool = False,
+    browser_executable: str | Path | None = None,
+) -> dict[str, Any]:
+    """Build a pinned OpenClaw config for an OpenAI-compatible provider.
 
-    return {
+    ``enable_browser`` selects the built-in managed ``openclaw`` profile.  The
+    extension relay is only needed for a signed-in user browser, not for the
+    managed headless Chromium used by this lab.  Private-network access is
+    allowed because the fixture site is on loopback.
+    """
+
+    config: dict[str, Any] = {
         "models": {
             "mode": "merge",
             "providers": {
@@ -203,6 +217,21 @@ def build_config(model: str, base_url: str, *, provider_id: str = DEFAULT_PROVID
         },
         "agents": {"defaults": {"model": {"primary": f"{provider_id}/{model}"}}},
     }
+    if enable_browser:
+        browser: dict[str, Any] = {
+            "enabled": True,
+            "defaultProfile": "openclaw",
+            "headless": True,
+            "ssrfPolicy": {
+                "dangerouslyAllowPrivateNetwork": True,
+                "allowedHostnames": ["127.0.0.1"],
+            },
+        }
+        if browser_executable is not None:
+            browser["executablePath"] = str(browser_executable)
+        config["tools"] = {"profile": "full"}
+        config["browser"] = browser
+    return config
 
 
 class OpenClawAdapter:
@@ -291,6 +320,8 @@ class OpenClawAdapter:
         run_id: str | None = None,
         timeout: float | None = None,
         env: Mapping[str, str] | None = None,
+        enable_browser: bool = False,
+        browser_executable: str | Path | None = None,
     ) -> RunResult:
         task = {"prompt": task_spec} if isinstance(task_spec, str) else dict(task_spec)
         prompt = task.get("prompt")
@@ -301,6 +332,8 @@ class OpenClawAdapter:
         run_dir.mkdir(parents=True, exist_ok=True)
         state_dir = run_dir / "state"
         state_dir.mkdir(exist_ok=True)
+        workspace = run_dir / "workspace"
+        workspace.mkdir(exist_ok=True)
 
         process_env = os.environ.copy()
         if env:
@@ -316,9 +349,26 @@ class OpenClawAdapter:
                 raise OpenClawAdapterError("MODEL_API_KEY is required for the OpenClaw provider config")
             config_path = run_dir / "openclaw.json5"
             config_path.write_text(
-                json.dumps(build_config(model, base_url), ensure_ascii=False, indent=2) + "\n",
+                json.dumps(
+                    build_config(
+                        model,
+                        base_url,
+                        enable_browser=enable_browser,
+                        browser_executable=browser_executable,
+                    ),
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
                 encoding="utf-8",
             )
+
+        # The browser plugin reads the pinned config through these environment
+        # variables; --config alone is not enough for its plugin-level config.
+        process_env.setdefault("OPENCLAW_CONFIG_PATH", str(config_path))
+        process_env.setdefault("OPENCLAW_STATE_DIR", str(state_dir))
+        if enable_browser:
+            process_env.setdefault("OPENCLAW_BROWSER_HEADLESS", "1")
 
         command = [
             *self.cli_command,
@@ -327,17 +377,21 @@ class OpenClawAdapter:
             "--message-file",
             "-",
             "--json",
-            "--config",
-            str(config_path),
-            "--state-dir",
-            str(state_dir),
+            "--cwd",
+            str(workspace),
         ]
+        if not enable_browser:
+            # The simple T1/API path uses the explicit flags.  When the browser
+            # plugin is enabled they change its config resolution and make the
+            # loopback SSRF allowance ineffective, so browser runs rely on the
+            # OPENCLAW_CONFIG_PATH/OPENCLAW_STATE_DIR environment instead.
+            command.extend(["--config", str(config_path), "--state-dir", str(state_dir)])
         limit = timeout or float(task.get("timeout_seconds") or DEFAULT_PROMPT_TIMEOUT)
         try:
             completed = subprocess.run(
                 command,
                 input=prompt,
-                cwd=str(self.source_path),
+                cwd=str(workspace),
                 env=process_env,
                 capture_output=True,
                 text=True,
@@ -357,17 +411,24 @@ class OpenClawAdapter:
         except subprocess.TimeoutExpired as exc:
             stdout = _decode(exc.stdout)
             stderr = _decode(exc.stderr)
+            # A browser-backed run may print the final JSON envelope and then
+            # keep plugin resources alive.  Treat a complete, successful
+            # envelope as a result and record the cleanup timeout separately.
+            envelope = _parse_envelope(stdout)
+            cleanup_timed_out = bool(envelope and envelope.get("ok"))
+            returncode = 0 if cleanup_timed_out else -9
             result = RunResult(
                 run_id,
-                -9,
+                returncode,
                 stdout,
                 stderr,
-                collect_events(run_id, None, -9, stderr, timed_out=True),
-                None,
-                True,
+                collect_events(run_id, envelope, returncode, stderr, timed_out=not cleanup_timed_out),
+                envelope,
+                timed_out=not cleanup_timed_out,
+                cleanup_timed_out=cleanup_timed_out,
             )
 
-        self._write_evidence(run_dir, run_id, task, result, config_path)
+        self._write_evidence(run_dir, run_id, task, result, config_path, enable_browser=enable_browser)
         record = self._runs.setdefault(run_id, _RecordedRun(task))
         record.result = result
         record.events = list(result.events)
@@ -388,6 +449,7 @@ class OpenClawAdapter:
             "ok": record.result.ok,
             "returncode": record.result.returncode,
             "timed_out": record.result.timed_out,
+            "cleanup_timed_out": record.result.cleanup_timed_out,
             "final": envelope.get("final"),
             "status": envelope.get("status"),
             "model": envelope.get("model"),
@@ -413,6 +475,8 @@ class OpenClawAdapter:
         task: Mapping[str, Any],
         result: RunResult,
         config_path: Path,
+        *,
+        enable_browser: bool = False,
     ) -> None:
         (run_dir / "events.jsonl").write_text(
             "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in result.events),
@@ -442,9 +506,11 @@ class OpenClawAdapter:
                 "answer": (result.envelope or {}).get("final"),
                 "returncode": result.returncode,
                 "timed_out": result.timed_out,
+                "cleanup_timed_out": result.cleanup_timed_out,
                 "usage": (result.envelope or {}).get("usage"),
             },
             "config_path": str(config_path),
+            "browser": {"enabled": enable_browser, "profile": "openclaw" if enable_browser else None},
             "evidence": {"events": "events.jsonl", "envelope": "envelope.json"},
         }
         (run_dir / "manifest.json").write_text(
