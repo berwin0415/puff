@@ -23,7 +23,9 @@ import argparse
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
+from urllib import error, request as urllib_request
 from typing import Any
 
 
@@ -187,6 +189,72 @@ def run(request: dict[str, Any]) -> int:
         values = {"alpha": "fixture-alpha", "browser_title": "Harness Fixture"}
         return values.get(key, f"missing:{key}")
 
+    repo_root = Path(__file__).resolve().parents[2]
+    execution_python = Path(
+        str(request.get("execution_python") or repo_root / ".venv/bin/python")
+    ).expanduser()
+    browser_output_dir = Path(
+        str(request.get("browser_output_dir") or repo_root / "var/browser")
+    ).expanduser()
+
+    @tool
+    def t6_word_count(text: str) -> str:
+        """Return the number of whitespace-separated words in text."""
+
+        return str(len(text.split()))
+
+    @tool
+    def fixture_effect(base_url: str, idempotency_key: str, amount: int = 10) -> str:
+        """Apply one idempotent fixture side effect and return JSON."""
+
+        payload = _json({"operation": "charge", "payload": {"amount": amount}}).encode("utf-8")
+        req = urllib_request.Request(
+            f"{base_url.rstrip('/')}/api/side-effects",
+            data=payload,
+            headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key},
+            method="POST",
+        )
+        try:
+            with urllib_request.urlopen(req, timeout=30) as response:
+                return _json({"status_code": response.status, "body": json.loads(response.read())})
+        except error.HTTPError as exc:
+            return _json({"status_code": exc.code, "body": json.loads(exc.read())})
+
+    @tool
+    def browser_fixture(base_url: str) -> str:
+        """Run the unified Execution Playwright T2 task and return JSON."""
+
+        browser_output_dir.mkdir(parents=True, exist_ok=True)
+        completed = subprocess.run(
+            [
+                str(execution_python),
+                "-m",
+                "execution.browser.smoke",
+                "--base-url",
+                base_url,
+                "--output-dir",
+                str(browser_output_dir),
+            ],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            timeout=180,
+            check=False,
+        )
+        if completed.returncode != 0:
+            return _json(
+                {
+                    "ok": False,
+                    "returncode": completed.returncode,
+                    "stderr": completed.stderr[-1000:],
+                }
+            )
+        try:
+            value = json.loads(completed.stdout.strip().splitlines()[-1])
+        except (IndexError, json.JSONDecodeError):
+            return _json({"ok": False, "stdout": completed.stdout[-1000:]})
+        return _json({"ok": True, **value})
+
     model_name = os.environ.get("MODEL_NAME", "")
     base_url = os.environ.get("MODEL_API_BASE_URL", "")
     api_key = os.environ.get("MODEL_API_KEY", "")
@@ -205,7 +273,7 @@ def run(request: dict[str, Any]) -> int:
         api_key=api_key,
         base_url=base_url,
         temperature=0,
-        max_tokens=int(request.get("max_tokens") or 256),
+        max_tokens=int(request.get("max_tokens") or 1024),
         timeout=float(request.get("timeout_seconds") or 120),
         max_retries=0,
     )
@@ -215,7 +283,12 @@ def run(request: dict[str, Any]) -> int:
 
     interrupt_names = [str(name) for name in request.get("interrupt_on") or ()]
     interrupt_on = {name: True for name in interrupt_names} or None
-    pause_after_model = bool(request.get("pause_after_model"))
+    enable_t6 = bool(request.get("enable_t6"))
+    pause_after = request.get("pause_after")
+    if pause_after is None and request.get("pause_after_model"):
+        pause_after = "model"
+    if pause_after not in {None, "model", "tools"}:
+        raise ValueError(f"unsupported pause_after: {pause_after!r}")
 
     config: dict[str, Any] = {"configurable": {"thread_id": run_id}}
     checkpoint_id = request.get("checkpoint_id")
@@ -223,17 +296,46 @@ def run(request: dict[str, Any]) -> int:
         config["configurable"]["checkpoint_id"] = str(checkpoint_id)
 
     with SqliteSaver.from_conn_string(str(checkpoint_db)) as checkpointer:
+        tools = [fixture_lookup]
+        if bool(request.get("enable_browser_tool")):
+            tools.append(browser_fixture)
+        if bool(request.get("enable_fixture_effect")):
+            tools.append(fixture_effect)
+        if enable_t6:
+            tools.append(t6_word_count)
+
+        t6_kwargs: dict[str, Any] = {}
+        if enable_t6:
+            from deepagents.graph import DeepAgentState
+            from langchain.agents.middleware.types import AgentMiddleware
+
+            class T6State(DeepAgentState):
+                t6_stage: str
+
+            class T6Middleware(AgentMiddleware):
+                state_schema = T6State
+
+                def before_agent(self, state: Any, runtime: Any) -> dict[str, Any]:
+                    return {"t6_stage": "started"}
+
+            t6_kwargs = {"state_schema": T6State, "middleware": [T6Middleware()]}
+
         agent = create_deep_agent(
             model=llm,
-            tools=[fixture_lookup],
+            tools=tools,
             checkpointer=checkpointer,
             interrupt_on=interrupt_on,
-            system_prompt="Use the provided fixture_lookup tool when the task requests it. Keep final answers concise.",
+            system_prompt=(
+                "Use fixture_lookup for deterministic fixture values. "
+                "Use browser_fixture when the task asks you to operate the local browser. "
+                "Keep final answers concise."
+            ),
+            **t6_kwargs,
         )
         # ``interrupt_after=['model']`` is a non-approval safe point: the graph
         # stops after the current model turn and can resume in another process.
-        graph = agent.builder.compile(checkpointer=checkpointer, interrupt_after=["model"]) if pause_after_model else agent
-        pause_mode = pause_after_model and not interrupt_on
+        graph = agent.builder.compile(checkpointer=checkpointer, interrupt_after=[pause_after]) if pause_after else agent
+        pause_mode = bool(pause_after) and not interrupt_on
 
         if mode == "resume":
             resume_value = request.get("resume", True)
@@ -249,7 +351,7 @@ def run(request: dict[str, Any]) -> int:
                     "thread_id": run_id,
                     "checkpoint_backend": "sqlite",
                     "interrupt_on": interrupt_names,
-                    "pause_after_model": pause_after_model,
+                    "pause_after": pause_after,
                 },
             )
             payload = {"messages": [{"role": "user", "content": prompt}]}
@@ -260,9 +362,9 @@ def run(request: dict[str, Any]) -> int:
             if pause_mode:
                 emit(
                     "pause_requested",
-                    {"thread_id": run_id, "interrupts": interrupts, "update_count": update_count, "pause_kind": "after_model"},
+                    {"thread_id": run_id, "interrupts": interrupts, "update_count": update_count, "pause_kind": f"after_{pause_after}"},
                 )
-                emit("graph_paused", {"thread_id": run_id, "pause_kind": "after_model"})
+                emit("graph_paused", {"thread_id": run_id, "pause_kind": f"after_{pause_after}"})
             else:
                 emit(
                     "interrupt_requested",
@@ -279,6 +381,10 @@ def run(request: dict[str, Any]) -> int:
         answer = ""
         if last_messages:
             answer = str(getattr(last_messages[-1], "content", ""))
+        if enable_t6:
+            state = graph.get_state(config)
+            values = getattr(state, "values", {}) or {}
+            emit("t6_state", {"t6_stage": values.get("t6_stage")})
         emit("graph_completed", {"answer": answer[:2000], "update_count": update_count, "thread_id": run_id})
     return 0
 

@@ -73,3 +73,21 @@ cloud lifecycle requirement.
 The adapter records a SQLite checkpoint and supports offline inspection plus
 tool-approval interrupt/resume. Arbitrary pause/cancel/live input and unified
 browser bridging remain pending.
+
+## Unified browser, process recovery and T6
+
+- **T2 (adapter layer)**: the worker exposes `browser_fixture`, which invokes the
+  shared Execution Playwright smoke. A real-model run returned
+  `accepted:harness-lab` and produced a screenshot. This is a unified execution
+  bridge, not a native candidate browser.
+- **Process recovery**: the graph pauses after the `tools` node, the worker
+  exits with a SQLite checkpoint, and a new process resumes the same thread.
+  The fixture contained exactly one side effect after resume
+  (`duplicate_side_effects=0`).
+- **T6 structural measurement**: adding `t6_word_count`, an approval gate and a
+  `t6_stage` state middleware required about 36 core lines across the worker and
+  adapter; the first run took 4.6s and covered 9 event types.
+
+Remaining: container-level restart, immediate preemption/cancel/live input,
+browser session rebuild after pause, normalized token/cost and multi-tenant
+isolation.

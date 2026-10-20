@@ -1,6 +1,6 @@
 # 云端 Agent Harness 本地验证实施方案
 
-更新日期：2026-10-19。状态：**P0 调研已收口**。M0-M5 完成；M6/M7 部分完成（容器级恢复、即时抢占、T6 成本未执行）；M8 已完成。推荐 Deep Agents + LangGraph 进入下一阶段，OpenClaw 保留为业务基线/控制平面对照，DeepSeek 作为专项参考，P1 暂不启动。收口结论见 [P0 调研收口](docs/validation/decisions/2026-10-19-p0-closeout.md)。
+更新日期：2026-10-19。状态：**P0 调研已收口，主路线缺口验证进行中**。M0-M5 完成；M6/M7 部分完成（Deep Agents 的统一浏览器 T2、进程级恢复、T6 结构测量已通过；容器级恢复、即时抢占、OpenClaw/DeepSeek T6 未执行）；M8 已完成。推荐 Deep Agents + LangGraph 进入下一阶段，OpenClaw 保留为业务基线/控制平面对照，DeepSeek 作为专项参考，P1 暂不启动。收口结论见 [P0 调研收口](docs/validation/decisions/2026-10-19-p0-closeout.md)。
 
 关联需求文档：[REQUIREMENTS.md](./REQUIREMENTS.md)
 
@@ -237,9 +237,9 @@ docs/validation/
 | M2：统一执行基线 | 已完成 | Fixture 幂等副作用、fail-once、确定性工具、Playwright/Chromium 浏览器轨道；Compose 构建和健康检查通过 |
 | M3：DeepSeek Harness | 已完成（DSH 云浏览器接入待验证） | T1 工具任务通过；统一 Playwright 基线通过；headless 直连无 browser Connection；hsi-desktop MCP/CDP 轨道解除绝对阻断；独立 Chromium + Playwright MCP 已验证；DSH 任务/scope 接入和生命周期能力未提供 |
 | M4：OpenClaw | 已完成适配器与 T1 | pinned checkout、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具任务通过；T2 浏览器托管 profile 可选，但 loopback 导航策略仍阻断；恢复能力待补齐 |
-| M5：Deep Agents/LangGraph | 已完成最小冒烟与原生恢复 | MIT 来源、外部 Python 依赖、SQLite checkpoint、fixture 工具和远程 API 通过；adapter 可离线读取 checkpoint；非审批模型安全点 pause + 跨进程 resume 已通过；统一浏览器、容器级恢复和即时抢占待补齐 |
-| M6：生命周期专项 | 部分完成 | Runner 级 T3-T5、Deep Agents 非审批模型安全点 pause + 跨进程 resume 通过；容器级重启、即时抢占、cancel/live input 未完成 |
-| M7：透明度、定制和成本 | 部分完成 | 事件透明度和适配器结构成本已记录；T6 实际改动量、按成功任务归一化的 token/费用未执行 |
+| M5：Deep Agents/LangGraph | 已完成主路线核心验证 | 来源、依赖、SQLite checkpoint、fixture 工具、远程 API、离线 snapshot、非审批模型/工具安全点 pause + 跨进程 resume、统一 Execution Playwright T2、副作用幂等和 T6 结构测量通过；容器级恢复和即时抢占待补齐 |
+| M6：生命周期专项 | 部分完成 | Runner 级 T3-T5、Deep Agents 模型/工具安全点 pause + 跨进程 resume、副作用幂等通过；容器级重启、即时抢占、cancel/live input 未完成 |
+| M7：透明度、定制和成本 | 部分完成 | Deep Agents T6 已执行（1 tool + approval + state，约 36 行核心改动，4.6s，9 类事件）；OpenClaw/DeepSeek T6 和按成功任务归一化的 token/费用未执行 |
 | M8：结论与下一步 | 已完成 | [P0 调研收口](docs/validation/decisions/2026-10-19-p0-closeout.md)：主路线 Deep Agents + LangGraph，OpenClaw 对照，DeepSeek 参考，P1 暂不启动 |
 
 当前验证已证明本地基础设施、统一执行基线和三个 P0 候选的最小远程模型链路可运行；DeepSeek T1 工具任务也已通过，不能据此推断候选框架的完整浏览器任务效果、恢复能力或成本排名。
@@ -273,12 +273,12 @@ docs/validation/
 | --- | --- | --- | --- | --- |
 | DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | `../deepseek-harness` 已存在；工作区干净 | 本地 commit `dd6322d604e00eec1ba5e0c8541159906a21094a`；本地 LICENSE 为 MIT | Node `24.22.0`、pnpm `11.7.0`；CLI、适配器 help、真实 API、T1 工具和统一 Playwright 基线通过；headless 直连无浏览器；hsi-desktop 轨道可迁移，独立 Chromium + Playwright MCP 已验证，DSH 接入待补 |
 | OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | `../openclaw` detached、工作区干净 | commit `b6e0872bdb7228e22fac7608345e0529a35ec46e`；`package.json`/LICENSE 为 MIT | Node `24.22.0`、pnpm `12.11.1`；依赖安装、构建、Gateway health/ready、远程模型、统一 adapter 和 T1 工具通过；T2 因 loopback 浏览器导航策略阻断（非 relay） |
-| Deep Agents | [langchain-ai/deepagents](https://github.com/langchain-ai/deepagents) | `~/harness-lab-sources/deepagents` 为官方 archive 解包 | ref `0089e635dce525055272883b53bc222f385beac1`；archive SHA-256 `2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548`；许可证 MIT | Python 3.12、依赖、SQLite checkpoint、fixture 工具、真实远程 API、离线 snapshot、非审批模型安全点 pause + 跨进程 resume 通过，工具审批中断为可选能力 |
+| Deep Agents | [langchain-ai/deepagents](https://github.com/langchain-ai/deepagents) | `~/harness-lab-sources/deepagents` 为官方 archive 解包 | ref `0089e635dce525055272883b53bc222f385beac1`；archive SHA-256 `2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548`；许可证 MIT | Python 3.12、依赖、SQLite checkpoint、fixture/浏览器工具、真实 API、离线 snapshot、模型/工具安全点 pause + 跨进程 resume、副作用幂等、T6 结构测量通过 |
 | LangGraph | [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) | `~/harness-lab-sources/langgraph` 已 checkout 且干净 | commit `98043c37abc60374030f960a03a6e0d4c0112643`；许可证 MIT | LangGraph `1.2.16` 导入和 Deep Agents 适配器图运行通过；统一浏览器和可恢复 worker 待补齐 |
 | P1 候选 | OpenAI Agents SDK、Google ADK、Pi Agent Core、OpenAI Codex SDK、OpenHands 的官方 GitHub 仓库 | 均未 checkout | 远程仓库可达；许可证元数据分别为 MIT、Apache-2.0、MIT、Apache-2.0、MIT；具体 commit 进入对应阶段再锁定 | 尚未运行，暂不进入 P0 |
 | Hogee 业务基线 | `/Users/hanbowen01/workspace/baidu/hogee/hogee-full` | 已存在；当前分支有预先存在的修改和未跟踪文件，只读参考 | 当前 commit `19faf627243e5ab2d043c7bc974830e9e55cb061`；不是候选框架来源 | 不作为候选运行，不修改该仓库 |
 
-当前主机环境检查结果：Colima 已启动，Docker context 为 `colima`，Docker server `29.5.2`，分配 4 CPU、约 8 GiB 内存和 100 GiB 磁盘；Docker Compose `5.6.0` 可用，`hello-world` 容器验证通过。仓库 `.venv` 使用 Python `3.12.13`，已安装 Pydantic、HTTPX、PyYAML、pytest、Docker SDK 和 Playwright；Chromium 已下载，页面启动冒烟通过。Node `24.22.0` 可用。`./scripts/check-environment.sh` 通过；本仓库全量测试已扩展到 43 passed + 3 skipped；设置 `RUN_LIVE_MODEL_TESTS=1` 时为 46 passed；Compose 配置校验、镜像构建、四服务启动和 Fixture `/healthz`、`/api/items` 访问均已通过。
+当前主机环境检查结果：Colima 已启动，Docker context 为 `colima`，Docker server `29.5.2`，分配 4 CPU、约 8 GiB 内存和 100 GiB 磁盘；Docker Compose `5.6.0` 可用，`hello-world` 容器验证通过。仓库 `.venv` 使用 Python `3.12.13`，已安装 Pydantic、HTTPX、PyYAML、pytest、Docker SDK 和 Playwright；Chromium 已下载，页面启动冒烟通过。Node `24.22.0` 可用。`./scripts/check-environment.sh` 通过；本仓库全量测试已扩展到 44 passed + 6 skipped；设置 `RUN_LIVE_MODEL_TESTS=1` 时为 50 passed；Compose 配置校验、镜像构建、四服务启动和 Fixture `/healthz`、`/api/items` 访问均已通过。
 
 DeepSeek Harness、OpenClaw、Deep Agents/LangGraph 的来源、依赖和最小远程模型运行均已有记录；DeepSeek T1 工具和统一 Playwright 基线也已运行。hsi-desktop 的 MCP/CDP 浏览器链路已完成静态迁移评估，headless 直连限制与云端 Chromium 待验项分开记录。详细记录见候选报告目录 [`docs/validation/reports/`](docs/validation/reports/)。
 

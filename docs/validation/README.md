@@ -22,6 +22,7 @@ checkpoint 和产物分别放入 `state/`、`artifacts/`。
 - [Deep Agents + LangGraph](reports/2026-10-19-deepagents-langgraph.md)
 - [统一 Runner 生命周期与故障恢复基线](reports/2026-10-19-runner-lifecycle-baseline.md)
 - [中断恢复、OpenClaw 适配器与云浏览器验证](reports/2026-10-19-interrupt-resume-and-cloud-browser.md)
+- [Deep Agents T2、进程级恢复与 T6 扩展成本](reports/2026-10-19-deepagents-t2-t6.md)
 
 阶段性结论：[P0 云端 Harness 调研结论与推荐](decisions/2026-10-19-p0-conclusion.md)。
 

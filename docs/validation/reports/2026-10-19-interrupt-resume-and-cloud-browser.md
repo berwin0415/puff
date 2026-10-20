@@ -122,7 +122,7 @@ profile_flush_seconds: 6
 
 ## 4. 测试与剩余缺口
 
-- 默认测试：`43 passed, 3 skipped`（实时模型测试默认跳过）。
-- 设置 `RUN_LIVE_MODEL_TESTS=1`：`46 passed`。
+- 默认测试：`44 passed, 6 skipped`（实时模型测试默认跳过）。
+- 设置 `RUN_LIVE_MODEL_TESTS=1`：`50 passed`。
 - 仍未验证：任意点 pause/resume、cancel、实时输入、OpenClaw Gateway 会话恢复、
   OpenClaw T2 浏览器、DeepSeek 云端浏览器全链路、T6 实际改动量。

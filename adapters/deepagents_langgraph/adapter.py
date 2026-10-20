@@ -183,6 +183,7 @@ class DeepAgentsLangGraphAdapter:
         worker_path: str | Path | None = None,
         artifact_root: str | Path | None = None,
         checkpoint_db: str | Path | None = None,
+        execution_python: str | Path | None = None,
         require_clean_langgraph: bool = True,
     ) -> None:
         self.source_path = Path(source_path).expanduser().resolve()
@@ -204,6 +205,10 @@ class DeepAgentsLangGraphAdapter:
         self.worker_path = Path(worker_path or Path(__file__).with_name("worker.py")).resolve()
         self.artifact_root = Path(artifact_root or os.environ.get("HARNESS_LAB_ARTIFACT_ROOT", "~/harness-lab-data/runs")).expanduser().resolve()
         self.checkpoint_db = Path(checkpoint_db).expanduser() if checkpoint_db is not None else None
+        repo_root = Path(__file__).resolve().parents[2]
+        self.execution_python = Path(
+            execution_python or repo_root / ".venv/bin/python"
+        ).expanduser()
         self.require_clean_langgraph = require_clean_langgraph
         self.version = f"deepagents@{expected_deepagents_commit};langgraph@{expected_langgraph_commit}"
         self._runs: dict[str, _RecordedRun] = {}
@@ -269,13 +274,34 @@ class DeepAgentsLangGraphAdapter:
         self._runs[run_id] = _RecordedRun(dict(task_spec), [_event(run_id, 1, "run_queued", "planned", {"checkpoint_backend": "sqlite"})])
         return run_id
 
-    def run_once(self, task_spec: Mapping[str, Any] | str, *, run_id: str | None = None, timeout: float | None = None, env: Mapping[str, str] | None = None) -> RunResult:
+    def run_once(
+        self,
+        task_spec: Mapping[str, Any] | str,
+        *,
+        run_id: str | None = None,
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
+        enable_browser_tool: bool = False,
+        interrupt_on: Sequence[str] = (),
+        enable_t6: bool = False,
+    ) -> RunResult:
         task = {"prompt": task_spec} if isinstance(task_spec, str) else dict(task_spec)
         prompt = task.get("prompt")
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("task_spec.prompt must be a non-empty string")
         run_id = run_id or str(uuid.uuid4())
-        request = {"run_id": run_id, "prompt": prompt, "checkpoint_db": str(self._checkpoint_db()), "timeout_seconds": timeout or task.get("timeout_seconds") or 120}
+        request = {
+            "mode": "run",
+            "run_id": run_id,
+            "prompt": prompt,
+            "checkpoint_db": str(self._checkpoint_db()),
+            "enable_browser_tool": enable_browser_tool,
+            "interrupt_on": list(interrupt_on),
+            "enable_t6": enable_t6,
+            "execution_python": str(self.execution_python),
+            "browser_output_dir": str(self.artifact_root / "browser" / run_id),
+            "timeout_seconds": timeout or task.get("timeout_seconds") or 120,
+        }
         process_env = os.environ.copy()
         if env:
             process_env.update({str(key): str(value) for key, value in env.items()})
@@ -321,6 +347,8 @@ class DeepAgentsLangGraphAdapter:
         task_spec: Mapping[str, Any] | str,
         *,
         run_id: str | None = None,
+        pause_after: str = "model",
+        enable_fixture_effect: bool = False,
         timeout: float | None = None,
         env: Mapping[str, str] | None = None,
     ) -> RunResult:
@@ -340,7 +368,8 @@ class DeepAgentsLangGraphAdapter:
             "run_id": run_id,
             "prompt": prompt,
             "checkpoint_db": str(self._checkpoint_db()),
-            "pause_after_model": True,
+            "pause_after": pause_after,
+            "enable_fixture_effect": enable_fixture_effect,
             "timeout_seconds": timeout or task.get("timeout_seconds") or 120,
         }
         return self._execute_worker(request, run_id, task, timeout, env)
@@ -350,7 +379,8 @@ class DeepAgentsLangGraphAdapter:
         run_id: str,
         *,
         checkpoint_id: str | None = None,
-        pause_after_model: bool = False,
+        pause_after: str | None = None,
+        enable_fixture_effect: bool = False,
         timeout: float | None = None,
         env: Mapping[str, str] | None = None,
     ) -> RunResult:
@@ -366,7 +396,8 @@ class DeepAgentsLangGraphAdapter:
             "checkpoint_db": str(self._checkpoint_db()),
             "checkpoint_id": checkpoint_id,
             "resume": True,
-            "pause_after_model": pause_after_model,
+            "pause_after": pause_after,
+            "enable_fixture_effect": enable_fixture_effect,
             "timeout_seconds": timeout or 120,
         }
         return self._execute_worker(request, run_id, {"run_id": run_id}, timeout, env)
@@ -378,6 +409,7 @@ class DeepAgentsLangGraphAdapter:
         decision: str = "approve",
         checkpoint_id: str | None = None,
         interrupt_on: Sequence[str] = ("fixture_lookup",),
+        enable_t6: bool = False,
         timeout: float | None = None,
         env: Mapping[str, str] | None = None,
     ) -> RunResult:
@@ -393,6 +425,7 @@ class DeepAgentsLangGraphAdapter:
             "checkpoint_db": str(self._checkpoint_db()),
             "checkpoint_id": checkpoint_id,
             "interrupt_on": list(interrupt_on),
+            "enable_t6": enable_t6,
             "resume": {"decisions": [{"type": decision}]},
             "timeout_seconds": timeout or 120,
         }

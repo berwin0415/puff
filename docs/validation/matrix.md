@@ -10,12 +10,12 @@
 | 依赖/运行环境 | Node 24.22 + pnpm 11.7，CLI 通过 | Node 24.22 + pnpm 12.11，安装和 build 通过 | Python 3.12，Deep Agents 0.7.28 + LangGraph 1.2.16 |
 | 远程模型 API | 通过，`API_OK` | 通过，`OPENCLAW_API_OK` | 通过，返回 `fixture-alpha` |
 | 确定性工具 | T1 通过，Fixture GET/POST 和幂等副作用有证据 | 统一 T1 adapter 已接入；`agent exec` 调用 curl 返回 `60` | `fixture_lookup` 通过，事件可见 |
-| 统一 Playwright 浏览器 | Execution 基线通过 | 托管 profile 可选；loopback 导航被策略阻断，T2 未通过 | 统一 Playwright 轨道尚未接入 |
+| 统一 Playwright 浏览器 | Execution 基线通过 | 托管 profile 可选；loopback 导航被策略阻断，T2 未通过 | PASS（适配层）：`browser_fixture` 工具调用统一执行基线 |
 | 候选原生浏览器 | `headless` 直连无 browser Connection；hsi-desktop MCP/CDP 轨道已迁移验证 | 内置托管 profile，不依赖扩展 relay；loopback 导航策略阻断，T2 未验证 | 未验证 |
 | 云 Chromium + Playwright MCP | 不适用（独立基础设施验证） | 不适用 | 不适用 |
 | 事件/游标归一化 | adapter 已实现，T1/T2 artifact 已留存 | `agent exec --json` envelope 已映射为统一事件 | JSONL worker 事件和游标已实现 |
-| SQLite/checkpoint | 候选 headless 入口未提供 | CLI 会话状态存在，checkpoint/resume 未验证 | SQLite checkpointer + adapter 离线 snapshot 已通过 |
-| 暂停/恢复/取消/审批 | 适配器入口明确未支持 | one-shot CLI，未验证 | 非审批模型安全点 pause（`interrupt_after=["model"]`）+ 跨进程 resume 已通过；审批中断为可选能力；即时抢占、cancel、live input 未验证 |
+| SQLite/checkpoint | 候选 headless 入口未提供 | CLI 会话状态存在，checkpoint/resume 未验证 | SQLite checkpointer + 离线 snapshot + 进程级 resume 已通过 |
+| 暂停/恢复/取消/审批 | 适配器入口明确未支持 | one-shot CLI，未验证 | 非审批模型/工具安全点 pause + 跨进程 resume 已通过；审批中断为可选能力；容器级恢复、即时抢占、cancel、live input 未验证 |
 | 多租户边界 | 需外围 Runner/Execution 实现 | Gateway/agent scope 需适配到租户后端 | 需外围 Runner/持久化/隔离层实现 |
 | 适配/自研成本 | 已有薄适配器；SDK/ACP 接入待评估 | `agent exec` adapter 已落地；Gateway 控制平面适配待评估 | 薄 worker/adapter 已实现；统一浏览器桥接待补齐 |
 
@@ -24,11 +24,11 @@
 | 任务 | DeepSeek | OpenClaw | Deep Agents + LangGraph |
 | --- | --- | --- | --- |
 | T1 确定性工具 | PASS：Fixture GET/POST、sum=60、幂等 201 | PASS：adapter + shell/curl，返回 60 | PARTIAL：`fixture_lookup` 通过，未跑统一 HTTP 链 |
-| T2 浏览器 | PARTIAL：统一基线通过；候选 headless 无浏览器 | BLOCKED：托管 profile 可选，loopback 导航策略阻断 | NOT RUN：未接统一 Playwright 桥 |
+| T2 浏览器 | PARTIAL：统一基线通过；候选 headless 无浏览器 | BLOCKED：托管 profile 可选，loopback 导航策略阻断 | PASS（适配层）：`browser_fixture` 调用统一 Execution Playwright，`accepted:harness-lab` |
 | T3 人工介入/审批 | BLOCKED：one-shot | BLOCKED：one-shot | PARTIAL：原生审批中断 + 跨进程 resume；实时输入未验证 |
-| T4 暂停/恢复 | BLOCKED：无 checkpoint/pause | NOT RUN | PARTIAL：模型安全点暂停 + 跨进程 resume；容器级/即时抢占未验证 |
-| T5 故障/重试 | PARTIAL：幂等副作用；无 checkpoint | NOT RUN | PARTIAL：checkpoint + 跨进程 resume；超时/进程退出未跑 |
-| T6 扩展成本 | NOT RUN | NOT RUN | NOT RUN |
+| T4 暂停/恢复 | BLOCKED：无 checkpoint/pause | NOT RUN | PARTIAL/PASS（进程级）：模型/工具安全点暂停 + 新进程 resume；容器级/即时抢占未验证 |
+| T5 故障/重试 | PARTIAL：幂等副作用；无 checkpoint | NOT RUN | PARTIAL/PASS（进程级）：副作用后暂停 + resume，重复副作用 0；容器级/超时未跑 |
+| T6 扩展成本 | NOT RUN | NOT RUN | PASS（结构测量）：36 行核心改动、4.6s、9 类事件 |
 
 完整判定、边界和 P1 决策见 [P0 调研收口](decisions/2026-10-19-p0-closeout.md)。
 
@@ -40,6 +40,7 @@
 - [Deep Agents + LangGraph 报告](reports/2026-10-19-deepagents-langgraph.md)
 - [统一 Runner 生命周期基线](reports/2026-10-19-runner-lifecycle-baseline.md)
 - [中断恢复、OpenClaw 适配器与云浏览器验证](reports/2026-10-19-interrupt-resume-and-cloud-browser.md)
+- [Deep Agents T2、进程级恢复与 T6 扩展成本](reports/2026-10-19-deepagents-t2-t6.md)
 
 ## 统一基础设施证据
 
