@@ -1,0 +1,32 @@
+candidate: pi_agent_core
+display_name: Pi Agent Core
+priority: lightweight_screen
+sources:
+- id: main
+  kind: archive
+  official_url: https://github.com/earendil-works/pi
+  commit: 73f8de80bc87021375f8b525292ac07492253002
+  path: /Users/hanbowen01/harness-lab-sources/pi-mono-73f8de80bc87021375f8b525292ac07492253002.tar.gz
+  archive_url: https://codeload.github.com/earendil-works/pi/tar.gz/73f8de80bc87021375f8b525292ac07492253002
+  archive_prefix: pi-73f8de80bc87021375f8b525292ac07492253002
+  sha256: ce969e2917f93ed49d8be62fc7e7a0a02caa02959f40c28c2fb87f2a62639fd8
+license:
+  main: MIT
+versions:
+  agent_core: 1.3.0
+  package_name: '@earendil-works/pi-agent-core'
+  node: '>=22.19.0'
+  package_manager: npm; package-lock.json
+entrypoint: Node library Agent from packages/agent; prompt, subscribe, abort, waitForIdle. Coding-agent CLI is a
+  separate higher-level product.
+model_integration: Pi AI provider/model with openai-completions API, baseUrl, exact model id, runtime apiKey; streamFn
+  supplied to Agent.
+state: Agent.state/messages in memory; durable persistence and task control are application work unless a separately
+  measured official package is selected.
+instance_boundary: Agent is an in-process object; concurrent objects can share process, but tools/workspace/credentials
+  are application responsibilities.
+unknowns:
+- badlogic/pi-mono redirects to earendil-works/pi; old @mariozechner names are not assumed for this pin.
+- Related packages/durable and coding-agent session manager exist; they are not silently credited to Agent Core.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

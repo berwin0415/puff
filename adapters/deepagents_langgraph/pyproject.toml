@@ -1,0 +1,51 @@
+[project]
+name = "harness-lab-deepagents-langgraph"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "deepagents==0.7.28",
+    "langgraph==1.2.16",
+    "langgraph-checkpoint==4.3.0",
+    "langgraph-checkpoint-sqlite==3.1.2",
+    "langgraph-prebuilt==1.1.1",
+    "langgraph-sdk==0.4.8",
+    "langchain==1.4.6",
+    "langchain-core==1.6.11",
+    "langchain-openai==1.7.2",
+    "httpx==0.28.1",
+    # I19 browser variant uses the official MCP SDK's public client APIs.
+    "mcp==1.28.1",
+    # Locked build tools are installed before building the six local packages.
+    "setuptools==83.0.0",
+    "wheel==0.46.3",
+    "hatchling==1.28.0",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'linux' and platform_machine == 'aarch64'"]
+
+[tool.uv.sources]
+# Match upstream's transitive path declarations during resolution; Docker's
+# --no-editable builds immutable installed wheels from these exact paths.
+deepagents = { path = "../sources/deepagents/libs/deepagents", editable = true }
+langgraph = { path = "../sources/langgraph/libs/langgraph", editable = true }
+langgraph-checkpoint = { path = "../sources/langgraph/libs/checkpoint", editable = true }
+langgraph-checkpoint-sqlite = { path = "../sources/langgraph/libs/checkpoint-sqlite", editable = true }
+langgraph-prebuilt = { path = "../sources/langgraph/libs/prebuilt", editable = true }
+langgraph-sdk = { path = "../sources/langgraph/libs/sdk-py", editable = true }
+
+# This is the exact pinned SDK source metadata. It lets uv resolve its dynamic
+# version without executing an upstream build backend on the host. The image
+# builds the package and the verifier checks the resulting installed version.
+[[tool.uv.dependency-metadata]]
+name = "langgraph-sdk"
+version = "0.4.8"
+requires-python = ">=3.10"
+requires-dist = [
+    "httpx>=0.25.2",
+    "orjson>=3.11.5",
+    "langchain-protocol>=0.0.15",
+    "langchain-core>=1.4.0,<2",
+    "websockets>=14,<17",
+]

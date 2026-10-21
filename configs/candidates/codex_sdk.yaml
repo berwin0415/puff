@@ -1,0 +1,35 @@
+candidate: codex_sdk
+display_name: OpenAI Codex SDK (TypeScript)
+priority: screen
+sources:
+- id: main
+  kind: archive
+  official_url: https://github.com/openai/codex
+  commit: 83086188ae0614bd882818ff1aa23f3194962012
+  path: /Users/hanbowen01/harness-lab-sources/codex-83086188ae0614bd882818ff1aa23f3194962012.tar.gz
+  archive_url: https://codeload.github.com/openai/codex/tar.gz/83086188ae0614bd882818ff1aa23f3194962012
+  archive_prefix: codex-83086188ae0614bd882818ff1aa23f3194962012
+  sha256: e57f1d4f914c71c3532a12d5c14f740909fca4e7e041fa1b3db71618c88e5567
+  release_tag: rust-v0.163.0
+license:
+  main: Apache-2.0 SDK and local Codex runtime; hosted Codex/OpenAI model service not included
+versions:
+  source_sdk: 0.0.0-dev in source; release tag rust-v0.163.0 injects published version
+  planned_npm_sdk: 0.163.0
+  planned_npm_runtime: '@openai/codex@0.163.0'
+  node_sdk: '>=18'
+  source_workspace_node: '>=22'
+entrypoint: TypeScript Codex.startThread/runStreamed/resumeThread spawning codex exec; app-server is a separate
+  variant and cannot substitute for SDK acceptance.
+model_integration: Codex({baseUrl, apiKey, config}) + thread model; current runtime supports Responses wire API,
+  rejects legacy chat wire API. Test selected endpoint protocol before capability claims; no model/protocol conversion.
+state: Local CODEX_HOME thread/session files; persist home and workspace; resumeThread uses thread id.
+instance_boundary: SDK uses CLI subprocesses; threads/process/container/sandbox mapping and backend concurrency
+  require measurement.
+unknowns:
+- Published SDK/runtime 0.163.0 pair must be installed and actual CLI version/digest recorded in I14; source is
+  pinned to the dereferenced rust-v0.163.0 tag.
+- If selected API only supports chat/completions, protocol mismatch must be recorded without replacing selected
+  model.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

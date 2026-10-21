@@ -1,0 +1,41 @@
+{
+  "schema": "harness-lab-dependency-change/1",
+  "candidate": "deepagents_langgraph",
+  "purpose": "I19 browser materials; not I10 historical image",
+  "old_package_count": 70,
+  "new_package_count": 85,
+  "old_lock_sha256": "a91dde4cbbce023c169e2d79a0df96cd404c3d303cea400445fd640b35adb6d7",
+  "new_lock_sha256": "7b80b63a93cf3932babfa737f69137fe6b0b0f3f09c71c3c40603ad8cacd0e8f",
+  "changed_existing_versions": {},
+  "removed_existing_packages": [],
+  "added_packages": {
+    "attrs": "26.1.0",
+    "click": "8.5.0",
+    "httpx-sse": "0.4.3",
+    "jsonschema": "4.26.0",
+    "jsonschema-specifications": "2025.9.1",
+    "mcp": "1.28.1",
+    "pydantic-settings": "2.16.0",
+    "pyjwt": "2.15.1",
+    "python-dotenv": "1.2.4",
+    "python-multipart": "0.0.32",
+    "referencing": "0.37.0",
+    "rpds-py": "2026.9.1",
+    "sse-starlette": "3.5.0",
+    "starlette": "1.9.0",
+    "uvicorn": "0.54.0"
+  },
+  "resolver": "uv 0.9.18, uv lock --no-build --python 3.12 with the existing lock copied before resolution",
+  "candidate_imports_on_host": 0,
+  "mcp_material": {
+    "package": "mcp",
+    "version": "1.28.1",
+    "registry": "https://pypi.org/simple",
+    "wheel_sha256": "2726bca5e7193f61c5dde8b12500a6de2d9acf6d1a1c0be9e8c2e706437991df",
+    "public_api_source": [
+      "mcp/client/session.py:ClientSession.initialize/list_tools/call_tool",
+      "mcp/client/streamable_http.py:streamable_http_client"
+    ],
+    "source_inspection": "wheel downloaded from PyPI metadata and SHA256 checked before ZIP source reads; no imports"
+  }
+}

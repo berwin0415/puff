@@ -1,0 +1,44 @@
+task: pause-resume
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 4
+- 6
+goal: 工具任务运行中提出暂停，到安全点保存并换容器继续，释放等待计算资源。
+base_task: tools
+variants:
+- uninterrupted
+- requested_pause
+controller_steps:
+- 单独干净基线运行tools
+- 在真实运行中请求暂停，记录请求和安全点时间
+- 确认候选自身状态落盘后删除Worker；记录状态目录和旧容器ID
+- 等待600秒，期间每2秒采样Worker/浏览器/Gateway资源和模型调用
+- 从同一镜像新建Worker，同一链状态和预算累计，继续同一任务
+- 重复关键路径3次；共享Worker另记影响任务
+assertions:
+- grade_tools最终结果通过
+- 状态来自候选而非只保存prompt或外层paused标签
+- 新旧container ID不同
+- 无旧进程内存/可写层依赖
+- 记录释放资源、恢复延迟、额外模型和工具调用
+grading_status: frozen protocol; lifecycle orchestration/grader pending I22
+browser_restore_required: false

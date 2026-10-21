@@ -1,0 +1,42 @@
+task: browser
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 3
+goal: 用页面完成登录、多页查询、表单提交、下载。
+candidate_input_factory: runner.grading.browser_prompt
+target_item_pattern: item-{seed}-08
+requested_quantity: 5
+stock_rule: 页面库存小于5时购买页面显示库存，否则购买5；由Agent自行读取判断。
+operation_id_pattern: browser-order-item-{seed}-08
+download_path: result.csv
+allowed_tools: 浏览器基础动作；不向本任务暴露业务HTTP写入工具或一键全流程工具
+controller_setup:
+- 可信后端创建独立测试账号并单独注入密码
+- 保存网站actions JSONL、原始浏览器/MCP工具事件与下载文件；trace为辅助证据
+assertions:
+- 实际写入恰好一次且与独立种子计算一致
+- CSV回执内容及scope正确
+- 可信网站记录显示登录/多页/表单/回执/下载
+- 真实浏览器工具轨迹含navigate/snapshot/fill或type/click
+grader: runner.grading.grade_browser
+grading_status: implemented; positive/negative calibration required
+browser_restore_required: false

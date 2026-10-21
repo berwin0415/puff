@@ -1,21 +1,35 @@
 candidate: deepagents_langgraph
 display_name: Deep Agents + LangGraph
+priority: detailed
 sources:
-  - https://github.com/langchain-ai/deepagents
-  - https://github.com/langchain-ai/langgraph
-licenses:
+- id: deepagents
+  kind: archive
+  official_url: https://github.com/langchain-ai/deepagents
+  commit: 0089e635dce525055272883b53bc222f385beac1
+  path: /Users/hanbowen01/harness-lab-sources/deepagents-0089e635dce525055272883b53bc222f385beac1.tar.gz
+  archive_url: https://codeload.github.com/langchain-ai/deepagents/tar.gz/0089e635dce525055272883b53bc222f385beac1
+  archive_prefix: deepagents-0089e635dce525055272883b53bc222f385beac1
+  sha256: 2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548
+- id: langgraph
+  kind: git
+  official_url: https://github.com/langchain-ai/langgraph
+  path: /Users/hanbowen01/harness-lab-sources/langgraph
+  commit: 98043c37abc60374030f960a03a6e0d4c0112643
+license:
   deepagents: MIT
-  langgraph: MIT
-source_commits:
-  deepagents: 0089e635dce525055272883b53bc222f385beac1
-  langgraph: 98043c37abc60374030f960a03a6e0d4c0112643
-source_artifacts:
-  deepagents_archive_url: https://github.com/langchain-ai/deepagents/archive/0089e635dce525055272883b53bc222f385beac1.tar.gz
-  deepagents_archive_sha256: 2b0cb8cd05f7faeb8e8745845958056a9e974658fc85f4682643874c99d8a548
-  external_root: ~/harness-lab-sources
-runtime: python
-runtime_versions:
-  python: "3.12"
-  deepagents: "0.7.28"
-  langgraph: "1.2.16"
-status: p0
+  langgraph: MIT; no hosted LangSmith/LangGraph service assumed
+versions:
+  deepagents_source: 0.7.28
+  langgraph_source: 1.2.16
+  python: '>=3.11; experiment target 3.12'
+entrypoint: Python create_deep_agent(...); compiled graph invoke/astream with explicit checkpointer and thread_id
+model_integration: Supply configured LangChain ChatOpenAI-compatible model object with base_url, api_key, model.
+  Linux dependency lock belongs to I10.
+state: Explicit LangGraph checkpointer/store; SQLite file may persist graph checkpoint, not live Python objects.
+instance_boundary: Many graph/thread invocations may share one application process. Thread id and filesystem roots
+  are scopes; application must enforce trusted user binding.
+unknowns:
+- Source package version and resolved Linux wheel versions/dependency lock must be compared in I10.
+- Predefined interrupt/checkpoint does not prove runtime pause on external request.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

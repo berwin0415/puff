@@ -1,0 +1,75 @@
+# 本版资料说明
+
+本版分享报告采用 **2026-10-21 15:29:07（北京时间）** 的资料截点。正文只保留影响理解和判断的结果；实验编号、逐项统计和原始文件在这里查阅。
+
+调研背景按本轮讨论明确为三个出发点：研究已有 DeepSeek Harness 客户端上云的工作，围绕现有 OpenClaw 云端业务反馈寻找改善方向，以及探索更多 Agent 框架的云端能力和适用条件。这些背景补充不改变实验结果的截点，也不表示已完成客户端代码盘点或整体迁移。
+
+## 实际受测版本与构建方式
+
+已交叉核对候选配置、实际源码导出清单、构建文件和既有运行记录：**DeepSeek Harness 与 OpenClaw 都使用官方开源仓库的固定源码版本，由本仓库加入实验接入代码并自行构建镜像。没有使用自有客户端版本，也没有使用实际云端业务容器。**
+
+| 候选 | 官方来源 | 源码包声明版本 | 固定源码提交 |
+| --- | --- | --- | --- |
+| DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | 0.1.2-alpha.3 | `dd6322d604e00eec1ba5e0c8541159906a21094a` |
+| OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | 2026.10.5 | `b6e0872bdb7228e22fac7608345e0529a35ec46e` |
+
+两份源码导出清单均记录官方仓库地址、与配置相同的实际提交，以及导出时工作区无改动。DeepSeek Harness 共导出 9044 个源码条目，OpenClaw 为 57891 个。上游源码与实验接入文件分别登记，不能把本仓库增加的工具、业务规则、状态扩展和控制逻辑全部算成官方默认功能。
+
+这里的“官方版本”指源码来源。镜像从固定的基础运行环境自行构建，并非直接使用官方预制产品镜像；OpenClaw 构建还调整了并发和内存参数。DeepSeek Harness 的不同实验使用官方 SDK 或运行接口、官方插件配合实验代码，OpenClaw 则通过官方后台服务与插件接口接入任务。具体能力结论应绑定各自的实验入口、配置和接入方式。
+
+| 核对环节 | DeepSeek Harness | OpenClaw |
+| --- | --- | --- |
+| 固定来源与版本配置 | [候选配置](../../configs/candidates/deepseek_harness.yaml) | [候选配置](../../configs/candidates/openclaw.yaml) |
+| 实际导出清单 | [源码清单](../../external/build-context/deepseek_harness/SOURCE_MANIFEST.json) | [源码清单](../../external/build-context/openclaw/SOURCE_MANIFEST.json) |
+| 镜像怎样构建 | [构建文件](../../compose/candidates/deepseek_harness/Dockerfile)、[接入说明](../../adapters/deepseek_harness/README.md) | [构建文件](../../compose/candidates/openclaw/Dockerfile)、[接入说明](../../adapters/openclaw/README.md) |
+| 既有构建与运行核对样本 | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-build-004/build.json)、[实际运行来源记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-smoke-001/candidate/entrypoint.json) | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-build-002/build.json)、[正式批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-formal-batch-001/batch.json) |
+
+DeepSeek Harness 的构建记录与实际源码清单哈希一致，抽查的初筛、详细运行记录也保存了同一官方提交和源码摘要。OpenClaw 的源码清单、构建文件与既有构建记录相符，正式批次使用对应的实验镜像。此次补核只确认材料来源，没有重建镜像或重跑实验，也不改变前述结果截点。
+
+## 背景、设计与主要结果来自哪里
+
+| 正文内容 | 来源 |
+| --- | --- |
+| 业务背景与目标 | [需求说明](../../REQUIREMENTS.md)，以及本轮讨论明确的客户端上云、云端业务改善和更多框架探索三个出发点 |
+| 实验如何从问题展开、候选和比较约束 | [调研计划](../../RESEARCH_PLAN.md) |
+| 最新执行状态及追加记录 | [实施任务表](../../IMPLEMENTATION_PLAN.md) |
+| 八候选初筛及四路线基本任务 | [初筛记录](../validation/screening.md)、[横向比较](../validation/comparison.md) |
+| 暂停、删除旧容器、等待及继续任务 | [暂停实验](../validation/pause-recovery.md) |
+| 故障正式批次与失败原因 | [故障记录](../validation/fault-recovery-execution.md) |
+| Deep Agents 三组双用户结果 | [多用户实验](../validation/multi-user-design.md) |
+| DeepSeek Harness 单用户与双用户试跑 | [多用户接入记录](../validation/deepseek-multi-user-execution.md) |
+| 两种运行方式及五用户轮换 | [资源实验](../validation/instance-cost-flow.md)、实施任务表末尾追加记录 |
+| 请求和用量的统计范围 | [用量台账](../validation/costs.md)、[模型用量计量说明](../validation/token-usage-design.md) |
+| 能力来源、需要自建的部分与选择条件 | [工程工作清单](../validation/engineering-inventory.md)、[阶段建议](../validation/recommendation.md) |
+
+## 首轮收尾结果与核对入口
+
+首轮已结束。基础与恢复研究（I00–I23）已完成，其中包含失败结果；多人边界、实例成本和完整计量（I24–I26）仍有未完成目标；条件化建议和资料复核、环境清理（I27–I28）已交付。项目容器和网络已清理，镜像、状态、预算与失败证据保留。
+
+下列原始结果保存在仓库外，链接适用于当前机器。向其他人分享时，可先阅读正文和仓库内记录；需要复核原件时再提供可访问副本。这里的批次链接用于定位证据，不要求读者了解执行编号。
+
+| 更新 | 原始结果 | 本版采用的事实 |
+| --- | --- | --- |
+| 两路线正式故障矩阵 | [DSH 二十四格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-formal-001/batch.json)、[Deep Agents 二十四格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-formal-001/batch.json) | 完整业务分别为23/24、10/24；强制退出后恢复各6/6；业务失败均仅涉及分页要求 |
+| 补普通任务对照 | [DSH 四格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-baseline-rest-001/batch.json)、[Deep Agents 四格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-baseline-rest-001/batch.json) | 分别4/4、2/4；早期首种子基线单列，不混作同一验收版本的批次 |
+| 最终关键窗口补测 | [DSH 八格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-final-001/batch.json)、[Deep Agents 八格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-final-001/batch.json) | 分别8/8、4/8；强制退出后恢复各4/4。正式和最终组均未观察到重发已提交操作 |
+| Deep Agents 三组双用户 | [第一组](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/scope-verdict.json)、[第二组](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/scope-verdict.json)、[第三组](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-303-001/scope-verdict.json) | 三组权限、并发、重连等机制检查通过，整组2/3；第一组保留业务失败 |
+| DeepSeek Harness 多人接入 | [单用户对照](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/baseline-verdict.json)、[双用户试跑](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json) | 单用户通过；双用户主任务通过，但取消因模型结果仍在途或未知而停止评分，有效并发与采样验收未过，整轮失败 |
+| 两用户旧资源记录复核 | [按需运行复核](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)、[持续运行复核](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json) | 两者都存在超过五秒的采样空档，旧均值只能描述已观测窗口 |
+| 五用户按需轮换 | [整轮判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json)、[采样及执行状态](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json) | 已结束，业务4/7；新增两个用户首次任务通过；空闲阶段一份样本不完整，整阶段资源均值和峰值未知。十用户未执行 |
+| 最终请求与用量核对 | [请求统计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)、[用量提取](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json) | 343个独立预算库、2485条记账；已知10,253,403 token。仍有17个预算库未查询，不是完整费用 |
+| 资料复核与收尾 | [收尾记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-closeout-001/documents.json)、[实施任务表](../../IMPLEMENTATION_PLAN.md) | 已停止本轮扩跑，保留未完成目标与原始失败，完成项目资源清理 |
+
+DSH 旧故障批次因采样问题中止的记录继续保留，包括“十八格有效、十七格完整通过”的历史批次；它们不与后来完整重跑的二十四格相加。早期专项开头和任务配置中可能仍有当时的待执行说明，本版采用截至截点的最终执行记录，并与原始批次核对。
+
+最终调用记账包括2416条远程200记录、4条远程结果未确认、1条仅有预留记录、36条内网模拟和28条本地故障注入。模型用量中已知输入为9,590,870、输出662,533；缓存读取已包含在输入内，推理计数已包含在输出内，不再重复相加。请求数、响应观察数和材料目录数是不同统计单位，没有逐条关联就不能计算覆盖率或费用排名。
+
+完整设计和结果解释见[基本能力](experiments/01-basic-capabilities.md)、[暂停与故障](experiments/02-pause-and-failure.md)、[多人使用与成本](experiments/03-users-and-cost.md)。仓库内可读统计见[请求汇总](../validation/research-usage-summary.json)、[未登记材料](../validation/research-usage-unenrolled-formats.json)及[模型用量汇总](../validation/token-usage-summary.json)。
+
+## 版本与历史记录
+
+[本版来源清单](sharing-source-snapshot.json)记录所读资料的路径、大小和内容指纹，用于识别版本；它不是源资料全文备份。清单包含60份需求、计划、验证记录和任务/候选配置，正文结论固定于上述截点。来源文件今后若更新，其内容指纹也会变化；根目录导读在本次撰写中更新，清单保留读取时版本。
+
+上一版截至上午 11:49 的[实验记录](reference/2026-10-21-114945/README.md)保留在参考资料区，内部链接已调整。其中未完成项只描述当时状态，不能替代本版进展。撰写分享稿没有重新运行实验、修改实验实现或改写原始结果。
+
+[返回分享目录](README.md)

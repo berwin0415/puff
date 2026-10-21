@@ -1,0 +1,16 @@
+# I22-only Goal variant. Apply after the existing scoped-runtime overlays.
+# Do not load this overlay from the normal detailed entry.
+- id: sessions
+  config:
+    root: !!js process.env.HARNESS_GOAL_SESSION_ROOT
+    compression: none
+    packChunks: false
+- insert:
+    - id: goal
+      name: '@deepseek-ai/dsh-goal'
+    - id: goal-round-driver
+      name: '@deepseek-ai/dsh-goal-round-driver'
+    - id: tool-goal
+      name: '@deepseek-ai/dsh-tool-goal'
+    - id: session-checkpoint-policy
+      name: '@deepseek-ai/dsh-session-checkpoint-policy'

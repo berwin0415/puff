@@ -1,10 +1,27 @@
 candidate: openclaw
 display_name: OpenClaw
-source: https://github.com/openclaw/openclaw
-license: MIT
-source_path: ../openclaw
-source_commit: b6e0872bdb7228e22fac7608345e0529a35ec46e
-runtime: node
-package_manager: pnpm@12.11.1
-version: 2026.10.5
-status: p0
+priority: business_baseline
+sources:
+- id: main
+  kind: git
+  official_url: https://github.com/openclaw/openclaw
+  path: /Users/hanbowen01/repo/openclaw
+  commit: b6e0872bdb7228e22fac7608345e0529a35ec46e
+license:
+  main: MIT; bundled third-party packages/assets retain their notices
+versions:
+  source_package: 2026.10.5
+  node: '>=24.16.0 <25 || >=26.1.0'
+  package_manager: pnpm@12.11.1
+entrypoint: Official Gateway + agent/session requests; CLI one-shot only as a smoke
+model_integration: 'Custom models.providers entry: baseUrl, apiKey, API shape and exact model id; map selected remote
+  API at runtime.'
+state: Per-agent SQLite session history under agentDir/openclaw-agent.sqlite; workspace and agentDir configured
+  independently.
+instance_boundary: Official multi-agent docs allow multiple agents in one Gateway process. An Agent is not intrinsically
+  one container; credentials/session and tool/sandbox boundaries still need verification.
+unknowns:
+- Current source behavior is not evidence of existing Hogee production deployment or savings.
+- Shared Gateway and per-user deployment comparison must keep the same total resource budget.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

@@ -1,0 +1,48 @@
+task: scope
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 8
+goal: 可信产品后端身份绑定两个scope；本用户可查可控，跨用户被拒绝且目标不受影响。
+identities:
+- user-a/session-a
+- user-b/session-b
+operations:
+- state
+- events
+- artifacts
+- pause
+- resume
+- cancel
+controller_steps:
+- 两用户同时运行同种工具任务，凭证/工作区/状态/浏览器账号独立
+- 每操作先记录B状态/写入/checkpoint摘要，A请求B，再次独立记录B，响应无B内容且摘要不变
+- B合法暂停后再测A恢复B，不能仅测运行态的无效resume
+- 本用户同类查询和控制正常，避免全部拒绝
+- 重连、A释放到B复用同Worker、A换Worker继续，再核对消息/文件/凭证/checkpoint归属
+scope_grader: runner.grading.grade_scope_attempts
+tool_result_grader: runner.grading.grade_tools
+assertions:
+- 六类跨用户探针全部拒绝且无foreign_content
+- before/after独立快照一致
+- 六类同用户操作成功
+- 工具任务最终各自结果正确且无串数据
+grading_status: scope attempt grader implemented; real candidate backend/worker probes pending I24

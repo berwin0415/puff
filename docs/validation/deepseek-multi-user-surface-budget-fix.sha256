@@ -1,0 +1,3 @@
+26cb93baa8a703110694ba89b183521fced7dba922ea29ea9a4cde3cce4e1784  runner/multi_user_dsh.py
+991a5fed35370004756f2bb049f2d46561831b174b59038bcb98201d9986d622  tests/test_dsh_multi_user.py
+5e7d7c34c22655a65ce966dee8162cfa896364455d8874d66729bc01da5c8018  docs/validation/deepseek-multi-user-surface-budget-fix.md

@@ -1,0 +1,313 @@
+{
+  "report_title": "云端 Agent Harness 选型实验报告",
+  "cutoff": "2026-10-21T11:49:45+08:00",
+  "timezone": "Asia/Shanghai",
+  "scope": "阶段性结果；仅纳入截至截点已经结束且有保留证据的运行；运行中和未登记证据单列，不重跑、不重评。",
+  "sources": [
+    {
+      "path": "IMPLEMENTATION_PLAN.md",
+      "sha256": "ed355f34c817ce2c69a20fce2809f569437ea400dcc39503a526c706905e3fbd",
+      "bytes": 87908
+    },
+    {
+      "path": "README.md",
+      "sha256": "70822eb26a4dc56399e28d4add3becba55e03e0e56d36490509b99808f8b8c43",
+      "bytes": 3101
+    },
+    {
+      "path": "REQUIREMENTS.md",
+      "sha256": "d5fd6448a3822135fa79272ab06e21974339a060977756083aaf1a55187dface",
+      "bytes": 25705
+    },
+    {
+      "path": "RESEARCH_PLAN.md",
+      "sha256": "d3598f96b8be2aa633d271b9e528c34ac49ce823e4f574367e2479e2a400aba4",
+      "bytes": 42330
+    },
+    {
+      "path": "adapters/codex_sdk/README.md",
+      "sha256": "1d6ac51dccce3de00d9df2fcf7333df94fb7c1b62bb9d18802a26336207bb888",
+      "bytes": 9182
+    },
+    {
+      "path": "adapters/deepagents_langgraph/README.md",
+      "sha256": "f6b4d362997d050837336f9e2b626450f350c4c8b572f9e2a0800667acf62ee0",
+      "bytes": 19369
+    },
+    {
+      "path": "adapters/deepseek_harness/README.md",
+      "sha256": "ec93861a988a248a1be2895d2b2cb554f11161e14a7cb45bfc7821adc4666185",
+      "bytes": 28388
+    },
+    {
+      "path": "adapters/google_adk/README.md",
+      "sha256": "287cd4382aaad81fce82540ac1cdb9f6b0ec5e50cef160175c7b3503ed49ac50",
+      "bytes": 5581
+    },
+    {
+      "path": "adapters/openai_agents_sdk/README.md",
+      "sha256": "ff3558afe6dc4fde616d4539f8713ae22ef0a053b930ec009feec380a06c91d3",
+      "bytes": 22410
+    },
+    {
+      "path": "adapters/openclaw/README.md",
+      "sha256": "6cd6040d90c6eac310e4632dccf82ba27dc4d6c1128d126a1ae0e050e751abd4",
+      "bytes": 25642
+    },
+    {
+      "path": "adapters/openhands/README.md",
+      "sha256": "4356dce7ced06ba69ff71f774733e24c4200abb795ecf35ed4845d9c686f99ad",
+      "bytes": 8693
+    },
+    {
+      "path": "adapters/pi_agent_core/README.md",
+      "sha256": "7933e9059b2dfec44efabc920535b03811170820eced53e73fdaba9d18b7a3b9",
+      "bytes": 6009
+    },
+    {
+      "path": "configs/candidates/codex_sdk.yaml",
+      "sha256": "d162acac014491c42ed447f4ea8a55fe0b06bc4afe009e97f34ac1a5042d268e",
+      "bytes": 1924
+    },
+    {
+      "path": "configs/candidates/deepagents_langgraph.yaml",
+      "sha256": "4cd52320d2b59629ab90cc2ebd3b7adb91af9f6fd5f7372614c9008a94b2793e",
+      "bytes": 1830
+    },
+    {
+      "path": "configs/candidates/deepseek_harness.yaml",
+      "sha256": "d374c00d894f8074e8e93c7da6a4a9ff62ac3179fdb119a2f45f62ae98207f18",
+      "bytes": 1375
+    },
+    {
+      "path": "configs/candidates/google_adk.yaml",
+      "sha256": "bfbd8a3e3e6162efadcdfe7d4a642f0e243e832815feb0283f29ad43455459aa",
+      "bytes": 1541
+    },
+    {
+      "path": "configs/candidates/openai_agents_sdk.yaml",
+      "sha256": "5abd73541ed3cacba3ccc2385ec8b55d99c4c545f1da8614f877b94da7832408",
+      "bytes": 1740
+    },
+    {
+      "path": "configs/candidates/openclaw.yaml",
+      "sha256": "9e937c8948b311f4aab88b2e220949c877614ad3a8ac5eb039ec159195c4f60d",
+      "bytes": 1273
+    },
+    {
+      "path": "configs/candidates/openhands.yaml",
+      "sha256": "27388f9971ba209ee5835cb745db7eec32f48b17487f8a8558bba0862649aab2",
+      "bytes": 2380
+    },
+    {
+      "path": "configs/candidates/pi_agent_core.yaml",
+      "sha256": "6a13e3b9952d72fedf7322bc044bf5d8480cf3670eb05b9f0d99d728c5bc333e",
+      "bytes": 1641
+    },
+    {
+      "path": "configs/experiment.yaml",
+      "sha256": "b49e54bbc0909e36d2b88f12d585acf191c147d8b971aa3cf9d5685690c55d89",
+      "bytes": 968
+    },
+    {
+      "path": "configs/tasks/browser.yaml",
+      "sha256": "8966c326522ef5dcd059ddfc0b4301efc34c30ee9332aa33f02aed53b1dc82d9",
+      "bytes": 1319
+    },
+    {
+      "path": "configs/tasks/business-extension.yaml",
+      "sha256": "5f3ff93fb0430996e7e957eb7c6e085f924ad4bdbbeaff94c4a23ddf62e3353d",
+      "bytes": 1922
+    },
+    {
+      "path": "configs/tasks/control-policy.yaml",
+      "sha256": "036a513516fbd0a72993e48609ed3db56448f9d45f7dddaa9308562477977379",
+      "bytes": 1856
+    },
+    {
+      "path": "configs/tasks/fault-recovery.yaml",
+      "sha256": "d6cca546aa340b2d1c08a542407253f509cd650cb71928cd330641e7dd792735",
+      "bytes": 1381
+    },
+    {
+      "path": "configs/tasks/instance-cost.yaml",
+      "sha256": "e57296cfa183a4c6c9061d880fd648d8c026d9c87c4e1437eafc1a492fc1ff07",
+      "bytes": 1599
+    },
+    {
+      "path": "configs/tasks/pause-resume.yaml",
+      "sha256": "1a0350d60fe34c354c6cd26c49cd9b1c1ec497bbe46d249c215288074b567a16",
+      "bytes": 1247
+    },
+    {
+      "path": "configs/tasks/runtime.yaml",
+      "sha256": "8d7085c3f6fe531d4e5f01a2df5ddcc5d02c78f8fc9ceb4f8b5e3a48d8bab824",
+      "bytes": 964
+    },
+    {
+      "path": "configs/tasks/scope.yaml",
+      "sha256": "fe78a130bd5ba9be59bbb13eb103143671b4fd3aba52b3db98e0bd6b7b75805e",
+      "bytes": 1379
+    },
+    {
+      "path": "configs/tasks/tools.yaml",
+      "sha256": "d8efaa757bcc86bbe9c0427c97dd44e4e2fbd2b64bb200b85f30667452af8e60",
+      "bytes": 1087
+    },
+    {
+      "path": "docs/validation/codex_sdk.md",
+      "sha256": "4f03b398cf011c82ada880e3b63a5eadce8c648c21aa5d7f49c925da9008b383",
+      "bytes": 4884
+    },
+    {
+      "path": "docs/validation/comparison.md",
+      "sha256": "3160b701e8e568ff96c3bac10cf3b6e3c20bf890fc0c65d5601de714f5aacd75",
+      "bytes": 39275
+    },
+    {
+      "path": "docs/validation/costs.md",
+      "sha256": "0ef937c3a7a79a65f7c00bc61519f49440988df2c50e35fd0e40b8fc6cf1c52d",
+      "bytes": 19735
+    },
+    {
+      "path": "docs/validation/deepagents_langgraph.md",
+      "sha256": "679fa499af63ddbf1d63d2be6a09520fc4b93233359afbd2dd3c082845af2435",
+      "bytes": 21994
+    },
+    {
+      "path": "docs/validation/deepseek-goal-wiring.md",
+      "sha256": "acb84d698ca47428be666b724a3adbf18ab9d5ff03a4f5e0a38d85486414b0b9",
+      "bytes": 8798
+    },
+    {
+      "path": "docs/validation/deepseek_harness.md",
+      "sha256": "17b4266c083493ef2d9c1993a48a896432b9c7fa3874127547c0c99057d5b329",
+      "bytes": 24617
+    },
+    {
+      "path": "docs/validation/detailed.md",
+      "sha256": "d44cced6e96a0d5a9b9bdf5f1527f17152a8b79c18fa520d4280d65076fc4b70",
+      "bytes": 49655
+    },
+    {
+      "path": "docs/validation/engineering-inventory.md",
+      "sha256": "fc3b7869c21717d84ec33f4501a981717a6b982cbd4d5bfff6c7f1d8ec40f8d4",
+      "bytes": 31155
+    },
+    {
+      "path": "docs/validation/execution.md",
+      "sha256": "349f6177774b078bffbd4b6cf349c0c6ccf3eebcddf4d9394a3cfe66dc3f0faa",
+      "bytes": 15364
+    },
+    {
+      "path": "docs/validation/fault-recovery-design.md",
+      "sha256": "e5e7bee319a6a07a9363edce95abe8ef78a65487686783ecc0bd8dc7ff52ef0f",
+      "bytes": 26058
+    },
+    {
+      "path": "docs/validation/fault-recovery-execution.md",
+      "sha256": "e6e6d62e1e27313724eedacf055062647ac141f98f2f4a17214d70f6810b778b",
+      "bytes": 32768
+    },
+    {
+      "path": "docs/validation/google_adk.md",
+      "sha256": "6a26a3f20b6a0f2f0828e16432d012bbcbb7781a6056ba4490156a8df58a45c9",
+      "bytes": 10018
+    },
+    {
+      "path": "docs/validation/instance-cost-flow.md",
+      "sha256": "7562bf690b0bff6af8b59c443351f1b8d3f3e010bde794b355109e36036e05a2",
+      "bytes": 26434
+    },
+    {
+      "path": "docs/validation/multi-user-design.md",
+      "sha256": "cd8acfd20071c5c5ca296f1c1b5799ff2a560972355d17e182c534391f8e2a1d",
+      "bytes": 48920
+    },
+    {
+      "path": "docs/validation/openai_agents_sdk.md",
+      "sha256": "0744d9f6812a6b47c44402cd8dbf61eb80b850bcbf3d7b936bb992fc39cf703a",
+      "bytes": 12866
+    },
+    {
+      "path": "docs/validation/openclaw.md",
+      "sha256": "bbcf0196c50c92738f526aa3c90b00c71d0378640ae3f2869aa8fecb7a993b6f",
+      "bytes": 30776
+    },
+    {
+      "path": "docs/validation/openhands.md",
+      "sha256": "36d0cb85d1cbb1456fd7492629e58fa4da66e90952ca0fd8552f68d467284c5e",
+      "bytes": 4400
+    },
+    {
+      "path": "docs/validation/pause-recovery-design.md",
+      "sha256": "12b8546fba8bed05b6738d4c75b8c62b1edbfdcad58bf1ac00b3768e77b89a8b",
+      "bytes": 29927
+    },
+    {
+      "path": "docs/validation/pause-recovery.md",
+      "sha256": "8f83b3bdc3f4628fe5a1a3268d1a72aa8a4fb78f2fd2dda34e4192d4245a703d",
+      "bytes": 14538
+    },
+    {
+      "path": "docs/validation/pause-resource-summary.json",
+      "sha256": "da5d9abf573039588da7d81eba3862c41d3524bf7ae88e759509b3481599667e",
+      "bytes": 74657
+    },
+    {
+      "path": "docs/validation/pi_agent_core.md",
+      "sha256": "94f99ee287f630bc02115d88f480426a8cd5a4a059e3f43be88f13b9d54bb226",
+      "bytes": 10765
+    },
+    {
+      "path": "docs/validation/recovery-interfaces.md",
+      "sha256": "7e938f330d8096aee1f3a2adcdfa02d9450ad33c61c96d6ac41382fcad6c036b",
+      "bytes": 39108
+    },
+    {
+      "path": "docs/validation/research-usage-inventory.json",
+      "sha256": "594709056edf9f12bb8160b340e4e9ff40b75f42c54b8752a86038fb682caabe",
+      "bytes": 292438
+    },
+    {
+      "path": "docs/validation/research-usage-summary.json",
+      "sha256": "aab2d5af77ff2388bfdcca2d4a0c683a6e26e4815ad81d30a5ae5218c518097c",
+      "bytes": 544985
+    },
+    {
+      "path": "docs/validation/resident-runtime.md",
+      "sha256": "7d9d90e8d18e4e7f3783e3151fab4a1025fd4f0904541505c464cad3c0848558",
+      "bytes": 16494
+    },
+    {
+      "path": "docs/validation/resource-budget.md",
+      "sha256": "23c55b9367f99999fa9fed518986a6c75db203830fad16f77b729ee13b5d9dec",
+      "bytes": 2686
+    },
+    {
+      "path": "docs/validation/scope-evidence.md",
+      "sha256": "e7bfa9409bd0cf89895f1b4ab9748be6c8d15e31e0bd69114aa1b3ecab9d4395",
+      "bytes": 9852
+    },
+    {
+      "path": "docs/validation/screening.md",
+      "sha256": "907472a0556189400133fea95baf9e11c7a897bcb6ff78e3aab39df009c85b9a",
+      "bytes": 16530
+    },
+    {
+      "path": "docs/validation/selection.md",
+      "sha256": "e84899d3471c917900efdbf45f0dd4cfa87cb3b417a4a5c6e3e12de1bee38666",
+      "bytes": 3730
+    },
+    {
+      "path": "docs/validation/sources.md",
+      "sha256": "aa7113193180b6e665a35fa179764939d5b201362483f8dd2aaa39a9310e5222",
+      "bytes": 7699
+    },
+    {
+      "path": "docs/validation/usage-summary.json",
+      "sha256": "7f45c188279b8ce8aa3c1132a75abe52443b11ca6e9fb5f2a1b310ecb5d65863",
+      "bytes": 97537
+    }
+  ]
+}

@@ -1,1 +1,1 @@
-"""Deterministic services and data used by Harness Lab validation runs."""
+"""Deterministic local business services for the Docker experiments."""

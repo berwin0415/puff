@@ -1,0 +1,41 @@
+candidate: openhands
+display_name: OpenHands SDK / Agent Server
+priority: screen
+sources:
+- id: sdk
+  kind: archive
+  official_url: https://github.com/OpenHands/software-agent-sdk
+  commit: 33d8aa29c3078d074799e2fbf5e847aeb2d71360
+  path: /Users/hanbowen01/harness-lab-sources/openhands-sdk-33d8aa29c3078d074799e2fbf5e847aeb2d71360.tar.gz
+  archive_url: https://codeload.github.com/OpenHands/software-agent-sdk/tar.gz/33d8aa29c3078d074799e2fbf5e847aeb2d71360
+  archive_prefix: software-agent-sdk-33d8aa29c3078d074799e2fbf5e847aeb2d71360
+  sha256: 70a8be4642612b7a6a1b43bc4dca5cc4be92fae58f98dfd10d0ff82b780b675c
+- id: canvas
+  kind: archive
+  official_url: https://github.com/OpenHands/OpenHands
+  commit: 8d39305538c1d17a30cbe477e57a0e18fcee7d95
+  path: /Users/hanbowen01/harness-lab-sources/openhands-8d39305538c1d17a30cbe477e57a0e18fcee7d95.tar.gz
+  archive_url: https://codeload.github.com/OpenHands/OpenHands/tar.gz/8d39305538c1d17a30cbe477e57a0e18fcee7d95
+  archive_prefix: OpenHands-8d39305538c1d17a30cbe477e57a0e18fcee7d95
+  sha256: 3296ef29e8b4690765d678917d748e54d3027660577100a570946fa9e8978028
+license:
+  sdk: MIT SDK, tools, workspace and Agent Server from pinned repository
+  canvas: MIT Agent Canvas; hosted Cloud/Enterprise operations not included
+versions:
+  sdk_agent_server_source: 1.56.0
+  canvas_source: 1.28.1
+  python_sdk: '>=3.12'
+  node_canvas: '>=24'
+entrypoint: Python LLM/Agent/Conversation; use local Agent Server REST/WebSocket if service control needed. Canvas
+  UI optional, not required for headless validation.
+model_integration: LLM(model=<provider/exact id>, base_url, api_key), LiteLLM-backed; configure same selected API,
+  disable unrelated hosted integrations.
+state: Conversation persistence_dir + conversation_id and workspace; official pause/persistence examples exist.
+  Cross-container continuation remains untested.
+instance_boundary: Agent/LLM definitions may be shared; Conversations own execution state. Local/remote workspace
+  or per-conversation Docker variants have different isolation and idle costs.
+unknowns:
+- OpenHands/OpenHands is now Agent Canvas frontend/orchestration; backend evidence must come from software-agent-sdk.
+- Code-task assumptions, sandbox/tool packages and optional Canvas/automation services must be counted separately.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

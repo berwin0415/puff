@@ -1,0 +1,30 @@
+candidate: openai_agents_sdk
+display_name: OpenAI Agents SDK (Python)
+priority: lightweight_screen
+sources:
+- id: main
+  kind: archive
+  official_url: https://github.com/openai/openai-agents-python
+  commit: 64cd5dfc5a1579870dcbed0ea42b27aa84033fee
+  path: /Users/hanbowen01/harness-lab-sources/openai-agents-python-64cd5dfc5a1579870dcbed0ea42b27aa84033fee.tar.gz
+  archive_url: https://codeload.github.com/openai/openai-agents-python/tar.gz/64cd5dfc5a1579870dcbed0ea42b27aa84033fee
+  archive_prefix: openai-agents-python-64cd5dfc5a1579870dcbed0ea42b27aa84033fee
+  sha256: 8bfb125e5d9343e2740a502aec764afaa63cf55dc17d5df068b7d3680a213321
+license:
+  main: MIT; SDK self-hosted. Managed Agents API and OpenAI-hosted tools are separate services, not this candidate.
+versions:
+  openai_agents_source: 0.24.0
+  python: '>=3.10'
+entrypoint: Python Agent + Runner.run/run_streamed; function_tool or MCP tools
+model_integration: AsyncOpenAI(base_url, api_key) + OpenAIChatCompletionsModel(model=exact id); disable hosted tracing
+  or provide independent processor for this experiment.
+state: SQLiteSession for history; RunState JSON/string for resumable execution on supported interruption paths.
+  Keep agent/tool definitions available when loading.
+instance_boundary: SDK objects/runs may share an application process; deployment, storage, workspace and tenant
+  authorization are application-owned.
+unknowns:
+- RunState approval-interruption support does not prove runtime pause requested externally. No approval workflow
+  is required by this plan.
+- Runtime ordinary-task auto execution and sensitive-operation rejection must be enforced in tool/control layer.
+checked_at: '2026-10-20'
+evidence_status: source_review_only_not_runtime_verified

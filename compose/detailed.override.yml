@@ -1,0 +1,31 @@
+# Explicitly applied only by scripts/run_detailed.py, never by screening.
+# Credentials are synthetic per-run browser inputs; fixture/admin tokens stay
+# outside these mounts. Browser artifacts are read-only for the Agent adapter.
+x-detailed-volumes: &detailed-volumes
+      - type: bind
+        source: ${LAB_FIXTURE_HOST:?detailed fixture path required}/scope.json
+        target: /config/scope.json
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${LAB_FIXTURE_HOST:?detailed fixture path required}/browser-credentials.json
+        target: /config/browser-credentials.json
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${LAB_EVIDENCE_HOST:?detailed evidence path required}/browser
+        target: /browser-artifacts
+        read_only: true
+        bind: {create_host_path: false}
+services:
+  model-proxy:
+    environment:
+      MODEL_PROXY_TIMEOUT_AT: ${LAB_MODEL_TIMEOUT_AT:-}
+  deepseek-harness:
+    volumes: *detailed-volumes
+  openclaw:
+    volumes: *detailed-volumes
+  deepagents-langgraph:
+    volumes: *detailed-volumes
+  openai-agents-sdk:
+    volumes: *detailed-volumes

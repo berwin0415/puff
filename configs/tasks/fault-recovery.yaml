@@ -1,0 +1,46 @@
+task: fault-recovery
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 5
+goal: 同一工具任务遇到故障，结果可核对，不悄悄漏写或重复写。
+base_task: tools
+write_modes:
+- idempotent
+- non_idempotent
+faults:
+- name: model_timeout
+  trigger: 计数代理第1次请求504，重试计入同一预算
+- name: fail_once
+  trigger: 预期第一件operation_id的工具写入前503一次
+- name: kill_before_write
+  trigger: 控制器在真实写入前杀Worker；具体候选安全事件另记录
+- name: drop_receipt_once
+  trigger: 预期第一件operation_id提交成功后断开连接
+controller_setup:
+- 每种故障/写入模式独立variant，禁止互读基线checkpoint/账本
+- 故障由可信admin准备，不让Agent参数选择
+- 完整保存请求次数、真实写次数、receipt查询和恢复事件
+assertions:
+- 完成后使用grade_tools核对，另区分自动完成/明确失败/需人工确认
+- 每个operation的请求数和write_count分别记录
+- 服务端防重不算候选自己保证只执行一次
+grading_status: fault injection available; candidate orchestration/verdict classification pending I23

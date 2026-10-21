@@ -1,0 +1,2551 @@
+{
+  "schema": "harness-lab-pause-resource-summary/1",
+  "date": "2026-10-20",
+  "runs": [
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-101-004",
+      "used_active_seconds": 32.77098716699402,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.376339,
+        "b_started_to_exit_observed_seconds": 12.865416,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.6000000000000001,
+              "peak": 0.6000000000000001
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.6000000000000001,
+              "peak": 0.6000000000000001
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 10,
+          "valid_samples": 10,
+          "sample_errors": 0,
+          "observed_span_seconds": 18.358383893966675,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 156.789,
+              "peak": 193.27
+            },
+            "cpu_percent": {
+              "sample_mean": 27.421,
+              "peak": 101.13
+            },
+            "pids_including_threads": {
+              "sample_mean": 6.5,
+              "peak": 12
+            },
+            "containers": {
+              "sample_mean": 3.9,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 96.961,
+              "peak": 131.9
+            },
+            "cpu_percent": {
+              "sample_mean": 26.413,
+              "peak": 101.07
+            },
+            "pids_including_threads": {
+              "sample_mean": 2.9,
+              "peak": 8
+            },
+            "containers": {
+              "sample_mean": 0.9,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 59.828,
+              "peak": 61.370000000000005
+            },
+            "cpu_percent": {
+              "sample_mean": 1.008,
+              "peak": 3.0700000000000003
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.6,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 296,
+          "valid_samples": 296,
+          "sample_errors": 0,
+          "observed_span_seconds": 602.9173591136932,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 78.81719594594594,
+              "peak": 118.77000000000001
+            },
+            "cpu_percent": {
+              "sample_mean": 0.66625,
+              "peak": 26.36
+            },
+            "pids_including_threads": {
+              "sample_mean": 4.010135135135135,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4.006756756756757,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 58.74591216216216,
+              "peak": 98.92
+            },
+            "cpu_percent": {
+              "sample_mean": 0.31003378378378377,
+              "peak": 25.75
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.016891891891892,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.010135135135135,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 20.071283783783784,
+              "peak": 21.5
+            },
+            "cpu_percent": {
+              "sample_mean": 0.35621621621621624,
+              "peak": 7.84
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9932432432432432,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.9966216216216216,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 2,
+          "valid_samples": 2,
+          "sample_errors": 0,
+          "observed_span_seconds": 2.0502679347991943,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 55.47,
+              "peak": 55.47
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 55.47,
+              "peak": 55.47
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 7,
+          "valid_samples": 7,
+          "sample_errors": 0,
+          "observed_span_seconds": 12.110697984695435,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 140.91285714285715,
+              "peak": 191.97
+            },
+            "cpu_percent": {
+              "sample_mean": 22.894285714285715,
+              "peak": 100.05
+            },
+            "pids_including_threads": {
+              "sample_mean": 5.142857142857143,
+              "peak": 7
+            },
+            "containers": {
+              "sample_mean": 3.7142857142857144,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 87.61142857142858,
+              "peak": 130.6
+            },
+            "cpu_percent": {
+              "sample_mean": 21.132857142857144,
+              "peak": 100.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 1.8571428571428572,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 0.8571428571428571,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 53.30142857142857,
+              "peak": 61.39
+            },
+            "cpu_percent": {
+              "sample_mean": 1.7614285714285713,
+              "peak": 7.93
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.2857142857142856,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 2.857142857142857,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/resource-samples.jsonl",
+          "sha256": "a0ff751227d69f52386de8ee6898f9d572166fce473ab2b35a3a065a5b08f972"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/cleanup.json",
+          "sha256": "28b3cf32e08159011e4f251c3c456faf73f9c62f52d0293368bbba1ca800185c"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/orchestration.json",
+          "sha256": "a7fc5e438754eb3975d10778c1323325026136b0e8145e96efccab6a52791131"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/trusted/worker-a.json",
+          "sha256": "7ee6521a5387313b9f7b698663cd01c66669ae40ee07d848d4f212727d4cf558"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/trusted/worker-b.json",
+          "sha256": "7b548c15a11cfcaf964f58827cd3445ddaf03c32889724760fec655ae9c1b498"
+        }
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-202-001",
+      "used_active_seconds": 35.73014066601172,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.473424,
+        "b_started_to_exit_observed_seconds": 21.678067,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 7,
+          "valid_samples": 7,
+          "sample_errors": 0,
+          "observed_span_seconds": 12.275874137878418,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 154.18857142857144,
+              "peak": 192.25
+            },
+            "cpu_percent": {
+              "sample_mean": 15.05142857142857,
+              "peak": 67.67999999999999
+            },
+            "pids_including_threads": {
+              "sample_mean": 6.714285714285714,
+              "peak": 10
+            },
+            "containers": {
+              "sample_mean": 3.857142857142857,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 93.12857142857142,
+              "peak": 130.9
+            },
+            "cpu_percent": {
+              "sample_mean": 13.03,
+              "peak": 64.1
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 0.8571428571428571,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 61.06,
+              "peak": 61.35
+            },
+            "cpu_percent": {
+              "sample_mean": 2.0214285714285714,
+              "peak": 4.7
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.7142857142857144,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 296,
+          "valid_samples": 296,
+          "sample_errors": 0,
+          "observed_span_seconds": 601.8531017303467,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 79.86341216216216,
+              "peak": 120.09
+            },
+            "cpu_percent": {
+              "sample_mean": 0.42780405405405403,
+              "peak": 26.36
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 58.62597972972973,
+              "peak": 98.31
+            },
+            "cpu_percent": {
+              "sample_mean": 0.1766891891891892,
+              "peak": 26.36
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.010135135135135,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.0067567567567566,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 21.23743243243243,
+              "peak": 22.15
+            },
+            "cpu_percent": {
+              "sample_mean": 0.25111486486486484,
+              "peak": 2.1
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9898648648648649,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.9932432432432432,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 55.46,
+              "peak": 55.46
+            },
+            "cpu_percent": {
+              "sample_mean": 0.04,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 55.46,
+              "peak": 55.46
+            },
+            "cpu_percent": {
+              "sample_mean": 0.04,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 12,
+          "valid_samples": 12,
+          "sample_errors": 0,
+          "observed_span_seconds": 22.250248908996582,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 162.96083333333334,
+              "peak": 193.6
+            },
+            "cpu_percent": {
+              "sample_mean": 16.3475,
+              "peak": 99.0
+            },
+            "pids_including_threads": {
+              "sample_mean": 5.916666666666667,
+              "peak": 7
+            },
+            "containers": {
+              "sample_mean": 3.8333333333333335,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 106.275,
+              "peak": 132.2
+            },
+            "cpu_percent": {
+              "sample_mean": 14.998333333333333,
+              "peak": 98.98
+            },
+            "pids_including_threads": {
+              "sample_mean": 2.3333333333333335,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 0.9166666666666666,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 56.685833333333335,
+              "peak": 61.6
+            },
+            "cpu_percent": {
+              "sample_mean": 1.3491666666666666,
+              "peak": 2.86
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.5833333333333335,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 2.9166666666666665,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/resource-samples.jsonl",
+          "sha256": "118e86980b23f4e36a493c34c165c49b9a0c935edabd7cd407558581e5a270db"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/cleanup.json",
+          "sha256": "b8e5bf004d8c39fcc4f5232322428033f9fef7f0cb817a3a588b19f8f5335d0c"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/orchestration.json",
+          "sha256": "1264a9375991df7a3dde697374736ab7364726d4c525472e89a860e6eda0d6e8"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/trusted/worker-a.json",
+          "sha256": "872d755d040f0852f0e82e8c39bed66d94be0cd39daddcde00d3613d648e2c05"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/trusted/worker-b.json",
+          "sha256": "30474883809106dc91d1d57d1aed2753df0d15e3904a8659384ad578fa0f2292"
+        }
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-303-001",
+      "used_active_seconds": 39.959332208003616,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.522709,
+        "b_started_to_exit_observed_seconds": 15.346111,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.92,
+              "peak": 54.92
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.92,
+              "peak": 54.92
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 14,
+          "valid_samples": 14,
+          "sample_errors": 0,
+          "observed_span_seconds": 26.761334896087646,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 155.33,
+              "peak": 194.95999999999998
+            },
+            "cpu_percent": {
+              "sample_mean": 11.319285714285716,
+              "peak": 66.24000000000001
+            },
+            "pids_including_threads": {
+              "sample_mean": 8.642857142857142,
+              "peak": 14
+            },
+            "containers": {
+              "sample_mean": 3.7857142857142856,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 93.77142857142857,
+              "peak": 133.2
+            },
+            "cpu_percent": {
+              "sample_mean": 9.503571428571428,
+              "peak": 62.63
+            },
+            "pids_including_threads": {
+              "sample_mean": 4.928571428571429,
+              "peak": 10
+            },
+            "containers": {
+              "sample_mean": 0.7857142857142857,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 61.558571428571426,
+              "peak": 61.79
+            },
+            "cpu_percent": {
+              "sample_mean": 1.8157142857142856,
+              "peak": 4.97
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.7142857142857144,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 295,
+          "valid_samples": 295,
+          "sample_errors": 0,
+          "observed_span_seconds": 603.3329598903656,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 79.18410169491526,
+              "peak": 117.81
+            },
+            "cpu_percent": {
+              "sample_mean": 0.8495593220338983,
+              "peak": 27.79
+            },
+            "pids_including_threads": {
+              "sample_mean": 4.003389830508475,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4.003389830508475,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 59.04101694915254,
+              "peak": 97.91
+            },
+            "cpu_percent": {
+              "sample_mean": 0.23430508474576273,
+              "peak": 27.34
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.010169491525424,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.006779661016949,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 20.14308474576271,
+              "peak": 21.49
+            },
+            "cpu_percent": {
+              "sample_mean": 0.6152542372881356,
+              "peak": 26.54
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9932203389830508,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.9966101694915255,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 2,
+          "valid_samples": 2,
+          "sample_errors": 0,
+          "observed_span_seconds": 2.021667957305908,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 55.879999999999995,
+              "peak": 55.879999999999995
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3.5,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 55.879999999999995,
+              "peak": 55.879999999999995
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0.0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0.5,
+              "peak": 1
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 8,
+          "valid_samples": 8,
+          "sample_errors": 0,
+          "observed_span_seconds": 14.196101903915405,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 138.2375,
+              "peak": 192.19
+            },
+            "cpu_percent": {
+              "sample_mean": 38.9075,
+              "peak": 100.96000000000001
+            },
+            "pids_including_threads": {
+              "sample_mean": 5.125,
+              "peak": 7
+            },
+            "containers": {
+              "sample_mean": 3.875,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 81.75875,
+              "peak": 130.4
+            },
+            "cpu_percent": {
+              "sample_mean": 36.28875,
+              "peak": 100.93
+            },
+            "pids_including_threads": {
+              "sample_mean": 1.75,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 0.875,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 56.47875,
+              "peak": 61.79
+            },
+            "cpu_percent": {
+              "sample_mean": 2.61875,
+              "peak": 14.2
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.375,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-303-001/resource-samples.jsonl",
+          "sha256": "5b041eba43b89b3450e63cef3cf3e2f1e11be861c8d528ca02ab352ec9d3a371"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-303-001/cleanup.json",
+          "sha256": "758af44fd8be146adcbfc211f5742e0d4b0b11d8757a3dce85d3e0460523fda3"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-303-001/orchestration.json",
+          "sha256": "b8e2f42fea2088626f22df4de6e2c7ade554d6aa4cc294f528355d46fbd59d7f"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-303-001/trusted/worker-a.json",
+          "sha256": "767655e3106876e22002e416f1fd4c2b56c4a58fbc1262a3ec49d25fd6efd914"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-303-001/trusted/worker-b.json",
+          "sha256": "2a38ce70d9c5cb6a080104ea0383afd432f039ec6b2aa84a7a0ba5c08387bc81"
+        }
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-pause-seed-101-002",
+      "used_active_seconds": 41.69739358300285,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.862184,
+        "b_started_to_exit_observed_seconds": 19.358861,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.94,
+              "peak": 54.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 12,
+          "valid_samples": 12,
+          "sample_errors": 0,
+          "observed_span_seconds": 22.47722291946411,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 182.7575,
+              "peak": 245.28
+            },
+            "cpu_percent": {
+              "sample_mean": 9.759166666666667,
+              "peak": 31.43
+            },
+            "pids_including_threads": {
+              "sample_mean": 18.75,
+              "peak": 24
+            },
+            "containers": {
+              "sample_mean": 3.8333333333333335,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 121.88333333333334,
+              "peak": 184.4
+            },
+            "cpu_percent": {
+              "sample_mean": 7.664166666666667,
+              "peak": 30.1
+            },
+            "pids_including_threads": {
+              "sample_mean": 15,
+              "peak": 20
+            },
+            "containers": {
+              "sample_mean": 0.8333333333333334,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 60.87416666666666,
+              "peak": 60.9
+            },
+            "cpu_percent": {
+              "sample_mean": 2.095,
+              "peak": 4.66
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.75,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 297,
+          "valid_samples": 297,
+          "sample_errors": 0,
+          "observed_span_seconds": 603.4662370681763,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 78.23326599326599,
+              "peak": 119.32
+            },
+            "cpu_percent": {
+              "sample_mean": 0.4765656565656566,
+              "peak": 25.26
+            },
+            "pids_including_threads": {
+              "sample_mean": 4.0033670033670035,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 58.243905723905726,
+              "peak": 98.03
+            },
+            "cpu_percent": {
+              "sample_mean": 0.25936026936026935,
+              "peak": 24.83
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.016835016835017,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.01010101010101,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 19.98936026936027,
+              "peak": 21.53
+            },
+            "cpu_percent": {
+              "sample_mean": 0.2172053872053872,
+              "peak": 1.82
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9865319865319865,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.98989898989899,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.95,
+              "peak": 54.95
+            },
+            "cpu_percent": {
+              "sample_mean": 0.04,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.95,
+              "peak": 54.95
+            },
+            "cpu_percent": {
+              "sample_mean": 0.04,
+              "peak": 0.04
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 10,
+          "valid_samples": 10,
+          "sample_errors": 0,
+          "observed_span_seconds": 18.443665981292725,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 200.361,
+              "peak": 262.21000000000004
+            },
+            "cpu_percent": {
+              "sample_mean": 16.582,
+              "peak": 101.63
+            },
+            "pids_including_threads": {
+              "sample_mean": 19.6,
+              "peak": 24
+            },
+            "containers": {
+              "sample_mean": 3.9,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 142.59,
+              "peak": 201.3
+            },
+            "cpu_percent": {
+              "sample_mean": 15.597999999999999,
+              "peak": 101.38
+            },
+            "pids_including_threads": {
+              "sample_mean": 16,
+              "peak": 20
+            },
+            "containers": {
+              "sample_mean": 0.9,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 57.771,
+              "peak": 60.92
+            },
+            "cpu_percent": {
+              "sample_mean": 0.984,
+              "peak": 2.0999999999999996
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.6,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/resource-samples.jsonl",
+          "sha256": "dd2c5dc0941782a789524a811de56a86625002e317d98b2944b38de989e8192f"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/cleanup.json",
+          "sha256": "5eaa2836073f6d762212263abb2e6aa9406795fdc0ff86418b821d05755cc362"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/orchestration.json",
+          "sha256": "fcd9c6d2efe7e054dec4c41521a5590ca41d94df4d668082bdaae623673f6014"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/trusted/worker-a.json",
+          "sha256": "4aab028a996960480daac580e62737b7fd1b3391fd8889aee85ccddd59bc016e"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/trusted/worker-b.json",
+          "sha256": "539b54f5c1a329ccdf7df379ca90568f92fdba648c61d327db49aca103510bce"
+        }
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-pause-seed-202-001",
+      "used_active_seconds": 39.376441875996534,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.560313,
+        "b_started_to_exit_observed_seconds": 19.016456,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 60.84,
+              "peak": 60.84
+            },
+            "cpu_percent": {
+              "sample_mean": 4.82,
+              "peak": 4.82
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 60.84,
+              "peak": 60.84
+            },
+            "cpu_percent": {
+              "sample_mean": 4.82,
+              "peak": 4.82
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 10,
+          "valid_samples": 10,
+          "sample_errors": 0,
+          "observed_span_seconds": 18.37496590614319,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 215.731,
+              "peak": 261.11
+            },
+            "cpu_percent": {
+              "sample_mean": 10.717,
+              "peak": 23.490000000000002
+            },
+            "pids_including_threads": {
+              "sample_mean": 19.8,
+              "peak": 24
+            },
+            "containers": {
+              "sample_mean": 3.9,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 154.84,
+              "peak": 200.2
+            },
+            "cpu_percent": {
+              "sample_mean": 8.542,
+              "peak": 21.1
+            },
+            "pids_including_threads": {
+              "sample_mean": 16,
+              "peak": 20
+            },
+            "containers": {
+              "sample_mean": 0.9,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 60.891,
+              "peak": 60.91
+            },
+            "cpu_percent": {
+              "sample_mean": 2.175,
+              "peak": 4.26
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.8,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 295,
+          "valid_samples": 295,
+          "sample_errors": 0,
+          "observed_span_seconds": 601.430093050003,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 78.27216949152542,
+              "peak": 109.58
+            },
+            "cpu_percent": {
+              "sample_mean": 0.6144745762711864,
+              "peak": 26.09
+            },
+            "pids_including_threads": {
+              "sample_mean": 4.003389830508475,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4.003389830508475,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 58.1224406779661,
+              "peak": 89.72999999999999
+            },
+            "cpu_percent": {
+              "sample_mean": 0.3191525423728814,
+              "peak": 26.09
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.010169491525424,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.006779661016949,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 20.14972881355932,
+              "peak": 21.55
+            },
+            "cpu_percent": {
+              "sample_mean": 0.2953220338983051,
+              "peak": 3.05
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9932203389830508,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.9966101694915255,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.98,
+              "peak": 54.98
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.98,
+              "peak": 54.98
+            },
+            "cpu_percent": {
+              "sample_mean": 0.03,
+              "peak": 0.03
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 10,
+          "valid_samples": 10,
+          "sample_errors": 0,
+          "observed_span_seconds": 18.184802055358887,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 209.171,
+              "peak": 262.11
+            },
+            "cpu_percent": {
+              "sample_mean": 16.316,
+              "peak": 100.79
+            },
+            "pids_including_threads": {
+              "sample_mean": 19.6,
+              "peak": 24
+            },
+            "containers": {
+              "sample_mean": 3.9,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 151.39,
+              "peak": 201.2
+            },
+            "cpu_percent": {
+              "sample_mean": 15.439,
+              "peak": 100.76
+            },
+            "pids_including_threads": {
+              "sample_mean": 16,
+              "peak": 20
+            },
+            "containers": {
+              "sample_mean": 0.9,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 57.781,
+              "peak": 60.94
+            },
+            "cpu_percent": {
+              "sample_mean": 0.877,
+              "peak": 1.84
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.6,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-202-001/resource-samples.jsonl",
+          "sha256": "b73373f5da2a515906ab78415f6b573c131365b3df14b08bde4f1087b343a251"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-202-001/cleanup.json",
+          "sha256": "868c2bdc58ebfb26b64052a61ba3e52044646a9fce89385d63a5fca8939a03dc"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-202-001/orchestration.json",
+          "sha256": "ebdd7d30825eb96f628504c3cb080c42a2e6b0be6f202a7c0672092f7e5448ee"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-202-001/trusted/worker-a.json",
+          "sha256": "4f5bceca0451f4cca43fad4e6012b07305ac214384203de3892c74b6aeec3427"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-202-001/trusted/worker-b.json",
+          "sha256": "46575171b5fe4115846a3a6b41f6a4d2a6c79cfc5ea2c055113483abb804ca0f"
+        }
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-pause-seed-303-001",
+      "used_active_seconds": 48.36539616600203,
+      "same_host_clock_timings": {
+        "signal_sent_to_a_exit_observed_seconds": 2.632524,
+        "b_started_to_exit_observed_seconds": 25.137463,
+        "note": "Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred."
+      },
+      "phases": {
+        "services_idle": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 59.1,
+              "peak": 59.1
+            },
+            "cpu_percent": {
+              "sample_mean": 5.54,
+              "peak": 5.54
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 59.1,
+              "peak": 59.1
+            },
+            "cpu_percent": {
+              "sample_mean": 5.54,
+              "peak": 5.54
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-a_active": {
+          "samples": 12,
+          "valid_samples": 12,
+          "sample_errors": 0,
+          "observed_span_seconds": 22.3264639377594,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 207.69333333333333,
+              "peak": 259.3
+            },
+            "cpu_percent": {
+              "sample_mean": 10.661666666666667,
+              "peak": 34.620000000000005
+            },
+            "pids_including_threads": {
+              "sample_mean": 19.666666666666668,
+              "peak": 23
+            },
+            "containers": {
+              "sample_mean": 3.9166666666666665,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 146.575,
+              "peak": 198.4
+            },
+            "cpu_percent": {
+              "sample_mean": 8.866666666666667,
+              "peak": 32.09
+            },
+            "pids_including_threads": {
+              "sample_mean": 15.833333333333334,
+              "peak": 19
+            },
+            "containers": {
+              "sample_mean": 0.9166666666666666,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 61.11833333333333,
+              "peak": 61.78
+            },
+            "cpu_percent": {
+              "sample_mean": 1.795,
+              "peak": 4.33
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.8333333333333335,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "paused_wait": {
+          "samples": 293,
+          "valid_samples": 293,
+          "sample_errors": 0,
+          "observed_span_seconds": 602.7076201438904,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 78.66655290102389,
+              "peak": 111.07
+            },
+            "cpu_percent": {
+              "sample_mean": 0.7241296928327645,
+              "peak": 24.63
+            },
+            "pids_including_threads": {
+              "sample_mean": 4,
+              "peak": 6
+            },
+            "containers": {
+              "sample_mean": 4,
+              "peak": 5
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 58.59402730375426,
+              "peak": 91.23
+            },
+            "cpu_percent": {
+              "sample_mean": 0.3794880546075085,
+              "peak": 24.63
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.0102389078498293,
+              "peak": 5
+            },
+            "containers": {
+              "sample_mean": 3.006825938566553,
+              "peak": 4
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 20.072525597269625,
+              "peak": 21.53
+            },
+            "cpu_percent": {
+              "sample_mean": 0.34464163822525595,
+              "peak": 5.19
+            },
+            "pids_including_threads": {
+              "sample_mean": 0.9897610921501706,
+              "peak": 1
+            },
+            "containers": {
+              "sample_mean": 0.9931740614334471,
+              "peak": 1
+            }
+          }
+        },
+        "after_wait": {
+          "samples": 1,
+          "valid_samples": 1,
+          "sample_errors": 0,
+          "observed_span_seconds": 0.0,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 54.959999999999994,
+              "peak": 54.959999999999994
+            },
+            "cpu_percent": {
+              "sample_mean": 0.05,
+              "peak": 0.05
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 54.959999999999994,
+              "peak": 54.959999999999994
+            },
+            "cpu_percent": {
+              "sample_mean": 0.05,
+              "peak": 0.05
+            },
+            "pids_including_threads": {
+              "sample_mean": 3,
+              "peak": 3
+            },
+            "containers": {
+              "sample_mean": 3,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        },
+        "worker-b_active": {
+          "samples": 13,
+          "valid_samples": 13,
+          "sample_errors": 0,
+          "observed_span_seconds": 24.689339876174927,
+          "all_containers": {
+            "memory_mib": {
+              "sample_mean": 196.8923076923077,
+              "peak": 257.28
+            },
+            "cpu_percent": {
+              "sample_mean": 30.56153846153846,
+              "peak": 101.91
+            },
+            "pids_including_threads": {
+              "sample_mean": 20.384615384615383,
+              "peak": 24
+            },
+            "containers": {
+              "sample_mean": 3.8461538461538463,
+              "peak": 4
+            }
+          },
+          "workers": {
+            "memory_mib": {
+              "sample_mean": 141.20076923076923,
+              "peak": 196.2
+            },
+            "cpu_percent": {
+              "sample_mean": 27.589230769230767,
+              "peak": 101.88
+            },
+            "pids_including_threads": {
+              "sample_mean": 16.846153846153847,
+              "peak": 20
+            },
+            "containers": {
+              "sample_mean": 0.9230769230769231,
+              "peak": 1
+            }
+          },
+          "shared_services": {
+            "memory_mib": {
+              "sample_mean": 55.69153846153846,
+              "peak": 61.18
+            },
+            "cpu_percent": {
+              "sample_mean": 2.9723076923076923,
+              "peak": 17.36
+            },
+            "pids_including_threads": {
+              "sample_mean": 3.5384615384615383,
+              "peak": 4
+            },
+            "containers": {
+              "sample_mean": 2.923076923076923,
+              "peak": 3
+            }
+          },
+          "bench_and_monitor": {
+            "memory_mib": {
+              "sample_mean": 0.0,
+              "peak": 0.0
+            },
+            "cpu_percent": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "pids_including_threads": {
+              "sample_mean": 0,
+              "peak": 0
+            },
+            "containers": {
+              "sample_mean": 0,
+              "peak": 0
+            }
+          }
+        }
+      },
+      "sources": {
+        "resource-samples.jsonl": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-303-001/resource-samples.jsonl",
+          "sha256": "818495c3998ad1bf08c34894316318f769018085df5c194821b4bbaa4b5f2d21"
+        },
+        "cleanup.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-303-001/cleanup.json",
+          "sha256": "843f3703ae4d5117c95da5025425cde7bc9e1e8d3305216c9a4311f1de41548b"
+        },
+        "orchestration.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-303-001/orchestration.json",
+          "sha256": "5dd86497bcf7aa42186bdc7f298eabd303bb35a26135f98ad607aa5998f119af"
+        },
+        "trusted/worker-a.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-303-001/trusted/worker-a.json",
+          "sha256": "c180eb3f348585bd5b43b58f8f8211e32e932d6f59afc09b67dee4c27776ee57"
+        },
+        "trusted/worker-b.json": {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-303-001/trusted/worker-b.json",
+          "sha256": "0a52c63e5d42b925a98051ac0cef332642767fc36c110c92c507abd23e50f061"
+        }
+      }
+    }
+  ],
+  "note": "Descriptive raw-sample summary only. No regrading. Means are per sample, not time weighted. Paused resources include experiment services and monitor. No currency or production savings inferred."
+}

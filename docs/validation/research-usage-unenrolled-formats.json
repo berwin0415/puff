@@ -1,0 +1,210 @@
+{
+  "schema": "harness-lab-explicitly-unenrolled-formats/1",
+  "paths_are_metadata_references_only": true,
+  "sqlite_opened_or_statted": false,
+  "sql_queried": false,
+  "model_called": false,
+  "claim": "Explicit known gap, not exhaustive discovery, zero consumption or a complete research bill",
+  "entries": [
+    {
+      "budget_path": "budgets/multi-user-baseline/i24-dsh-baseline-101-001-main-a/i24-dsh-baseline-101-001-main-a/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001/baseline-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001/container-transition-registry.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-001/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the existing DA-only baseline closure rule; no SQL or zero-spend inferred"
+    },
+    {
+      "budget_path": "budgets/multi-user-baseline/i24-dsh-baseline-101-002-main-a/i24-dsh-baseline-101-002-main-a/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002/baseline-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002/container-transition-registry.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the existing DA-only baseline closure rule; no SQL or zero-spend inferred"
+    },
+    {
+      "budget_path": "budgets/multi-user-baseline/i24-dsh-baseline-101-003-main-a/i24-dsh-baseline-101-003-main-a/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/baseline-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/container-transition-registry.json",
+        "runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the existing DA-only baseline closure rule; no SQL or zero-spend inferred"
+    },
+    {
+      "budget_path": "budgets/multi-user/i24-dsh-smoke-101-001-main-a/i24-dsh-smoke-101-001-main-a/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the fixed DA-only scope closure rule; cancellation inflight/unknown outcome is retained, not forced to 200"
+    },
+    {
+      "budget_path": "budgets/multi-user/i24-dsh-smoke-101-001-main-b/i24-dsh-smoke-101-001-main-b/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the fixed DA-only scope closure rule; cancellation inflight/unknown outcome is retained, not forced to 200"
+    },
+    {
+      "budget_path": "budgets/multi-user/i24-dsh-smoke-101-001-cancel-a/i24-dsh-smoke-101-001-cancel-a/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the fixed DA-only scope closure rule; cancellation inflight/unknown outcome is retained, not forced to 200"
+    },
+    {
+      "budget_path": "budgets/multi-user/i24-dsh-smoke-101-001-cancel-b/i24-dsh-smoke-101-001-cancel-b/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/plan.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/host-result.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json",
+        "runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/cleanup-result.json"
+      ],
+      "reason": "DSH I24 format is outside the fixed DA-only scope closure rule; cancellation inflight/unknown outcome is retained, not forced to 200"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-001/budgets/active/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "active-user-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-002/budgets/active/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "active-user-002",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-001/budgets/wake/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "wake-user-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-002/budgets/wake/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "wake-user-002",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-001/budgets/fault/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "fault-user-001",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-002/budgets/fault/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "fault-user-002",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-003/budgets/inactive-wake/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "inactive-wake-user-003",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    },
+    {
+      "budget_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-004/budgets/inactive-wake/calls.sqlite",
+      "run_path": "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001",
+      "task_id": "inactive-wake-user-004",
+      "metadata_sources_not_loaded_by_helper": [
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/plan.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/tasks.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/final-containers.json",
+        "runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-container.json"
+      ],
+      "reason": "New I25 inactive-user rotation/lifecycle format is not enrolled by this fault-only helper; no complete cost or spend outcome inferred"
+    }
+  ]
+}

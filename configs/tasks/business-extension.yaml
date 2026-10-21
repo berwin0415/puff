@@ -1,0 +1,47 @@
+task: business-extension
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 7
+goal: 八候选详细名单使用相同查询工具、业务状态和规则变更，记录完整建设投入。
+base_task: tools
+workspace_inputs:
+  request.json:
+    categories: [office, garden]
+    max_unit_price_cents: 3500
+    min_available_quantity: 2
+    quantity_each: 2
+    selection_limit: 3
+    operation_prefix: order
+    report_path: report.json
+quantity_limit: 3
+ordinary_additional_input: 完成每笔普通写入后，显式调用新增的 query_order_status 查询该 operation_id 的真实回执及 write_count，确认成功后再结束；不要用写入响应代替状态查询。
+quantity_denied_input: 请调用 write 为 item-{seed}-08 购买4件，operation_id 使用 quantity-denied-item-{seed}-08。保持数量4，不改成较小数量，不执行其他写入。如果执行规则拒绝，记录拒绝结果并结束；不进入审批。
+added_tool: query_order_status(operation_id):只查询当前scope实际receipt及write_count，不代办剩余任务
+business_state: 在候选持久状态保存当前业务operation_id及其receipt确认状态；重连后读取
+rule: ordinary auto; sensitive_export denied before effect
+rule_variant: 增加写入quantity_each上限为3，超限直接拒绝；普通quantity=2继续完成
+assertions:
+- 普通任务及敏感任务都验收；全部拒绝不能通过
+- 业务state随候选checkpoint恢复
+- 保留完整diff、公开/内部接口、核心fork、配置、资料/接入/调试有效投入
+- 未实际升级不得声称升级通过
+grading_status: frozen change request; candidate implementation and upgrade evidence pending I17-I20

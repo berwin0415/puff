@@ -1,0 +1,47 @@
+task: tools
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 2
+- 6
+goal: 读取条件、查全分页、选择最便宜的至多3件、各写入2件并生成JSON报告。
+workspace_inputs:
+  request.json:
+    categories:
+    - office
+    - garden
+    max_unit_price_cents: 3500
+    min_available_quantity: 2
+    quantity_each: 2
+    selection_limit: 3
+    operation_prefix: order
+    report_path: report.json
+candidate_input_factory: runner.grading.prepare_tools_inputs
+query_page_size_max: 5
+controller_setup:
+- 只将request.json和目标提示写入候选工作区
+- 外部验收器单独从seed/user/session重新计算预期；不将预期报告写给候选
+expected_artifacts:
+- report.json
+- scoped business ledger
+- trusted tool-events.jsonl
+grader: runner.grading.grade_tools
+grading_status: implemented; positive/negative calibration required

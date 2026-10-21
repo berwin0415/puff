@@ -1,0 +1,43 @@
+schema_version: 1
+
+paths:
+  data_root: /Users/hanbowen01/harness-lab-data
+  container_data_root: /data
+
+# These are variable names only. Values are injected at runtime, never read here.
+model:
+  api_base_url_env: MODEL_API_BASE_URL
+  api_key_env: MODEL_API_KEY
+  name_env: MODEL_NAME
+
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+  pause_wait_seconds: 600
+  budget_usd_reference: 1.0
+  # Price information and an actual money limiter are not implemented yet.
+  usd_limit_enforced: false
+  price_source: null
+
+seeds:
+  smoke: [101]
+  validation: [101, 202, 303]
+  final: [101, 202, 303, 404, 505]
+
+concurrency:
+  max_active_tasks: 2
+  idle_user_counts: [2, 5, 10]
+
+# Total across the services in one experiment, not a per-container allowance.
+resources:
+  memory_bytes: 6442450944
+  cpus: 3
+
+sampling:
+  interval_seconds: 2
+
+execution_policy:
+  ordinary_operations: auto_within_scope
+  sensitive_operations: deny
+  human_approval: false

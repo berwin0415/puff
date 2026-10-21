@@ -1,8 +1,0 @@
-environment: local
-compose_file: compose/docker-compose.yml
-runner_service: runner
-adapter_service: adapter
-execution_service: execution
-fixture_service: fixtures
-state_backend: sqlite_jsonl
-artifact_root_env: HARNESS_LAB_ARTIFACT_ROOT

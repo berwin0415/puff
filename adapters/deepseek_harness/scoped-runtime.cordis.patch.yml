@@ -1,0 +1,10 @@
+# I17 is an explicitly separate direct-runtime variant of sdk-minimal.
+# The official loop, model provider, tools runtime and persistence stay intact.
+# This entry owns create/resume through agents.create/agents.resume({ setup }), so there is
+# no stdio SDK server or its command-line/stdin lifetime provider.
+- id: sdk-app-startup
+  disabled: true
+- id: sdk-jsonrpc-server
+  disabled: true
+- id: harness-lab-http-tools
+  disabled: true

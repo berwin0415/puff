@@ -1,0 +1,249 @@
+# 候选能力与投入比较
+
+资料截点：2026-10-21。本文是本轮I27比较交付，条件化建议见[建议文档](recommendation.md)；I26已同步010已登记材料统计，金额、完整计量、人工工时及升级实验仍未知，本轮未完成。I22两路线各三条原生暂停恢复均成立，完整业务DSH3/3、Deep Agents1/3。I23固定阶段已全部结束：DSH正式23/24、补基线4/4、最终8/8；Deep Agents分别10/24、2/4、4/8，分页失败及DSH旧采样停止批分别保留。不同阶段不合成一个成功率。
+
+I24的DA三组边界、并发、重连、资源和清理均通过，整组业务2/3；DSH单用户基线通过，双用户smoke整体失败，正式三种子本轮未完成。I25旧两策略探索均有采样长空档，新按需N5业务4/7且空闲窗口跨阶段缺测，N10停止。本轮不继续修实验台扩跑，浏览器使用期隔离、同Worker复用、resident入口授权和完整产品后端开销明确留为未完成。
+
+这些结果支持继续优先考察DSH、把Deep Agents保留为掌握执行和状态的自建备选，但没有证明迁移现有OpenClaw能减少研发或线上费用。没有具体业务权重，本轮不计算综合名次；总进度以[实施任务表](../../IMPLEMENTATION_PLAN.md)为准。
+
+本文只读取候选报告、已结束的 batch 索引、既有 verdict 和资源摘要，沿用原判定；未重新执行或评分候选，未读取原始推理文本。代码已准备、合成校准通过、原生接口存在、真实任务通过是不同层次的证据。
+
+## 一、九项能力现在有多少证据
+
+下表的详细任务通过数保留原101/202/303三组，每轮20次模型请求、300秒活跃预算。进入最终比较的Deep Agents和DSH均已补充404/505，另列下文并保留镜像/判定分组；其余路线没有因此获得更多运行证据。所有“未验证”均表示当前没有足够运行证据，不能改写成候选不支持。
+
+| 能力 | DeepSeek Harness | OpenClaw | Deep Agents + LangGraph | OpenAI Agents SDK |
+| --- | --- | --- | --- | --- |
+| 1. 开源材料与 Docker 运行 | MIT固定源码；真实SDK/插件进入镜像；新容器模型和工具通过。详细任务与Goal专项是不同变体 | MIT固定源码；真实Gateway进入镜像；新容器模型和工具通过 | 两项目均MIT；真实`create_deep_agent`、LangGraph、SQLite saver进入镜像；新容器任务通过 | MIT固定源码wheel；真实Agent/Runner、Chat Completions模型进入镜像；新容器任务通过 |
+| 2. 多步工具任务与上下文 | 普通工具3/3；按页查询、筛选、3笔业务写入和报告通过 | 普通工具2/3；一轮报告/写入正确，但没有按约定读全分页 | 普通工具2/3；一轮请求每页100条，违反≤5条要求 | 普通工具3/3；当前三组完整通过 |
+| 3. 浏览器操作 | 3/3；无Electron，任务实际驱动容器内浏览器；模型20/20/16次，前两轮没有调用余量 | 0/3；均用满20次。303已提交并下载正确文件，但未正常结束；101/202未提交 | 3/3；18/20/17次，202用满预算 | 3/3；20/20/18次，前两轮用满预算；旧MCP接线失败保留 |
+| 4. 任务暂停与恢复 | 冷读23项通过。Goal101002/202001均真实暂停、删A、等600秒、重建代理、新B沿原会话续跑，17/17通过；101为追加离线复核，原16/17保留。303001也完整17项通过；两路线三种子暂停专项已结束，DSH完整3/3 | 冷读22项通过；所选HTTP入口没有本轮已通过的安全暂停/新容器续跑 | 冷读22项通过。101004/202001/303001三组原生drain、删A、等600秒、重建代理、新B从原checkpoint空输入继续均成立；303完整17项通过，101/202分页违约使完整业务仅1/3。原预算、不重发与无OOM均通过 | 冷读22项通过；公开RunState/after_turn的完整续跑尚未接入验证 |
+| 5. 故障处理与业务一致性 | 删除修订后的正式24格完整23/24，唯一失败为超时/非幂等/101分页；补普通基线4/4、最终kill/drop各4/4。正式六条及最终四条kill均原生恢复，各格已提交重发0；旧两停止批单列，不合并成功率 | 缺文件错误、注入504后的重试已有冒烟；故障后重启及写入不确定窗口未验 | 新fault-send正式24格完整10/24；补普通基线2/4、最终4/8（kill1/4、drop3/4），业务失败均仅分页。各阶段外层及清理有效，正式六条及最终四条kill均原生恢复，各格已提交重发0；无故障也有分页失败 | 缺文件错误、注入504后的重试已有冒烟；RunState存在不能代替崩溃及写后丢回执实验 |
+| 6. 流程透明与执行控制 | 通知、工具审计和会话事件可对应；原取消两轮缺原生结束事件，保留失败；Goal停点另验 | Gateway/原生事件与工具审计可对应。修正后的HTTP取消有同run停止证据，但容器OOM，整体失败 | 图事件、状态、工具审计可对应；公开drain与同步checkpoint实测成立，语义是当前superstep完成后协作停止 | 流事件、hook及实际模型终态可对应；公开immediate cancel实测，不能据此保证副作用撤销 |
+| 7. 业务定制与维护 | 新增回执查询/数量规则/原生业务态的新保存接法3/3；旧必需事件冷读不兼容暴露了维护点 | 扩展1/3；查询及业务态已接通，两轮分页失败。数量规则正式只1/3真正触发拒绝，另两轮无副作用但缺执行层证据 | 扩展1/3；查询及状态已接通。202分页超限；303实际选错商品，不能归成状态没存住 | 扩展2/3；一轮分页超限，报告、写入及状态正确仍整体失败；数量规则3/3执行前拒绝 |
+| 8. 产品后端接入与作用域 | 当前有可信配置绑定和单任务工具scope审计；新I24单用户基线完整通过（9模型/3写）；双用户smoke两主任务判定通过（10/9模型），两取消因在途/未知预算结果未完成评分；有效并发窗口未命中且删除过渡采样失败，整组false，清理通过；不能称完整产品边界已验证 | 当前单Gateway实验由可信客户端持owner/operator凭证；不同user/session字符串不等于租户授权，真实后端边界未验 | 新removal101/202/303三组并发/重连/归属及跨用户拒绝、资源/生命周期和两取消均通过；202/303整组通过，各20次模型，101仅B主任务失败，整体2/3。三组host无采样/超额/执行错误、正向清理通过。旧fresh失败保留；DSH、浏览器使用期隔离及同Worker复用未完成 | 当前Session/工具绑定及单任务scope审计；真实用户授权、越权控制及复用未验 |
+| 9. 隔离方式与实例成本 | 同runtime多会话是源码线索；常驻/按需方案和成本尚未实测 | 一个Gateway多个Agent/session是源码线索；本轮只测单任务，不能说必须每用户一个容器，也未证明共享安全 | 同材料两用户常驻/按需探索均结束，各五个可评分业务3/5、34/33条请求计数。原业务态保留或冷读、两新任务唤醒及杀A后B原生进展成立；旧全阶段采样补审计均失败，首尾/序号/落盘完整性仍未知。常驻5/10启动前配额拒绝，无RSS实测；新无模型观测门禁通过；按需N5业务4/7，回收后空闲资源有1份缺测，整轮失败，N10先停。无节省比例 | SDK对象可由应用管理是源码线索；常驻/按需方案和成本尚未实测 |
+
+Deep Agents新增404/505为tools2/2、browser2/2、sensitive2/2、extension1/2、extension-denied2/2，合计9/10；extension404违反每页≤5条要求，报告、三笔写入、查询和业务态均正确仍失败。原三组的分页和错误商品选择失败全部保留。按已核对的相同候选/任务/判定口径列出的五种子描述汇总为tools4/5、browser5/5、sensitive5/5、extension2/5、extension-denied5/5；bench镜像不同，分组边界见第三节，不能当作同一完整镜像组合的25轮批次。
+
+DSH新保存接法的404/505五类均2/2，共10/10。它与原15轮的候选镜像不同，与metadata正式6轮的进程验收也不同；同样保留来源分层，不能拼成新镜像同一口径25轮。两批最终补充只覆盖前述工具/浏览器/规则/扩展任务，没有关闭故障、后端授权或实例成本的缺口。
+
+冷读只验证：旧Worker删除后，新Worker能从原生存储读回完整业务态，而且没有新增模型或业务请求。它没有继续未完成任务，不能替代第四项。浏览器不要求保存页面、登录或服务端会话现场；浏览器能力按第三项评价。
+
+第六项的透明度证据说明能看到哪些执行事实；没有做“定位同一故障各花多少人工时间”的实验，不能据此给出排障效率排名。单任务scope审计也不能替代第八项的身份、越权和并发实验；本轮I24仅覆盖独立模拟后端及其固定入口，未连接用户已有的产品租户后端。
+
+原三组敏感任务执行层拒绝为DSH3/3、OpenClaw3/3、Deep Agents3/3、Agents SDK1/3；Deep Agents新增两组也均真实触发执行层拒绝。Agents SDK另两轮是模型自行拒绝，均无敏感副作用；这说明本轮没有触发执行层测试路径，不能称为发生越权写入，也不能称该执行规则已充分验证。
+
+上述结论的能力来源必须分别计入：
+
+| 路线 | 候选及官方配套提供 | 本仓库接入需要维护 |
+| --- | --- | --- |
+| DSH | Agent循环、profile/插件机制、会话事件与持久化；专项另加载官方Goal/checkpoint插件和原生崩溃日志修复 | 工具与MCP桥、可信任务绑定、业务态保存、Goal运行及故障恢复绑定/诊断；当前会导入固定源码路径，升级时须复核插件契约、轮次事件时序及会话格式 |
+| OpenClaw | Gateway、Agent循环、会话库、公开插件/hook和session接口 | Gateway生命周期、HTTP工具/MCP桥、任务到session的可信绑定、业务态及实际取消的观测链；本仓库`BUSINESS_EXTENSION.patch`不是上游内核fork |
+| Deep Agents | `create_deep_agent`、图执行、RunControl、checkpointer/SQLite saver及原生checkpoint续跑 | HTTP/MCP工具、业务扩展、生命周期与绑定、暂停索引；故障物理审计及Send诊断；I24外置模拟后端/单次Worker控制、I25 resident入口。生产授权、同Worker复用及完整成本仍需补齐 |
+| Agents SDK | Agent/Runner、FunctionTool、RunHooks、SQLiteSession、RunState、公开取消 | HTTP/MCP工具、可信绑定、原生模型终态观察、状态保存与传输适配；完整中断续跑和产品运行管理仍需补齐 |
+
+模型计数、Docker调度、模拟业务、故障注入、独立判定和受保护观测是公共实验设施，不是上述任何候选自带的完整产品能力。实验设施也不必原样进入未来产品。完整材料边界见[工程清单](engineering-inventory.md)。
+
+### I23–I25新增证据按专项分组
+
+这些变体与前述普通工具、浏览器及I22暂停镜像分别留存，不把通过数拼成一个新成功率。
+
+| 专项及材料 | 已结束结果 | 仍缺什么 |
+| --- | --- | --- |
+| I23 DSH `fault-round-order`，[基线](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i23-dsh-round-baseline101-001/batch.json)、[冒烟](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-smoke-001/batch.json) | 两模式正常基线2/2、20次模型；seed101非幂等四故障4/4、51条reservation，含1次本地超时注入；真实kill恢复及无已提交写入重发成立，清理完成 | [正式24格批](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-formal-001/batch.json)已停止，详见下文；删除修订后的独立正式、补基线和最终种子均已结束，单列如下，不补判旧批 |
+| I23 DSH新[分阶段耗时正式批](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-timing-formal-001/batch.json) | 模型超时、工具首次失败和写后丢回执的18格有效结束，17格完整通过，工具失败/幂等/303仅分页失败；第19格原业务和原生恢复通过，但采样inspect返回1，完整性停止 | 第19格不判候选能力成败，余5格未运行，不补失败或零消耗；旧批与新批不合并成功率；后续独立固定阶段已结束，不回填旧批 |
+| I23 Deep Agents `fault-send`，[基线](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-baseline101-001/batch.json)、[冒烟](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-smoke-001/batch.json) | 两模式基线0/2、10次模型，均业务分页失败；四故障2/4、27条reservation，含1次本地注入。超时/工具失败完整通过，丢回执/kill业务失败但外层检查有效；旧Delta/Send诊断中止保留 | DA正式24格、补普通基线4轮及最终8轮均已结束，单列如下。原生恢复成立不等于原业务完整完成，也不把冒烟外推为生产可靠性 |
+| I23 Deep Agents首次[正式24格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-formal-001/batch.json) | 24/24格全部结束，完整10/24；四故障完整通过依次为模型超时2/6、工具失败5/6、丢回执2/6、写前kill1/6。14格失败均仅all_pages_read，24格原独立checks均通过、host errors为0、cleanup.remaining均空；6条kill原生恢复6/6，24格已提交操作重发均0。axes累计154条reservation，009 SQL确认148条远程200、6条本地注入 | 两路线补普通基线及最终阶段均已结束，单列如下；不与冒烟或DSH旧停止批合并成功率，154不称全部远程调用。009已独立完成SQL与token提取，原失败和完整性限制不变 |
+| I23 DSH删除互斥修订后[正式24格](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-formal-001/batch.json) | 24/24格有效结束，完整23/24；超时5/6，其余三故障各6/6。唯一超时/非幂等/101仅业务分页失败；外层、host与清理有效，六kill原生恢复通过，各格已提交重发0 | 旧两个停止批保留；本批独立留存，不合并成功率，不外推生产可靠性 |
+| I23补普通基线202/303：[DSH](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-baseline-rest-001/batch.json)、[DA](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-baseline-rest-001/batch.json) | DSH4/4，DA2/4；DA幂等303、非幂等202仅分页失败，其余业务/外层/清理有效。此前101分别2/2、0/2保留，可描述同候选普通基线DSH6/6、DA2/6，但bench分层 | DA无故障也有分页约束失败，不能把故障组同类失败都归为恢复问题；不与正式矩阵合并通过率 |
+| I23最终关键故障404/505：[DSH](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-final-001/batch.json)、[DA](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-final-001/batch.json) | DSH8/8，kill/drop各4/4；DA4/8，分别1/4、3/4，四失败仅分页。各路线四kill均原生恢复，每格已提交重发0，外层与清理有效 | I23约定调研结束，能力包含业务失败；分组留存，不把恢复或不重发等同于完整业务，也不推出线上可靠性 |
+| I24 Deep Agents `multi-user`旧[fresh-smoke原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-fresh-smoke-101-001/scope-verdict.json) | 完整走过主任务与取消流程；边界/重叠/重连及两取消通过；两主任务失败，`transition_terminal_not_healthy`使资源/生命周期失败，整体false | 旧镜像/原判定保留，不以新修订回填健康；费用闭合只证明固定付费writer及后端路由结束，不声称旧trial全清理 |
+| I24 Deep Agents `multi-user`新[removal101原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/scope-verdict.json) | bench `96fe6035…`、services `a68a4e18…`，351项容器校准后执行；`product_boundary_overlap_reconnect`与`actual_container_resources_and_lifecycle`通过，A及两取消通过，仅B主任务失败。host passed=true、采样/超额/errors为空；独立[正向清理](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/cleanup-result.json)通过，同trial容器/网络最终均为空 | 整体仍false，保留B业务失败；202/303结果单列，不覆盖本轮 |
+| I24 Deep Agents相同pins的[removal202](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/scope-verdict.json)与[removal303](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-303-001/scope-verdict.json) | 两组CLI均0，scope/host/cleanup均passed=true；各两个主任务6+6次模型、两取消4+4次，共20次。两组业务、边界/并发/重连、实际资源生命周期及正向清理均通过，host错误/超额为空；同trial容器和网络清空 | 三组新状态已全部执行，整组2/3；DSH、浏览器使用期隔离及同Worker复用仍未验证。取消仍为superstep边界协作drain，不等于立即取消 |
+| I24 DSH同入口[baseline003](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-003/baseline-verdict.json)及双用户[smoke101](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json) | 单用户基线9次模型、3笔正确写入，业务/原生/预算/0.75CPU配置、host及清理均通过。双用户两主任务各10/9次模型且独立判定通过；两取消因`inflight_or_unknown_model_result`停止评分；有效工具并发窗口未命中，B旧Worker删除中采样缺当时已删除的证明，整组及host为false，清理通过 | 两取消尚无可采信原生结论，不能写成再次证实缺结束事件；不能把两个主任务或两个容器同时存在当成整组通过。正式三种子本轮未完成，不继续修实验台扩跑，原失败保留 |
+| I25 Deep Agents `instance-runtime`，[baseline004](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-baseline-101-004/protected/baseline-verdict.json) | 5次远程请求、3笔写入；八项中七项通过，唯一失败为完整业务，具体是未读全分页。新观察链已在实际挂载与真实基线中验证；旧观察错误保留 | 完整业务基线门槛仍未满足；随后两策略仅作明确标记的探索，不改原失败 |
+| I25同材料两用户[按需](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-od-101-001/protected/flow-verdict.json)与[常驻](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-101-001/protected/flow-verdict.json) | 同镜像/种子101/pair各业务3/5，分别33/34条计数；原业务态冷读/保留、两新任务唤醒、杀A后B原生进展与原观察/资源/清理检查通过。两轮fault-B均分页失败，A不恢复；新全阶段采样补审计均失败，见下文 | 常驻N=5/10在Docker启动前按固定配额拒绝，非RSS/OOM结果；新无模型观测门禁通过；按需N5及未活跃用户轮换已结束，完整结果单列下方；N10因回收后空闲窗口缺测先停。其余种子、同入口I24/产品后端、DSH及故障A恢复仍缺，不能报告完整成本收益 |
+| I25按需[N5轮换101](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json) | 7个可评分业务4/7；此前未活跃用户003/004首次业务均通过。active001、wake001、fault002均只因请求`page_size=100`违反每页最多5条失败，报告、写入及scope正确。实际只杀A且退出137、非OOM，B之后仍有原生进展；复合故障项因B业务分页失败而false。148样本无sample error，5秒节奏、精确登记、独立评分和清理通过 | 回收后空闲第82份样本跨到随后冷读Worker启动，前后容器集合不同、缺新增Worker本份资源数据；29份完整、1份不完整，整阶段均值/峰值未知，不能补0。整体`cost_subset_passed=false`、`i25_complete=false`、`savings_percent=null`，N10本轮未完成，不为通过重跑N5 |
+
+基线只剩业务失败、模型/工具/原生状态/预算与资源轨道有效时，可继续独立的隔离或生命周期探索。业务及整轮失败仍按原判定保留，基础设施完整性错误仍须先归因；不为获得成功重复同材料/种子，不改变模型、提示词或预算。I25探索计划固定`formal_i25_eligible=false`，两策略原判定均保持`cost_subset_passed=false`、`i25_complete=false`、`savings_percent=null`。完整过程分别见[故障报告](fault-recovery-execution.md)、[多用户报告](multi-user-design.md)和[实例成本报告](instance-cost-flow.md)。
+
+DSH旧正式首批原状态为`stopped`：第一格model_timeout/幂等服务/101完整通过，第二格202因`fault_resource_sampling_gap`完整性停止，仅1/24格有效，第二格不判候选成败。旧证据没有逐命令耗时，不能倒推具体慢点。新诊断经279项容器校准和四容器无模型probe后执行独立的完整24格计划：前18格有效结束，17格完整通过，工具首次失败/幂等/303保留分页业务失败；第19格kill/幂等/101的原业务、原生恢复虽通过，采样inspect返回1使`fault_resource_sample_error`触发完整性停止。第19格不计候选成败，余5格未运行；空batch判定指针不代表实际原verdict缺失。两批原件均保留，采样5秒门槛未放宽，基础设施错误不混入候选故障恢复成功率。
+
+I25旧判分只检查空闲窗口节奏，没有要求启动、控制、关闭等全部阶段均不超过5秒。[按需新审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)核136份样本，发现18处相邻开始间隔超过5秒，最大23.670秒；[常驻新审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json)核140份，发现14处，最大23.598秒。两者单份采样跨度、时钟顺序、control绑定及完整JSON行检查通过，但样本连续序号、采样线程完成/总行数、完整起止与首尾边界均无旧证据，保持null，不能补0或解释为通过。两份新审计均`failed`，旧verdict不改；内存表只保留原样本描述，不能声称全流程采样完整或峰值已覆盖。
+
+新[313项容器校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-rotation-check-001/host.json)已通过，覆盖token用量、实例计划、轮换流程及采样离线审计四份测试；断网、无模型/远程key、健康退出并清理。它验证代码边界，不是N5/N10轮换实测。本轮显式轮换在001/002退出后首次唤醒003/004，仍最多双活跃，独立scope/存储/凭证/预算，并核原历史和回收后业务态；N5已真实执行并完成独立评分/清理，7个可评分业务4/7，两新用户003/004首次业务均通过；整体失败及N10停止原因见上方N5分组，不能据校准宣称实例成本通过。
+
+## 二、其余四条路线保留什么结论
+
+| 路线 | 当前真实容器证据 | 本轮边界 |
+| --- | --- | --- |
+| Pi Agent Core | 工具任务完整1/2，另一轮分页超限；两轮报告和写入正确；模拟累计限额通过 | 未做同题详细/恢复/隔离/成本。Core之外的coding-agent、durable包须另列变体，不能默认算给Core |
+| Google ADK | 两个新容器工具任务均完整通过；模拟累计限额通过 | SQLite SessionService、ResumabilityConfig/invocation_id是值得验证的原生线索；未测不能写成只能存历史或依赖Google托管 |
+| Codex SDK | 原生Responses与MCP统一工具的两轮修正后任务完整通过；模拟累计限额通过；首轮审批接线失败保留 | SDK/CLI开源范围已确认；没有换模型或转换协议。当前输出token无公开硬上限；恢复及实例关系尚未实测 |
+| OpenHands | 核心SDK两个新容器工具任务均完整通过；模拟累计限额通过 | Agent Server/Canvas未运行；官方pause/persistence示例不能算本轮恢复通过，也不能因Coding定位预先淘汰 |
+
+它们暂缓详细投入是实验范围选择。与四条详细路线的证据深度不同，不参与任务成功率或成本排序。来源和版本见[材料清单](sources.md)，初筛决定见[初筛报告](screening.md)。
+
+## 三、成功任务用量怎么算
+
+先固定比较组：同一种任务、同一候选变体与镜像、同一模型、数据、请求/时间预算和资源配额。用该组**所有尝试**的实际模型请求、token或可核验费用作分子，以该组完整成功的业务任务数作分母。失败轮的调用、重试和错误写入不能从分子删除。
+
+```text
+每个成功业务任务的请求用量 = 本组全部尝试的远程模型请求数 ÷ 本组完整成功的业务任务数
+每个成功业务任务的费用 = 本组全部尝试的可核验费用 ÷ 本组完整成功的业务任务数
+```
+
+如果没有成功任务，只报告尝试数、失败原因及总支出，不除以零。敏感拒绝、数量拒绝、取消、诊断、无模型校准、冷读和状态准备分别报告；它们的测试通过不能充当已完成业务任务的分母。不同任务可以展示固定测试组合的总量，但不能当作未来业务的真实任务结构。
+
+下面原三组表只从已结束正式batch的既有`runs[].passed`和`runs[].metrics.model_requests`汇总101/202/303。每格依次是 **完整通过/尝试；全部请求；其中失败轮请求**。这些正式轮均已由候选报告核对为真实远程请求；不是SDK turn数，也不是当前研究全过程的总支出。Deep Agents最终补充单独列在表后。
+
+| 正式任务组 | DSH原接法 | OpenClaw | Deep Agents | Agents SDK |
+| --- | --- | --- | --- | --- |
+| 普通工具 | 3/3；25；0 | 2/3；29；8 | 2/3；17；5 | 3/3；18；0 |
+| 浏览器 | 3/3；56；0 | 0/3；60；60 | 3/3；55；0 | 3/3；58；0 |
+| 业务扩展 | 3/3；27；0 | 1/3；31；17 | 1/3；21；15 | 2/3；18；6 |
+| 敏感拒绝测试 | 3/3；6；0 | 3/3；12；0 | 3/3；6；0 | 1/3；4；2 |
+| 数量拒绝测试 | 3/3；7；0 | 1/3；10；7 | 3/3；6；0 | 3/3；7；0 |
+| 固定五类测试组合，共15轮 | 15/15；121；0 | 7/15；142；92 | 12/15；105；20 | 12/15；105；8 |
+
+例如，OpenClaw普通工具组应使用29/2次请求，不能只把两轮成功所用的21次除以2；其浏览器组为0成功、60次总请求，不给出“每成功任务用量”。这些是小样本描述，不能直接折算生产可靠性或费用排名。
+
+DSH修正业务态保存方式后，受影响的extension和extension-denied另做了三组正式任务：extension为3/3、25次请求，extension-denied为3/3、6次请求，均无失败轮。它们属于新镜像/新接法，应分别使用25/3及6/3，不能和旧组累计成“21种能力通过”。旧组的27次和7次仍保留为研究支出；普通工具/浏览器未在新接法下补跑，不拼出一个并未执行过的完整新镜像15轮批次。
+
+### Deep Agents最终补充与五种子描述
+
+F7新增404/505共10轮，9/10完整通过、70次请求（失败轮5次）、14笔真实写入。10份既有verdict与batch的run集合、passed及metrics逐一一致，70条代理记录均为forwarded/上游200。候选完整镜像仍为`sha256:626b547f46061a5ed28bfda72436cf5d5a4d8e6efef70c44bcc89a5ba35ef5e5`；与F4/F5的完整materials相等，实际工具服务及浏览器镜像相同，25轮均使用相同入口、模型和20次/300秒预算。
+
+| 任务 | 原101/202/303：通过/尝试；请求；失败轮请求 | 新404/505：通过/尝试；请求；失败轮请求 | 五种子描述合计：通过/尝试；请求；失败轮请求 |
+| --- | --- | --- | --- |
+| 普通工具 | 2/3；17；5 | 2/2；12；0 | 4/5；29；5 |
+| 浏览器 | 3/3；55；0 | 2/2；38；0 | 5/5；93；0 |
+| 业务扩展 | 1/3；21；15 | 1/2；12；5 | 2/5；33；20 |
+| 敏感拒绝测试 | 3/3；6；0 | 2/2；4；0 | 5/5；10；0 |
+| 数量拒绝测试 | 3/3；6；0 | 2/2；4；0 | 5/5；10；0 |
+| 固定五类测试组合 | 12/15；105；20 | 9/10；70；5 | 21/25；175；25 |
+
+bench从F4/F5的`sha256:67f4ce1e9a1afbc790f63e2104aed014bcf1670d921aff8f3ea10f934e27acbc`变为F7的`sha256:53fad51f6cd3572a64193bbfc6c00fed7c92749262c4f532d196b98685a97ff5`，所以保留两层结果。逐一读取25份bench环境清单，`runner/detailed.py`的hash均为`304dbf222c0e83490c0f297dd5768719f144c64c71f7f30098caf3d2e25c9af2`，`runner/grading.py`均为`3562066d54e4315e23a13b7661f7636f447283ba01e5a52d258d0a4cbe7f730e`，进程验收源码也相同；每类既有verdict的检查名称/说明相同。可以据此做上述五种子描述汇总，但不声称两个完整bench镜像相同，也没有把旧三组重新用新bench评分。完整来源对照见[Deep Agents报告](deepagents_langgraph.md#与原101202303如何合看)。
+
+新增extension404一次请求page_size=100，返回25件，违反分页约定；不能删除其5次失败用量。五种子35笔真实写入仍包含旧extension303的错误选择；21/25还包含拒绝测试，不能把21当作成功业务任务数。按上述五种子固定任务组描述，普通工具用量为29/4，业务扩展为33/2，浏览器为93/5；这些请求数没有可靠单价，不能换算费用排名。新增浏览器505用满20次预算，预算余量问题仍在。
+
+### DSH最终补充单独分组
+
+F8为新保存方式候选`sha256:dc5238ff6e83883e223619d149c4b784e55f491c86b3fa7be90dc99ce29336ed`，404/505共10轮全部通过、78次forwarded/200、14笔真实写入，失败轮请求为0。
+
+| 最终404/505任务 | DSH：通过/尝试；请求；失败轮请求 | Deep Agents：通过/尝试；请求；失败轮请求 |
+| --- | --- | --- |
+| 普通工具 | 2/2；14；0 | 2/2；12；0 |
+| 浏览器 | 2/2；37；0 | 2/2；38；0 |
+| 业务扩展 | 2/2；19；0 | 1/2；12；5 |
+| 敏感拒绝测试 | 2/2；4；0 | 2/2；4；0 |
+| 数量拒绝测试 | 2/2；4；0 | 2/2；4；0 |
+| 各10轮固定测试组合 | 10/10；78；0 | 9/10；70；5 |
+
+F8与F7使用同一bench `sha256:53fad51f6cd3572a64193bbfc6c00fed7c92749262c4f532d196b98685a97ff5`、实际工具服务/浏览器镜像、任务文件、模型、20次/300秒预算及2 GiB/1 CPU候选配额。DSH浏览器两轮为19/18次，剩余调用只有1/2次；不据两种子给出费用或可靠性排名。
+
+DSH的F8与F2候选镜像、adapter manifest/export和任务hash相同，但bench由`sha256:d4489e54d827e324df6274b08599ab782da05fc21722ed190d3dc87e82bf9c0b`更新，详细判定源码由`0094073d12a97dde0a8e74d2cc76b1583513e6da9fb31833fa890ffb99ae127a`变为`304dbf222c0e83490c0f297dd5768719f144c64c71f7f30098caf3d2e25c9af2`。进程检查从原普通宿主退出观察，升级为完整Worker身份、镜像、配额、无OOM/error及非活动状态的独立核对；调度脚本hash也变化。F1原15轮又是不同候选`3c4da6e3…`与必需自定义事件接法。F1、F2、F8分别保留，不生成一组从未在同一新镜像/判定下执行的25轮。完整分组见[DSH报告](deepseek_harness.md#材料分组与评价边界)。
+
+### 分母和请求数的落点
+
+| 要取的数 | 既有材料 | 使用边界 |
+| --- | --- | --- |
+| 该轮是否完整通过 | batch的`runs[].passed`、`failed_checks`；对应`verdict.json`的`passed/checks` | 沿用既有独立业务判定；自然语言“完成”、SDK completed或正确报告不能覆盖失败项 |
+| 正式组全部请求、失败轮请求 | 同batch的每轮`metrics.model_requests`；对应verdict同字段 | 按全部run汇总，再按既有passed拆分；不能只筛passed=true |
+| 真实远程请求与本地注入的区别 | 候选报告对代理证据的核对结论 | 正式组已核对为forwarded/200。diagnostic-timeout中的注入504没有发送远程；代理reservation与远程请求须分开，不能用其请求总数直接计费 |
+| 资源样本与缺测 | 每轮`resource-metrics.json`中的`samples/sample_errors/phases/resources` | 现有数字含配套服务；PIDs含线程。均值/峰值不是CPU秒、内存积分或完整云账单 |
+| 镜像、变体与任务身份 | batch的image/materials及对应manifest/input | 变体、模型、任务或配额不同则分组；最终比较须使用完整ID与hash，不能仅靠浮动tag |
+| token与金额 | 010在断网Docker提取307项登记、285个目录；2266份观察输入/输出/总量已知，13份未知；已知输入9,590,870、输出662,533、总量部分10,253,403 token，见[安全结果](token-usage-summary.json) | 13份观察这三项未知，另有11个材料单元无可用usage；请求级关联未建立、覆盖率null、金额未知。不是同题正式组效率排名或全研究总量；缓存和reasoning不重复相加 |
+
+所有正式batch的`model_cost_usd/price_source`均未提供可靠金额依据。金额保持unknown，不套用未核验的公开价格。DSH初筛已有`native-usage-summary.json`，其他候选也保留原生usage；初筛两轮不能替代正式组，也不能直接横比不同原生汇总口径。
+
+### 正式来源索引
+
+证据根为`/Users/hanbowen01/harness-lab-data/runs/2026-10-20/`。下列是本文实际读取的静态索引；hash固定读取的字节，不修改原文件。
+
+| 编号 | batch.json | SHA-256 |
+| --- | --- | --- |
+| F1 | [DSH原正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-formal-batch-001/batch.json) | `7d0e394b8fb7b6f3be05e73e0c0029432815773123499e80a7e40c8c8f1f24b0` |
+| F2 | [DSH新保存正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-metadata-formal-batch-001/batch.json) | `c5cd9e5b40624c70e5e60a625f4cfc3673592eb0b84e11bb4209e9987ebfcf2d` |
+| F3 | [OpenClaw正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-formal-batch-001/batch.json) | `64fecc9b52160b0e485c228f654c18723893d04e28d5f3e8488df24349cb1793` |
+| F4 | [Deep Agents扩展正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i19-deepagents-extension-formal-batch-001/batch.json) | `aea375fbca6e0e888a2562a7ecce9b29becb629d155817d7e4c1ae28465ca8ed` |
+| F5 | [Deep Agents其余正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i19-deepagents-core-formal-batch-001/batch.json) | `bb55d0d6d74df2991d5359ac35cff3a952e7315a7a4cb6ab52eb92a13edd4482` |
+| F6 | [Agents SDK正式](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-formal-batch-001/batch.json) | `baaa8d2b4b8fccda1f2fca5aba9dfbb6e143e2b2cd1a880c2d0101471784a51d` |
+| F7 | [Deep Agents最终404/505](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/final-da-batch-001/batch.json) | `eff609880e9435bbf31b43d4584d9700662e1805899d11d6976b35405c50cb0e` |
+| F8 | [DSH最终404/505](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/final-dsh-batch-001/batch.json) | `5992321cff4b56dc3c73c26a8c66a395ccb3cb5c5007d07a7220d308aaa251b9` |
+
+F4和F5是同镜像、互不重叠的任务，共同组成Deep Agents的15轮；F1和F2有重复任务及不同接法，保持独立。每个run由batch中的manifest索引到自身verdict和resource-metrics。本文另外逐一读取这六份索引对应的66份既有verdict，`passed`及`metrics.model_requests`与索引一致；这是资料核对，没有重跑判定器。
+
+本次另核对F7的10份verdict、10份进程验收和安全模型调用记录，不改写前述66份核对记录。F7的10个新Worker均正常退出、无OOM，配额保持2 GiB/1 CPU；173条资源采样、6次采样错误，仍不能作为独占或空闲用户成本。
+
+F8的10份verdict与batch的run集合、passed及metrics也逐一一致；10个不同Worker独立进程验收均通过、退出0、无OOM，2 GiB/1 CPU。78条代理记录均forwarded/200；163条资源采样、4次采样错误，仍含配套服务。本次新增20份静态判定资料核对，没有重跑评分。
+
+### 正式组之外的失败也要留账
+
+上面的分母表不是I26的研究总账。初筛、八类冒烟、入口修正、取消、状态冷读、I22基线及中止链均另有投入，正式表里的零失败请求也不等于某候选没有研究失败支出。[研究用量台账](costs.md)当前010截点已完成断网Docker SQL/token验收，均无key、退出0、清理通过。343库/2485条reservation分为2416条远程200、4条远程未确认、1条在途未知、36条模拟和28条本地注入；未闭合及别名列表为空，17个未登记来源未查询、不补0。token覆盖307项/285目录，2266份观察三项用量已知、13份未知，已知输入9,590,870、输出662,533、总量10,253,403；11个单元无usage，无请求级join、完整账单或金额结论。
+
+010追加本轮已结束固定阶段：DSH正式293条reservation中287条远程200、6条注入，DA/DSH补基线分别21/41条远程200，DA/DSH最终分别50/95条远程200；分类来自已通过的Docker安全分组，不从reservation直接当远程。009的295库/1985条及7,769,302已知token原件、008及全部旧失败原件均保留。writer已关闭不使远程未知结果变成成功；已删除临时库、未留库探针及其他未登记来源仍有缺口，I26本轮未完成。
+
+已登记的旧I24 fresh轮仅闭合固定付费writer及后端路由，保留业务和采样失败；其费用闭合不声称该trial全清理。新removal轮另有正向清理原件，不能回填给旧轮。
+
+F7的70次（含失败5次）和F8的78次已在此前同一次清单更新中加入，新增148次全部forwarded/200，后续不重复计数。SQL统计仅在Docker内只读查询清单明确列出、来源及结束证据闭合的库；发现未列路径不自动打开查询。当前发现范围不保证穷尽所有日期和run内数据库。
+
+| 分组 | 已知来源与例子 | 后续汇总要求 |
+| --- | --- | --- |
+| 初筛与预算探针 | 八候选报告与各自tools/runtime目录；明确预算库清单 | 已列17个初筛库、1个协议尝试库及22个模拟探针库，真实/模拟分开；构建失败无库的支出不能凭空补成调用 |
+| 详细冒烟 | 三候选smoke batch与DSH逐轮报告、批次外run | 当前25个冒烟库已列，包括OpenClaw与Deep Agents批次外首轮及新镜像修正；保留所有失败，不只取成功或batch内部轮 |
+| 接线修正和控制失败 | DSH两轮cancel；OpenClaw cancel001及002；Agents SDK browser-smoke-001和修正后002；Deep Agents extension-smoke-002 | 保留旧失败。首次模型前失败可为0请求；不能删除失败run，再用修正后的成功替代 |
+| 状态冷读 | 四候选各来源run下`native-state/`；DSH必需事件不兼容、Deep Agents只读SQLite准备失败等 | 冷读不运行模型；记录原生重建/准备错误与自动资源，不能增加业务成功分母 |
+| I22暂停/基线/实施中止 | [暂停报告](pause-recovery.md)、`infrastructure/runtime/i22-baseline-batch-001/batch.json`及显式白名单调用库 | 六基线49次、六条完整暂停链52次、四条实施中止15次，当前16链共116次；原verdict与离线复核只计同一条链。DA两条业务失败的11次请求不移入业务成功分母 |
+| I23–I25 | [故障报告](fault-recovery-execution.md)、[多用户报告](multi-user-design.md)、[实例成本报告](instance-cost-flow.md)及各既有原判定 | 已结束冒烟、探索与失败基线按材料分组；部分库已登记，未登记者单列。I23固定阶段已结束，I24/I25未完成项单列；原生恢复/边界通过项不能充当完整业务成功分母 |
+
+## 四、建设与运行成本仍缺什么
+
+现有[工程清单](engineering-inventory.md)列出了四候选接入、专用判定和公共实验设施。其第1–6节是专项前静态快照，第8节单列I22新增，第9节登记I23故障接线、I24外置后端/HTTP及I25 resident/观察器维护面，后续代码仍会变动。物理行数、锁文件条目数、构建时长均不能替代人工工时、净新增代码或升级难度。真实人工开发/调试工时和候选升级实验均为unknown。
+
+| 成本问题 | 已有依据 | 还不能下的结论 |
+| --- | --- | --- |
+| 跑通与业务定制要补什么 | 接入文件、公开接口、失败和修正过程已记录；没有发现本仓库修改上游内核的补丁 | 不按当前代码行数给开发难度排名，不据缓存构建秒数倒推研发天数 |
+| 原有OpenClaw继续改要花多少 | 已验证插件扩展、公开状态接口和当前入口缺口；用户确认现有产品按用户启动Agent实例 | Hogee仅源码参考；未核验现网实际版本、配额及完整休眠策略，不能推现网维护工时或账单 |
+| 暂停期间能释放什么 | 两路线101/202/303共六条真实链均已释放Worker，600秒预算/工具静默、重建代理并原生恢复；DSH完整业务3/3，DA完整业务1/3，另两条分页失败 | 共享服务固定成本及每暂停任务存储增量仍未完整比较；三种子小样本不推广为总体或现网节省比例 |
+| 空闲用户增多增加多少开销 | I25同材料两用户常驻/按需探索结束，各业务3/5；常驻初始/回收空闲整套内存均值282.10/312.63 MiB，按需31.41/47.85 MiB。常驻N=5/10有启动前固定配额拒绝记录，均未启动Docker | 已增加一个种子的按需N5轮换：业务4/7，回收后空闲窗口有一份资源缺测，仍非完整成功任务成本对照；不能把人工准备历史当作已完成业务，不能把配额拒绝当成框架RSS/OOM上限 |
+| 两活跃任务能否共享资源且不串 | I24新removal三组边界/真实重叠/重连、归属/越权拒绝、资源/生命周期、两取消及正向清理均通过，202/303整组通过；I25两策略都有真实重叠及原状态保留/冷读/唤醒、杀A后B原生进展 | I24的101组B主任务、I25的fault-B业务仍失败；DSH完整后端边界、同Worker复用、浏览器使用期隔离及resident入口I24本轮未完成。独立Worker并发不等于同进程共享安全，故障A未恢复 |
+| 模型与云运行金额 | 010当前343个预算库共2485条reservation：2416条远程200、4条远程未确认、1条在途未知、36条模拟和28条本地注入；[用量台账](costs.md)及独立token已知部分、Docker只读执行证据已留存 | 明确封闭材料范围仍不是全研究账单；010保留009及旧停止批，追加本轮结束阶段；17个未登记来源未查不补0。无可靠单价，token与请求关联未建立，reserve前401/429实际拒绝数也未知；本地CPU/内存摘要不是云金额 |
+
+I25两用户的同材料常驻/按需探索均已完整执行，固定镜像、seed101及pair `i25-da-101`；各五个可评分业务3/5，分别34/33条请求计数。按需active-B失败、常驻active-A失败，两轮fault-B均漏读分页；两轮A故障任务没有结果且未恢复，不能算成功。原业务态在常驻对象保留或新容器冷读后都可核对，两项新唤醒业务均通过，杀A后B原生进展成立。原判定的观察、空闲采样、配额、关闭与清理检查保留；新审计确认全阶段相邻采样间隔未通过，首尾和写盘完整性仍未知。
+
+| 同材料两用户seed101探索 | 按需 | 常驻 |
+| --- | ---: | ---: |
+| 初始60秒空闲：整套内存均值 / 容器数 | 31.41 MiB / 2 | 282.10 MiB / 4 |
+| 两任务活跃：整套内存均值 / 容器数 | 390.36 MiB / 8 | 390.69 MiB / 8 |
+| 回收后60秒空闲：整套内存均值 / 容器数 | 47.85 MiB / 2 | 312.63 MiB / 4 |
+| 再次唤醒：整套内存均值 / 容器数 | 397.32 MiB / 8 | 404.04 MiB / 8 |
+| 两用户可信请求→首次原生活动 | 21.08 / 21.06秒 | 13.26 / 13.26秒 |
+
+内存数字是原判定中的整套Docker样本均值，包括Fixture与观察器；空闲常驻保留两个真实Agent对象，按需没有Worker。全阶段采样存在已知长空档，不能从这些均值推完整峰值或覆盖率。唤醒时间包括实验服务/容器准备，没有产品队列或真实认证入口，不能当作产品端到端延迟。这组探索说明保留对象的空闲内存与重新启动等待之间存在取舍，不证明成功任务经济性或现网收益。
+
+常驻[N=5](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-5-refusal-101-001/protected/refusal.json)与[N=10](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-10-refusal-101-001/protected/refusal.json)均在Docker启动前因冻结配额超过6 GiB/3 CPU而拒绝，`Docker_started=false`、`observed_RSS=null`；不能给出实测容量或OOM结论。按需N5及未活跃用户轮换已结束，但整轮失败；N10先停。其他种子、故障A恢复、resident入口I24及完整模拟产品后端开销仍未验证。完整成本比较的业务和产品证据门槛没有满足，`i25_complete=false`、`savings_percent=null`不变，不计算成功任务成本或节省比例。
+
+## 五、现在如何选择下一笔投入
+
+本轮按既有[专项选择](selection.md)完成了DSH与Deep Agents的固定暂停、故障阶段及多用户/成本探索；未完成项如实留档，不继续扩建实验平台。本轮条件化建议已在[建议文档](recommendation.md)交付，具体业务确定后再决定下一笔投入。
+
+| 可能选择 | 什么证据会支持它 | 当前仍缺的决策材料 |
+| --- | --- | --- |
+| 继续改OpenClaw | 业务主要问题能通过现有公开插件、可信后端路由及可观测性改造解决，保留已有产品积累的投入更低 | 当前浏览器预算、分页、取消OOM的处置；共享/按需部署及可信隔离的真实证据；现网接入量与改造清单 |
+| 迁移到DSH | Goal续跑、故障一致性、后端授权及按需资源能验证成立，新增维护面在可接受范围内 | DSH取消、后端边界及按需成本本轮未完成；说明固定源码路径/插件/状态格式维护，以及相对OpenClaw实际能少维护什么 |
+| 使用Deep Agents自建 | 需要明确控制执行图和业务状态，公开机制能满足要求，所需产品运行管理可在有限研发时间内完成 | 分页/商品选择失败对目标任务的影响；resident同入口授权、完整成本及生产运行管理补齐量 |
+| 选择轻量SDK路线 | 后续业务确实只需少量循环和工具，轻量接入比保留现成运行体系更经济 | Agents SDK完整RunState续跑/after_turn、隔离及实例成本；Pi/ADK等目前只有初筛，需先补同题详细证据 |
+
+“使用SDK”仍可能要自研产品运行管理；“使用完整Agent产品”也不等于强制每用户一个容器。最终建议要同时列出候选自带、官方配套、业务接入和实验设施，不把自研成本藏起来。
+
+I22、I23约定调研结果与失败已留存，I27比较及条件化建议本轮已交付。I24/I25仍有未完成项：DSH双用户正式三种子、浏览器使用期隔离、同Worker复用、resident同入口授权、完整模拟产品后端开销、N10及其他成本种子、故障A恢复。本轮不为补齐这些项继续修实验台，不宣称完整云端Harness通过、迁移更省研发或线上省钱。
+
+当前010已完成独立断网Docker SQL/token验收，登记范围为343库/2485条reservation、10,253,403已知token；[SQL原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)与[token原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json)均通过且清理完成，009历史原件保留。17个未登记来源未查不补0，包括尚未兼容reader的DSH I24七条材料和I25 N5八条任务；缺失usage、请求关联、金额、人工工时及升级实验仍未知。I26本轮未完成，I27条件化建议已完成。
+
+### I24/I25本次接线收尾补记
+
+DSH新同入口基线003完整通过；双用户smoke101完整执行但整体未通过。两主任务独立判定通过，取消因预算在途/未知而未完成评分；并发有效工具进展未命中约定窗口，另有删除中采样过渡证据不足。正向清理通过，不能用主任务通过替代整组隔离或取消结论，见[执行记录](deepseek-multi-user-execution.md)。
+
+I25新bench863b70d9…中405项相关校准通过。无模型probe001辅助服务实际137失败；probe002有35份零错误样本，但评分入口缺镜像内导入路径，整链仍失败。独立副本追加诊断23项全过、原件哈希未变，不覆盖原002；修订宿主helper后全新probe003完整通过，35份样本及23项独立检查全过；N5已执行并独立评分/清理，整体失败；N10因回收后空闲资源缺测先停，不能据无模型门禁宣称业务成本通过。完整模拟产品后端的开销、resident入口身份边界和浏览器使用期隔离仍未验证；本轮不要求连接现网Hogee租户系统。

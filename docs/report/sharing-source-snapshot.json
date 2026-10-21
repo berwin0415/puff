@@ -1,0 +1,312 @@
+{
+  "purpose": "首轮分享报告重写来源版本标识；不包含源文件全文",
+  "cutoff": "2026-10-21T15:29:07+08:00",
+  "sources": [
+    {
+      "path": "README.md",
+      "sha256": "e4821b8f083f1998abfadc7754f8dfaaad8508c02b4f2ed4f7d1cacfc75f204f",
+      "bytes": 4954
+    },
+    {
+      "path": "REQUIREMENTS.md",
+      "sha256": "d5fd6448a3822135fa79272ab06e21974339a060977756083aaf1a55187dface",
+      "bytes": 25705
+    },
+    {
+      "path": "RESEARCH_PLAN.md",
+      "sha256": "2ba3de04654ff6a3e3a9115d1b665331f3c076b8e88a8610d13f240bed67d081",
+      "bytes": 42438
+    },
+    {
+      "path": "IMPLEMENTATION_PLAN.md",
+      "sha256": "78222f6c9f2cb20be8e4bd24c199977b0c965bdb221a54a7d8cfd64e041b36b9",
+      "bytes": 102736
+    },
+    {
+      "path": "docs/validation/codex_sdk.md",
+      "sha256": "4f03b398cf011c82ada880e3b63a5eadce8c648c21aa5d7f49c925da9008b383",
+      "bytes": 4884
+    },
+    {
+      "path": "docs/validation/comparison.md",
+      "sha256": "f438ffb1fa736f1243ca1878fd993635de8a8abfaba53eda86d4c5a3f4afc6fd",
+      "bytes": 49924
+    },
+    {
+      "path": "docs/validation/costs.md",
+      "sha256": "560e41ebda0d505b1f7ee82cb95e100867248546e146680a29f0d629173667ec",
+      "bytes": 23256
+    },
+    {
+      "path": "docs/validation/deepagents_langgraph.md",
+      "sha256": "d25d356a263d0c8cef0550a28b43d77f5d258ef657c4fdac3629d41a766255aa",
+      "bytes": 25255
+    },
+    {
+      "path": "docs/validation/deepseek-goal-wiring.md",
+      "sha256": "acb84d698ca47428be666b724a3adbf18ab9d5ff03a4f5e0a38d85486414b0b9",
+      "bytes": 8798
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-design.md",
+      "sha256": "db643d1a274f29606b0f99b6840953e1c977cc2e56bcc553a52cd6849b126a65",
+      "bytes": 22175
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-execution.md",
+      "sha256": "fd9af408d2a7148240122631be7ac5cf2fcf1e0a560a00d0de27b9f978fad392",
+      "bytes": 4868
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-implementation.md",
+      "sha256": "1b7752d24ca948cb73460e209bbeeec0139f4ee930c3acefbfdfc3c04ddd7b02",
+      "bytes": 8673
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-review-fixes.md",
+      "sha256": "853a6359c7fa6067b8f63b74c5b395f93b248308ec338cdbd65e209d827aa53d",
+      "bytes": 2630
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-surface-budget-fix.md",
+      "sha256": "5e7d7c34c22655a65ce966dee8162cfa896364455d8874d66729bc01da5c8018",
+      "bytes": 2359
+    },
+    {
+      "path": "docs/validation/deepseek-multi-user-surface-network-fix.md",
+      "sha256": "b1fd2b181569410e25da825ee48d6c64307140eb6047eb66954617530d80324b",
+      "bytes": 2530
+    },
+    {
+      "path": "docs/validation/deepseek_harness.md",
+      "sha256": "66ed45dee3a5abb58fffd3c845009ee65cb74d476d3b264dc400f337e27af233",
+      "bytes": 31413
+    },
+    {
+      "path": "docs/validation/detailed.md",
+      "sha256": "d44cced6e96a0d5a9b9bdf5f1527f17152a8b79c18fa520d4280d65076fc4b70",
+      "bytes": 49655
+    },
+    {
+      "path": "docs/validation/engineering-inventory.md",
+      "sha256": "64eb7bd8c6182fd2eab121cfc557c3ec366ad2326c6ee58d82fb66ccbeb83c5f",
+      "bytes": 39349
+    },
+    {
+      "path": "docs/validation/execution.md",
+      "sha256": "349f6177774b078bffbd4b6cf349c0c6ccf3eebcddf4d9394a3cfe66dc3f0faa",
+      "bytes": 15364
+    },
+    {
+      "path": "docs/validation/fault-recovery-design.md",
+      "sha256": "e5e7bee319a6a07a9363edce95abe8ef78a65487686783ecc0bd8dc7ff52ef0f",
+      "bytes": 26058
+    },
+    {
+      "path": "docs/validation/fault-recovery-execution.md",
+      "sha256": "75db8cd75492abc54c844af25c67f415129f3b7c4c4ba47544cd6cfdb859d9ab",
+      "bytes": 54069
+    },
+    {
+      "path": "docs/validation/google_adk.md",
+      "sha256": "6a26a3f20b6a0f2f0828e16432d012bbcbb7781a6056ba4490156a8df58a45c9",
+      "bytes": 10018
+    },
+    {
+      "path": "docs/validation/instance-cost-flow.md",
+      "sha256": "e555f99cd96fcf33d6384baf35a35a114f83e0643b69b975d8b2c2535c163769",
+      "bytes": 48092
+    },
+    {
+      "path": "docs/validation/instance-cost-lifecycle-sampling-design.md",
+      "sha256": "3ce8bf084eb000e64e879b9ac0ab6048fc188e803aabcbe4bf6e9d068fc1b5c8",
+      "bytes": 20511
+    },
+    {
+      "path": "docs/validation/instance-cost-probe-import-revision.md",
+      "sha256": "578619e3d338d889f1e8528bb05a1dac031b1c0bb8af20954a4e9f301b4338c1",
+      "bytes": 5036
+    },
+    {
+      "path": "docs/validation/instance-cost-service-init-revision.md",
+      "sha256": "65d92e27cf8da582d3b4e2c095f8a5a0c856a996a82d12d6522df0138e8851e4",
+      "bytes": 4695
+    },
+    {
+      "path": "docs/validation/multi-user-design.md",
+      "sha256": "ff0e0302f571e3b59bc9d712f1a4a7036e38a7602f52c556f9119da079ec106c",
+      "bytes": 50452
+    },
+    {
+      "path": "docs/validation/openai_agents_sdk.md",
+      "sha256": "0744d9f6812a6b47c44402cd8dbf61eb80b850bcbf3d7b936bb992fc39cf703a",
+      "bytes": 12866
+    },
+    {
+      "path": "docs/validation/openclaw.md",
+      "sha256": "bbcf0196c50c92738f526aa3c90b00c71d0378640ae3f2869aa8fecb7a993b6f",
+      "bytes": 30776
+    },
+    {
+      "path": "docs/validation/openhands.md",
+      "sha256": "36d0cb85d1cbb1456fd7492629e58fa4da66e90952ca0fd8552f68d467284c5e",
+      "bytes": 4400
+    },
+    {
+      "path": "docs/validation/pause-recovery-design.md",
+      "sha256": "12b8546fba8bed05b6738d4c75b8c62b1edbfdcad58bf1ac00b3768e77b89a8b",
+      "bytes": 29927
+    },
+    {
+      "path": "docs/validation/pause-recovery.md",
+      "sha256": "8f83b3bdc3f4628fe5a1a3268d1a72aa8a4fb78f2fd2dda34e4192d4245a703d",
+      "bytes": 14538
+    },
+    {
+      "path": "docs/validation/pi_agent_core.md",
+      "sha256": "94f99ee287f630bc02115d88f480426a8cd5a4a059e3f43be88f13b9d54bb226",
+      "bytes": 10765
+    },
+    {
+      "path": "docs/validation/recommendation.md",
+      "sha256": "f17127a06a1145c2994d125d92d783c46d23c2995dbf48ddc02be7123c92acd9",
+      "bytes": 20323
+    },
+    {
+      "path": "docs/validation/recovery-interfaces.md",
+      "sha256": "7e938f330d8096aee1f3a2adcdfa02d9450ad33c61c96d6ac41382fcad6c036b",
+      "bytes": 39108
+    },
+    {
+      "path": "docs/validation/resident-runtime.md",
+      "sha256": "7d9d90e8d18e4e7f3783e3151fab4a1025fd4f0904541505c464cad3c0848558",
+      "bytes": 16494
+    },
+    {
+      "path": "docs/validation/resource-budget.md",
+      "sha256": "23c55b9367f99999fa9fed518986a6c75db203830fad16f77b729ee13b5d9dec",
+      "bytes": 2686
+    },
+    {
+      "path": "docs/validation/scope-evidence.md",
+      "sha256": "e7bfa9409bd0cf89895f1b4ab9748be6c8d15e31e0bd69114aa1b3ecab9d4395",
+      "bytes": 9852
+    },
+    {
+      "path": "docs/validation/screening.md",
+      "sha256": "907472a0556189400133fea95baf9e11c7a897bcb6ff78e3aab39df009c85b9a",
+      "bytes": 16530
+    },
+    {
+      "path": "docs/validation/selection.md",
+      "sha256": "e84899d3471c917900efdbf45f0dd4cfa87cb3b417a4a5c6e3e12de1bee38666",
+      "bytes": 3730
+    },
+    {
+      "path": "docs/validation/sources.md",
+      "sha256": "aa7113193180b6e665a35fa179764939d5b201362483f8dd2aaa39a9310e5222",
+      "bytes": 7699
+    },
+    {
+      "path": "docs/validation/token-usage-design.md",
+      "sha256": "2425d9acc06d68ed7739c44225031394d32d3565d85fabf4892477b170c62fbb",
+      "bytes": 20874
+    },
+    {
+      "path": "configs/tasks/browser.yaml",
+      "sha256": "8966c326522ef5dcd059ddfc0b4301efc34c30ee9332aa33f02aed53b1dc82d9",
+      "bytes": 1319
+    },
+    {
+      "path": "configs/tasks/business-extension.yaml",
+      "sha256": "5f3ff93fb0430996e7e957eb7c6e085f924ad4bdbbeaff94c4a23ddf62e3353d",
+      "bytes": 1922
+    },
+    {
+      "path": "configs/tasks/control-policy.yaml",
+      "sha256": "036a513516fbd0a72993e48609ed3db56448f9d45f7dddaa9308562477977379",
+      "bytes": 1856
+    },
+    {
+      "path": "configs/tasks/fault-recovery.yaml",
+      "sha256": "d6cca546aa340b2d1c08a542407253f509cd650cb71928cd330641e7dd792735",
+      "bytes": 1381
+    },
+    {
+      "path": "configs/tasks/instance-cost.yaml",
+      "sha256": "e57296cfa183a4c6c9061d880fd648d8c026d9c87c4e1437eafc1a492fc1ff07",
+      "bytes": 1599
+    },
+    {
+      "path": "configs/tasks/pause-resume.yaml",
+      "sha256": "1a0350d60fe34c354c6cd26c49cd9b1c1ec497bbe46d249c215288074b567a16",
+      "bytes": 1247
+    },
+    {
+      "path": "configs/tasks/runtime.yaml",
+      "sha256": "8d7085c3f6fe531d4e5f01a2df5ddcc5d02c78f8fc9ceb4f8b5e3a48d8bab824",
+      "bytes": 964
+    },
+    {
+      "path": "configs/tasks/scope.yaml",
+      "sha256": "fe78a130bd5ba9be59bbb13eb103143671b4fd3aba52b3db98e0bd6b7b75805e",
+      "bytes": 1379
+    },
+    {
+      "path": "configs/tasks/tools.yaml",
+      "sha256": "d8efaa757bcc86bbe9c0427c97dd44e4e2fbd2b64bb200b85f30667452af8e60",
+      "bytes": 1087
+    },
+    {
+      "path": "configs/candidates/codex_sdk.yaml",
+      "sha256": "d162acac014491c42ed447f4ea8a55fe0b06bc4afe009e97f34ac1a5042d268e",
+      "bytes": 1924
+    },
+    {
+      "path": "configs/candidates/deepagents_langgraph.yaml",
+      "sha256": "4cd52320d2b59629ab90cc2ebd3b7adb91af9f6fd5f7372614c9008a94b2793e",
+      "bytes": 1830
+    },
+    {
+      "path": "configs/candidates/deepseek_harness.yaml",
+      "sha256": "d374c00d894f8074e8e93c7da6a4a9ff62ac3179fdb119a2f45f62ae98207f18",
+      "bytes": 1375
+    },
+    {
+      "path": "configs/candidates/google_adk.yaml",
+      "sha256": "bfbd8a3e3e6162efadcdfe7d4a642f0e243e832815feb0283f29ad43455459aa",
+      "bytes": 1541
+    },
+    {
+      "path": "configs/candidates/openai_agents_sdk.yaml",
+      "sha256": "5abd73541ed3cacba3ccc2385ec8b55d99c4c545f1da8614f877b94da7832408",
+      "bytes": 1740
+    },
+    {
+      "path": "configs/candidates/openclaw.yaml",
+      "sha256": "9e937c8948b311f4aab88b2e220949c877614ad3a8ac5eb039ec159195c4f60d",
+      "bytes": 1273
+    },
+    {
+      "path": "configs/candidates/openhands.yaml",
+      "sha256": "27388f9971ba209ee5835cb745db7eec32f48b17487f8a8558bba0862649aab2",
+      "bytes": 2380
+    },
+    {
+      "path": "configs/candidates/pi_agent_core.yaml",
+      "sha256": "6a13e3b9952d72fedf7322bc044bf5d8480cf3670eb05b9f0d99d728c5bc333e",
+      "bytes": 1641
+    },
+    {
+      "path": "configs/experiment.yaml",
+      "sha256": "b49e54bbc0909e36d2b88f12d585acf191c147d8b971aa3cf9d5685690c55d89",
+      "bytes": 968
+    }
+  ],
+  "interpretation_notes": [
+    "正文依据首轮结束后截至2026-10-21 15:29:07（北京时间）的材料；I24–I26未完成目标保留，不表示实验仍在运行。",
+    "任务配置与早期专项说明可能保留待执行状态；实际结果采用最终执行记录并核对原始批次。",
+    "历史中止批、重新执行的完整批次、普通对照和最终补测分别报告，不拼接通过率。",
+    "这是60份来源文件的路径与内容指纹，不是全文备份；根目录导读随后更新，保留此处读取时版本。"
+  ]
+}

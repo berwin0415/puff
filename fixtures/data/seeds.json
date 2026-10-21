@@ -1,0 +1,6 @@
+{
+  "generator_version": 1,
+  "validation_seeds": [101, 202, 303],
+  "final_seeds": [101, 202, 303, 404, 505],
+  "description": "Catalogue varies by seed and trusted user/session identity. No expected task answer is included."
+}

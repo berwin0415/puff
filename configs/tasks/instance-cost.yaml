@@ -1,0 +1,64 @@
+task: instance-cost
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 9
+goal: 固定两个活跃任务，比较空闲用户增长与每用户常驻/节省资源方案的增量。
+user_counts:
+- 2
+- 5
+- 10
+active_tasks: 2
+base_task: tools
+variants:
+- per_user_resident_assumption
+- one_measured_saving_strategy
+explicit_assumptions:
+- 常驻不回收仅是实验对照假设，不是已确认现网事实
+- 版本、附加服务、回收等待窗口固定；不能从Hogee源码补现网事实
+phases:
+- 全部空闲
+- 两个活跃
+- 任务结束并等待回收
+- 回收后唤醒
+- 单Worker退出影响
+controller_steps:
+- 同一总预算最多6GiB/3CPU；超预算停止加实例，留实测档位
+- 用户状态创建不应默认消耗模型；确需则另记
+- 所有容器和进程纳入采样；共享固定开销、状态存储、镜像磁盘分列
+- 先以scope任务证明最低隔离，再比较成本
+metrics:
+- total_memory/peak_memory
+- idle_user_memory_delta
+- cpu
+- container_count
+- process_count
+- state_bytes
+- wake_latency
+- queue_latency
+- extra_model_calls
+- failure_blast_radius
+- engineering_effort
+assertions:
+- 同口径最终任务结果及scope验收
+- 固定活跃任务数，不能通过减少工作量节约
+- 不能只看容器数量或外推生产吞吐
+grading_status: frozen experiment matrix; measurement/orchestration pending I25

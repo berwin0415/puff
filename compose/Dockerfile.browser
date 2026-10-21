@@ -1,0 +1,7 @@
+FROM mcr.microsoft.com/playwright:v1.64.0-noble@sha256:4109b399f6d3de22a133ab935df0d7614ed0de9195d529f0ebc6255655cdb495
+WORKDIR /opt/browser
+COPY compose/browser/package.json compose/browser/package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY compose/browser/launcher.mjs ./
+COPY compose/browser/acceptance.mjs ./
+ENTRYPOINT ["node", "/opt/browser/launcher.mjs"]

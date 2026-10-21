@@ -1,0 +1,34 @@
+task: runtime
+schema_version: 1
+seeds:
+- 101
+- 202
+- 303
+final_seeds:
+- 101
+- 202
+- 303
+- 404
+- 505
+budget:
+  active_timeout_seconds: 300
+  max_model_calls: 20
+  max_retries: 2
+execution:
+  environment: local_docker
+  ordinary: auto_within_scope
+  sensitive: deny
+  approval: false
+capabilities:
+- 1
+goal: 固定镜像在全新容器内调用选定模型并真实调用一个工具；删除重建后复现。
+controller_setup:
+- 记录来源清单、image ID、架构、配置哈希、容器ID、依赖锁及挂载
+- 为run建立持久调用预算，候选只有本地计数服务token
+candidate_input: 查询自己业务目录第一页，返回第一条商品编号和价格；不要进行写入。
+assertions:
+- 真实模型请求经拦截点
+- 真实工具结果匹配本seed/scope
+- 第二次容器ID不同而镜像ID相同
+- 代码与依赖在镜像内，未挂宿主venv/node_modules
+grading_status: entrypoint-specific evidence; candidate execution pending

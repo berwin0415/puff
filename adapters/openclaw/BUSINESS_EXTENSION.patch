@@ -1,0 +1,451 @@
+# {"kind":"OpenClaw I18 business extension adapter diff; no upstream fork","baseline_adapter_export_sha256":"9b639e3e434ca4c806743024b5a14b25a2091b4e78272d190b65cd712dbe03d5","fixed_upstream_commit":"b6e0872bdb7228e22fac7608345e0529a35ec46e","scope":[{"path":"adapters/openclaw/entrypoint.mjs","before_sha256":"5006369e17bddd0e51be4b5ec7b1773d3a2ad893fa4e6984115a4c0186a6bd86","after_sha256":"d9c992723eb2b70ac96b4205c45ae59bfbd04bb87f5be016e64560f4eac166a4"},{"path":"adapters/openclaw/README.md","before_sha256":"30bf36a2a1e9d00527636e65e58383a2ad37f28679d7c562d7d9d4980be7157f","after_sha256":"e1c507f126e220d6742e261cc24a0b9c837fd59185570f7084eeb9e003ab63e7"},{"path":"adapters/openclaw/tools-plugin/openclaw.plugin.json","before_sha256":"45764b8d040da8ad18faca9d5a4a6584d7ac90f3ed4e734cbce3029be8320c16","after_sha256":"d83d6fd11ed7328fe81f69c00b95395b30f1bfbb712dd354f4b0a46ef39ff496"},{"path":"adapters/openclaw/tools-plugin/index.mjs","before_sha256":"eb912155c7daf2d2ed1f90cf90092e19c9aef0b0974c474025efd4039b7982cd","after_sha256":"718bd777040b5cdc36502f139326bfd49aa720e81c565e0a251600d49adfa283"},{"path":"adapters/openclaw/tools-plugin/detailed-options.mjs","before_sha256":"f82ee35a737d74e718fa5495bc390690d5087a38ebbe321991a3592de6f2e47b","after_sha256":"e051d53e302f51789f51c931adb8549e4133f6326f275c80670c6d3ff6f960dd"},{"path":"adapters/openclaw/tools-plugin/business-state.mjs","before_sha256":null,"after_sha256":"8e02b86e40bd14ca0b140b3002799a2b9f2217de3c484971d3d1fb4fb86fa6ba"},{"path":"compose/candidates/openclaw/Dockerfile","before_sha256":"d803a6521828028e1b6c6d850f39a71a84dae9afca9de66e6eaaa68605c386df","after_sha256":"9f70a25926c956a2eeb5c7b1c03eaa374b92d1dc1fdbf585f0d049905cd5fd3e"},{"path":"scripts/stage_openclaw.py","before_sha256":"dde290ef10150de36d486434c12486715febca40915fb129424fb234b0610690","after_sha256":"0c61825c4259e5dd3b7f84e73682263a89466598597e655dda2776d4586d14b1"}]}
+--- a/adapters/openclaw/entrypoint.mjs
++++ b/adapters/openclaw/entrypoint.mjs
+@@ -1,12 +1,13 @@
+ /** Launch an isolated official Gateway and submit one trusted HTTP task. */
+ import { spawn } from 'node:child_process'
+-import { createHash, randomBytes } from 'node:crypto'
++import { randomBytes } from 'node:crypto'
+ import { appendFileSync, existsSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
+ import { isAbsolute, resolve } from 'node:path'
+ import { setTimeout as delay } from 'node:timers/promises'
+ import { verifySource } from './verify-source.mjs'
+ import { readBrowserCredentials, readTrustedScope, redactor, sanitizeEvidenceFiles, validateDetailedOptions } from './tools-plugin/detailed-options.mjs'
+ import { createBrowserClient } from './tools-plugin/browser-client.mjs'
++import { inspectBusinessState, nativeSessionIdentity } from './tools-plugin/business-state.mjs'
+ 
+ const root = '/opt/openclaw'
+ const cli = resolve(root, 'openclaw.mjs')
+@@ -39,19 +40,21 @@
+ 
+ function readRequest() {
+   const args = process.argv.slice(2)
+-  if ((args.length !== 2 && args.length !== 3) || args[0] !== '--request' || (args.length === 3 && args[2] !== '--validate-only')) throw new Error('Usage: entrypoint --request /config/request.json [--validate-only]')
++  if ((args.length !== 2 && args.length !== 3) || args[0] !== '--request' || (args.length === 3 && !['--validate-only', '--inspect-business-state'].includes(args[2]))) throw new Error('Usage: entrypoint --request /config/request.json [--validate-only | --inspect-business-state]')
++  const inspectBusinessOnly = args[2] === '--inspect-business-state'
+   const request = JSON.parse(readFileSync(trustedPath(args[1]), 'utf8'))
+   const keys = ['run_id', 'session_id', 'prompt', 'workspace', 'state_dir', 'output_dir', 'tools_url', 'tool_token_file', 'max_output_tokens', 'timeout_seconds', 'max_retries']
+   if (!request || typeof request !== 'object' || Array.isArray(request) || keys.some(key => !Object.hasOwn(request, key)) || Object.keys(request).some(key => !keys.includes(key) && key !== 'candidate_options')) throw new Error('Invalid trusted run request fields')
+   for (const key of ['run_id', 'session_id']) if (typeof request[key] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(request[key]) || request[key].toLowerCase() === 'old') throw new Error('Invalid run/session identifier')
+   if (typeof request.prompt !== 'string' || !request.prompt || request.prompt.length > 65536) throw new Error('Expected a bounded prompt')
+   for (const [key, min, max] of [['max_output_tokens', 1, 16384], ['timeout_seconds', 1, 3600], ['max_retries', 0, 2]]) if (!Number.isSafeInteger(request[key]) || request[key] < min || request[key] > max) throw new Error('Invalid run budget')
+-  for (const key of ['workspace', 'state_dir', 'output_dir']) request[key] = trustedPath(request[key], true)
++  for (const key of ['workspace', 'state_dir', 'output_dir']) request[key] = trustedPath(request[key], key === 'output_dir' || !inspectBusinessOnly)
+   if (new Set([request.workspace, request.state_dir, request.output_dir]).size !== 3) throw new Error('Workspace, state and evidence must be separate directories')
+-  request.tool_token_file = trustedPath(request.tool_token_file)
++  if (!inspectBusinessOnly) request.tool_token_file = trustedPath(request.tool_token_file)
+   if (request.tools_url !== 'http://tools:8081') throw new Error('Expected the scoped experiment tools service')
+   if (Object.hasOwn(request, 'candidate_options')) request.candidate_options = validateDetailedOptions(request.candidate_options)
+-  return { request, validateOnly: args.length === 3 }
++  if (inspectBusinessOnly && request.candidate_options?.case !== 'extension') throw new Error('Business state inspection requires the extension case')
++  return { request, validateOnly: args[2] === '--validate-only', inspectBusinessOnly }
+ }
+ 
+ async function stopChild(child) {
+@@ -188,7 +191,7 @@
+ 
+ async function main() {
+   const provenance = verifySource()
+-  const { request, validateOnly } = readRequest()
++  const { request, validateOnly, inspectBusinessOnly } = readRequest()
+   const started = Date.now()
+   const deadline = new AbortController()
+   const timer = setTimeout(() => deadline.abort(new Error('Active task deadline reached')), request.timeout_seconds * 1000)
+@@ -204,13 +207,31 @@
+     return { experiment_policy_status: denied ? 'denied' : 'no_execution_denial_observed' }
+   }
+   try {
++    const options = request.candidate_options
++    if (options) detailedScope = readTrustedScope(options.trusted_scope_file, request.session_id)
++    const { sessionValue, sessionKey } = nativeSessionIdentity(request)
++    process.env.OPENCLAW_STATE_DIR = request.state_dir
++    process.env.OPENCLAW_CONFIG_READONLY = '1'
++    process.env.OPENCLAW_SKIP_CHANNELS = '1'
++    // SQLite stages its private native directory beneath XDG_CACHE_HOME.
++    // The image root is read-only; use this container's private tmpfs cache.
++    const cacheDir = resolve('/tmp', 'harness-openclaw-cache-' + randomBytes(8).toString('hex'))
++    mkdirSync(cacheDir, { mode: 0o700 })
++    process.env.XDG_CACHE_HOME = trustedPath(cacheDir, true)
++    if (inspectBusinessOnly) {
++      // This branch does not read any model/tool token, start the Gateway,
++      // enumerate tools, submit the supplied prompt or create a native session.
++      const inspected = { ...await inspectBusinessState(request, detailedScope), session_id: request.session_id, provenance, elapsed_seconds: (Date.now() - started) / 1000 }
++      writeFileSync(resolve(request.output_dir, 'business-state-read.json'), evidenceJson(inspected) + '\n')
++      writeFileSync(resolve(request.output_dir, 'result.json'), evidenceJson(inspected) + '\n')
++      process.stdout.write(JSON.stringify({ status: inspected.status, stop_reason: inspected.stop_reason, session_id: request.session_id }) + '\n')
++      return
++    }
+     if (process.env.MODEL_API_BASE_URL !== 'http://model-proxy:8082/v1' || !process.env.MODEL_NAME || process.env.MODEL_NAME.length > 512 || /\s/u.test(process.env.MODEL_NAME)) throw new Error('Candidate requires the fixed counting proxy and exact selected model')
+     if (process.env.MODEL_API_KEY) throw new Error('Candidate must receive only a local model run token file')
+     process.env.HARNESS_MODEL_RUN_TOKEN = tokenFile(process.env.MODEL_RUN_TOKEN_FILE)
+     process.env.HARNESS_GATEWAY_TOKEN = randomBytes(32).toString('base64url')
+     sensitiveValues.push(process.env.HARNESS_GATEWAY_TOKEN)
+-    const options = request.candidate_options
+-    if (options) detailedScope = readTrustedScope(options.trusted_scope_file, request.session_id)
+     let tools, prompt = request.prompt
+     if (options?.browser) {
+       const credentials = readBrowserCredentials(options.browser.credentials_file)
+@@ -224,24 +245,18 @@
+       if (!toolResponse.ok) throw new Error(`Cannot list trusted HTTP tools (${toolResponse.status})`)
+       tools = (await toolResponse.json()).tools
+       if (!Array.isArray(tools) || tools.length !== toolNames.length || new Set(tools.map(tool => tool.name)).size !== toolNames.length || tools.some(tool => !toolNames.includes(tool.name) || typeof tool.description !== 'string' || !tool.input_schema || tool.input_schema.type !== 'object' || tool.input_schema.additionalProperties !== false)) throw new Error('Expected the eight trusted tool definitions')
+-    }
+-    const sessionValue = 'lab-' + createHash('sha256').update(JSON.stringify([request.run_id, request.session_id])).digest('hex')
+-    const sessionKey = `agent:lab-a:openai-user:${sessionValue}`
++      if (options?.case === 'extension') {
++        const receipt = tools.find(tool => tool.name === 'receipt')
++        tools = [...tools, { name: 'query_order_status', description: "Query actual receipts and write_count for one operation in the current scope; read only, performs no remaining task steps.", input_schema: structuredClone(receipt.input_schema) }]
++      }
++    }
+     const agentDir = trustedPath(resolve(request.state_dir, 'agents/lab-a/agent'), true)
+     const configPath = resolve(request.state_dir, 'openclaw.json')
+     const bindingPath = resolve(request.state_dir, 'harness-tool-binding.json')
+-    process.env.OPENCLAW_STATE_DIR = request.state_dir
+     process.env.OPENCLAW_CONFIG_PATH = configPath
+-    process.env.OPENCLAW_CONFIG_READONLY = '1'
+-    process.env.OPENCLAW_SKIP_CHANNELS = '1'
+-    // SQLite stages its private native directory beneath XDG_CACHE_HOME.
+-    // The image root is read-only; use this container's private tmpfs cache.
+-    const cacheDir = resolve('/tmp', 'harness-openclaw-cache-' + randomBytes(8).toString('hex'))
+-    mkdirSync(cacheDir, { mode: 0o700 })
+-    process.env.XDG_CACHE_HOME = trustedPath(cacheDir, true)
+     process.env.HARNESS_TOOL_BINDING_FILE = bindingPath
+     process.env.OPENCLAW_GATEWAY_TOKEN = process.env.HARNESS_GATEWAY_TOKEN
+-    writeFileSync(bindingPath, JSON.stringify({ agent_id: 'lab-a', session_key: sessionKey, transport: options?.browser ? 'browser' : 'http', tools_url: request.tools_url, tool_token_file: request.tool_token_file, events_path: resolve(request.output_dir, 'raw-events.jsonl'), tools, scope: detailedScope ?? null, browser: options?.browser ?? null, workspace: request.workspace, deadline_at: started + request.timeout_seconds * 1000 }, null, 2) + '\n', { mode: 0o600 })
++    writeFileSync(bindingPath, JSON.stringify({ agent_id: 'lab-a', session_key: sessionKey, transport: options?.browser ? 'browser' : 'http', tools_url: request.tools_url, tool_token_file: request.tool_token_file, events_path: resolve(request.output_dir, 'raw-events.jsonl'), tools, scope: detailedScope ?? null, browser: options?.browser ?? null, business_extension: options?.business_extension ?? null, workspace: request.workspace, deadline_at: started + request.timeout_seconds * 1000 }, null, 2) + '\n', { mode: 0o600 })
+     // Transport and continuation settings are both fixed before session creation.
+     // Mock-upstream verification still decides whether all retry layers obey it.
+     writeFileSync(resolve(agentDir, 'settings.json'), JSON.stringify({ retry: { enabled: request.max_retries > 0, maxRetries: request.max_retries, provider: { maxRetries: request.max_retries, maxRetryDelayMs: 1000 } } }, null, 2) + '\n', { mode: 0o600 })
+@@ -259,7 +274,7 @@
+       plugins: { allow: ['harness-lab-tools', 'openai'], slots: { memory: 'none' }, load: { paths: [resolve(import.meta.dirname, 'tools-plugin')] }, entries: { 'harness-lab-tools': { enabled: true, hooks: { allowConversationAccess: true, allowPromptInjection: false } } } },
+     }
+     writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 })
+-    writeFileSync(resolve(request.output_dir, 'entrypoint.json'), JSON.stringify({ run_id: request.run_id, session_id: request.session_id, session_key: sessionKey, agent_id: 'lab-a', profile: 'official-gateway-http-single-task', detailed_case: options?.case ?? null, scope: detailedScope ?? null, browser: options?.browser ? { url: options.browser.url, allowed_tools: tools.map(tool => tool.name), credentials: 'separate_trusted_file', download_destination: 'result.csv' } : null, provenance, started_at: new Date(started).toISOString(), model_api: 'openai-completions', tool_name_projection: 'harness_ prefix; original parameter schemas and tool granularity', controls: { pause: 'not_implemented_by_this_entry', resume: 'not_yet_verified', cancel: 'gateway_process_stop_only' }, instance_boundary: 'one Gateway process plus launcher in one initial screening container; shared Gateway is a later variant' }, null, 2) + '\n')
++    writeFileSync(resolve(request.output_dir, 'entrypoint.json'), JSON.stringify({ run_id: request.run_id, session_id: request.session_id, session_key: sessionKey, agent_id: 'lab-a', profile: 'official-gateway-http-single-task', detailed_case: options?.case ?? null, scope: detailedScope ?? null, browser: options?.browser ? { url: options.browser.url, allowed_tools: tools.map(tool => tool.name), credentials: 'separate_trusted_file', download_destination: 'result.csv' } : null, business_extension: options?.business_extension ? { ...options.business_extension, added_tool: 'query_order_status', canonical_HTTP_tool: 'receipt', state: 'native_session_pluginExtensions/harness-lab-tools/business', task_resume_claim: false } : null, provenance, started_at: new Date(started).toISOString(), model_api: 'openai-completions', tool_name_projection: 'harness_ prefix; original parameter schemas and tool granularity', controls: { pause: 'not_implemented_by_this_entry', resume: 'not_yet_verified', cancel: 'gateway_process_stop_only' }, instance_boundary: 'one Gateway process plus launcher in one initial screening container; shared Gateway is a later variant' }, null, 2) + '\n')
+     await cliCheck(['config', 'validate', '--json'], resolve(request.output_dir, 'config-validation.json'), deadline.signal)
+     await cliCheck(['plugins', 'inspect', 'harness-lab-tools', '--runtime', '--json'], resolve(request.output_dir, 'plugin-inspect.json'), deadline.signal)
+     let summary
+@@ -288,7 +303,7 @@
+     clearTimeout(timer)
+     process.removeListener('SIGTERM', interrupt); process.removeListener('SIGINT', interrupt)
+     await stopChild(gateway)
+-    sanitizeEvidenceFiles(request.output_dir, ['entrypoint.json', 'config-validation.json', 'plugin-inspect.json', 'gateway.log', 'gateway-runtime.jsonl', 'http-response.sse', 'http-error.txt', 'raw-events.jsonl', 'result.json', 'mcp-events.jsonl', 'mcp-client-events.jsonl', 'browser-actions.jsonl', 'download-events.jsonl', 'policy-decisions.jsonl'], redactor(sensitiveValues))
++    sanitizeEvidenceFiles(request.output_dir, ['entrypoint.json', 'config-validation.json', 'plugin-inspect.json', 'gateway.log', 'gateway-runtime.jsonl', 'http-response.sse', 'http-error.txt', 'raw-events.jsonl', 'result.json', 'business-state-read.json', 'business-state.json', 'business-state-reconnected.json', 'business-rule-decisions.jsonl', 'http-tool-events.jsonl', 'mcp-events.jsonl', 'mcp-client-events.jsonl', 'browser-actions.jsonl', 'download-events.jsonl', 'policy-decisions.jsonl'], redactor(sensitiveValues))
+   }
+ }
+ 
+--- a/adapters/openclaw/README.md
++++ b/adapters/openclaw/README.md
+@@ -73,7 +73,7 @@
+ }
+ ```
+ 
+-`case` 只允许 `tools`、`browser`、`sensitive`；只有 `browser` 可以带 `browser` 字段。可信 scope 文件固定四个字段 `experiment_id / variant / user_id / session_id`，会话必须与 request 一致。真实插件工具仍由可信 `agentId + sessionKey` factory 绑定，模型参数不能改变 URL、凭证、scope、产物目录或预算。
++`case` 允许 `tools`、`browser`、`sensitive` 和下面的 `extension`；只有 `browser` 可以带 `browser` 字段，只有 `extension` 可以带必填的 `business_extension`。可信 scope 文件固定四个字段 `experiment_id / variant / user_id / session_id`，会话必须与 request 一致。真实插件工具仍由可信 `agentId + sessionKey` factory 绑定，模型参数不能改变 URL、凭证、scope、产物目录或预算。
+ 
+ 浏览器任务不读取工具 token、不访问 `/tools`，也不提供 HTTP 业务工具。入口仅预取原始工具定义，实际操作由官方 OpenClaw Agent 和远程模型决定。工具只开放 `browser_navigate`、`browser_snapshot`、`browser_fill_form`、`browser_type`、`browser_click`、`browser_tabs`、`browser_wait_for`，保留官方 Playwright MCP 的原始参数 schema 和描述，名称按原方式加 `harness_` 前缀。没有 evaluate、run-code、curl 或一键业务工具。
+ 
+@@ -92,6 +92,38 @@
+ 
+ 本次额外接入工作包括严格配置及路径校验、官方 MCP 连接与白名单、可信测试登录输入、原始协议/工具证据关联、真实下载搬运、403 规则证据投射和日志脱敏。它属于实验接入成本，不算 OpenClaw 原生业务功能；共享 Gateway、多租户控制与调度尚未实现。
+ 
++## I18 同一业务改造材料
++
++默认的 11 字段请求、八个 HTTP 工具、浏览器任务和敏感操作执行路径继续使用原配置。业务改造只在下面的严格选项下启用；数量上限固定为 3，不能由模型参数覆盖：
++
++```json
++{
++  "case": "extension",
++  "trusted_scope_file": "/config/scope.json",
++  "business_extension": { "quantity_limit": 3 }
++}
++```
++
++新增的 `harness_query_order_status(operation_id)` 完全复制原 `receipt` 的参数 schema，返回当前 scope 的真实 receipt 和 `write_count`。每次只向统一服务发送一次 `name=receipt` 的 HTTP 请求，保留原响应；没有 HTTP 重试，也不代替模型下单、写文件、计算或决定下一步。公共服务仍只提供原八个工具。`raw-events.jsonl` 的原始插件执行记录同时保留暴露工具名和 `canonical_tool=receipt`；`http-tool-events.jsonl` 是指向这条原始记录的索引，包含 `tool=receipt`、`exposed_tool=query_order_status`、真实参数、HTTP 状态和原始 payload。外部验收还需核对统一服务的独立 receipt 审计。
++
++数量规则使用公开 `api.on('before_tool_call', ..., {matcher:['harness_write']})`。正常数量 2 自然通过；数量大于 3 直接返回原生 `{block:true,blockReason:'quantity_limit_exceeded'}`，执行器不会转发该次 HTTP 写入，不弹审批。`business-rule-decisions.jsonl` 和原始 hook 记录包含真实调用 ID、参数、拒绝理由及 `http_forwarded=false`。其中 `status=403` 只是候选规则拒绝的分类，`status_source` 明确标注 `candidate_policy_classification;native_hook_returns_block_not_HTTP`；公开 hook 没有产生 HTTP 响应，不能把这个数值描述为工具服务 HTTP 403。敏感操作仍由原工具执行层的真实 403 拒绝；两种拒绝的证据分开解释。正常任务、超限任务、敏感任务都必须实测，不能因为全部拒绝而算通过。
++
++`tools-plugin/business-state.mjs` 使用公开 `api.session.state.registerSessionExtension({namespace:'business'})` 声明业务状态。仅此 case 的工具 factory 选择公开 `contextVersion:2`，拿到宿主的 `assertInvocationCurrent`。通过 `api.runtime.agent.session.getSessionEntryAsync / prepareSessionEntryPatch` 读取和更新原生 `SessionEntry.pluginExtensions['harness-lab-tools'].business`，不手写 SQLite、另存 JSON 状态库或修改核心。写入前先在原生会话保存 `operation_id / receipt_confirmed=false`；只有实际 receipt 或新查询工具的 HTTP 200 完成记录才能确认，write 响应本身不会确认。确认前校验 operation、四个 scope 字段、调用 ID、数量和原回执；各 operation 的 `source:{path:'http-tool-events.jsonl',line}` 使用同次 HTTP 证据追加返回的真实引用，顶层事件保留 canonical `tool=receipt`、`exposed_tool`、原参数、状态和完整原 HTTP payload。确认态同时保留 `receipt_source_tool / receipt_source_call_id`，可将原生状态与实际回执查询逐条核对。已确认的状态不因后续查询开始而退回未确认。多个 operation 保留在最多 128 项的 map 中，达到上限即拒绝新状态，不淘汰旧记录；同时保留该会话和其他插件的字段。状态写入前与 SQLite 提交准入均复核原生调用身份；同 session key 换了原生 session UUID 会拒绝。
++
++`business-state.json` 只投影从官方公开会话 API 实际返回的状态，格式为 `{scope,business_state,source}`。`business_state` 包含当前 `operation_id / receipt_confirmed` 及各 operation 的确认态、`write_count / receipts`。`source.path` 指向按内容摘要命名的 `native-business-state-<sha256>.json`；文件保留同次原生返回中本插件的精确字段，`source.sha256 / json_pointer` 直接定位同一状态。原始状态提交、首次读取以及 scope/session 身份另外留在 `raw-events.jsonl`。这些 JSON 是证据，真正的状态仍在原生会话数据库里。远端业务写入和本地原生会话提交没有跨系统原子事务：如果业务写入后断连、会话提交失败或执行被取消，入口不自动重试远端写入，也不把未确认态补成成功；必须由真实查询及外部账本辨别副作用。
++
++换一个全新候选容器时，可复用原 state 挂载、相同 `run_id / session_id` 和 scope，仅执行：
++
++```text
++node /opt/materials/harness-lab/entrypoint.mjs --request /config/request.json --inspect-business-state
++```
++
++该分支不启动 Gateway、不读取模型或工具 token、不访问工具目录、不发送 request 中的 prompt、不创建原生会话，也不调用模型。保留 11 个 request 字段用于统一身份与路径，但不要求提供模型环境变量或实际 token 文件。建议验收时禁用容器网络，将原 state 和 workspace 只读挂载，并给 `/tmp` 与新 evidence 目录写权限；SQLite 原生库缓存继续放在独立 `XDG_CACHE_HOME` 临时目录。入口只通过公开 `openclaw/plugin-sdk/session-store-runtime.getSessionEntryAsync` 读取原生会话，核对真实 session UUID 和 scope，写入 `business-state-reconnected.json` 及其原生来源快照；原会话或业务字段不存在就报错。`result.json` 的状态为 `inspected`，明确 `task_resume_claim=false`。这只能证明新容器读回了原生业务状态，不表示暂停、Agent 任务续跑、checkpoint 与远端副作用原子一致性已经通过。
++
++固定源码的接口依据为 `src/plugins/plugin-api.types.ts` 的 `session.state`、`src/plugins/tool-types.ts` 的 V2 factory、`src/plugins/runtime/types-core.ts` 的公开会话 facade，以及 `src/plugin-sdk/session-store-runtime.ts` 的异步读写；`src/config/sessions/types.ts` 把 `pluginExtensions` 列为公开会话字段。没有使用内部 `patchPluginSessionExtension` 或要求 `operator.admin` 的 `sessions.pluginPatch` 捷径。新增查询别名、规则、状态数据结构、证据投影和只读入口都属于本仓库自研接入，需计入开发、调试和后续维护成本。实际 Docker 构建、原生 API 导出检查、quantity=2 / quantity=4 / 敏感操作、真实查询与换容器只读重挂验收尚由主流程执行；当前材料不提前标记任何能力通过。
++
++`BUSINESS_EXTENSION.patch` 保存本次业务改造相对上一份已暂存浏览器/敏感任务材料的完整源文件、配置和构建差异；`LAB_ADAPTER_MANIFEST.json` 继续记录当前全部适配材料及摘要。这个差异是接入代码，不包含上游核心 fork。有效阅读、实现、调试和运行投入由主任务执行记录汇总，不能把静态材料完成当成容器调试或升级验收耗时。
++
+ ## 暂停和换容器恢复：目前能说什么
+ 
+ 固定源码的 `docs/gateway/restart-recovery.md` 明确说明：对话及会话在 SQLite 持久化，符合条件且已经接纳的主会话工作，在 Gateway 停止/重启后有原生恢复和协调机制；显式 Stop/cancel 属于终止，不等于暂停。不能因为本入口没有接恢复接口，就判断 OpenClaw 框架没有恢复能力。
+--- a/adapters/openclaw/tools-plugin/openclaw.plugin.json
++++ b/adapters/openclaw/tools-plugin/openclaw.plugin.json
+@@ -4,7 +4,7 @@
+   "description": "Projects trusted HTTP tools or basic original Playwright MCP tools without an Agent or business workflow.",
+   "activation": { "onStartup": true },
+   "contracts": {
+-    "tools": ["harness_list_items", "harness_write", "harness_receipt", "harness_ledger", "harness_read_file", "harness_write_file", "harness_calculate_totals", "harness_sensitive_export", "harness_browser_navigate", "harness_browser_snapshot", "harness_browser_fill_form", "harness_browser_type", "harness_browser_click", "harness_browser_tabs", "harness_browser_wait_for"]
++    "tools": ["harness_list_items", "harness_write", "harness_receipt", "harness_ledger", "harness_read_file", "harness_write_file", "harness_calculate_totals", "harness_sensitive_export", "harness_query_order_status", "harness_browser_navigate", "harness_browser_snapshot", "harness_browser_fill_form", "harness_browser_type", "harness_browser_click", "harness_browser_tabs", "harness_browser_wait_for"]
+   },
+   "configSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+ }
+--- a/adapters/openclaw/tools-plugin/index.mjs
++++ b/adapters/openclaw/tools-plugin/index.mjs
+@@ -3,6 +3,7 @@
+ import { dirname, resolve } from 'node:path'
+ import { appendEvidence, readBrowserCredentials, redactor } from './detailed-options.mjs'
+ import { createBrowserClient } from './browser-client.mjs'
++import { BUSINESS_NAMESPACE, createBusinessState } from './business-state.mjs'
+ 
+ export default {
+   id: 'harness-lab-tools',
+@@ -17,16 +18,32 @@
+     const redact = redactor([token, credentials?.password, process.env.HARNESS_MODEL_RUN_TOKEN, process.env.HARNESS_GATEWAY_TOKEN])
+     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+     const record = (type, event, context) => appendEvidence(binding.events_path, { time: new Date().toISOString(), type, event, context }, redact)
++    if (binding.business_extension) {
++      if (binding.transport !== 'http' || !binding.scope || binding.business_extension.quantity_limit !== 3) throw new Error('Invalid frozen business extension binding')
++      api.session.state.registerSessionExtension({ namespace: BUSINESS_NAMESPACE, description: 'Current scoped business operation and actual receipt confirmation; native session data only' })
++      api.on('before_tool_call', (event, context) => {
++        const bound = context.agentId === binding.agent_id && context.sessionKey === binding.session_key && Boolean(context.sessionId)
++        const denied = !bound || (typeof event.params?.quantity === 'number' && event.params.quantity > binding.business_extension.quantity_limit)
++        const reason = !bound ? 'business_policy_session_mismatch' : denied ? 'quantity_limit_exceeded' : 'quantity_within_limit'
++        const nativeResult = denied ? { block: true, blockReason: reason } : null
++        const source = appendEvidence(binding.events_path, { time: new Date().toISOString(), type: 'business_quantity_policy', phase: 'guard', scope: binding.scope, tool: 'write', native_tool: event.toolName, call_id: event.toolCallId ?? context.toolCallId ?? null, arguments: event.params, operation_id: event.params?.operation_id, quantity: event.params?.quantity, quantity_limit: 3, decision: denied ? 'deny' : 'allow', reason, approval_required: false, status: denied ? 403 : 200, status_source: 'candidate_policy_classification;native_hook_returns_block_not_HTTP', native_hook_result: nativeResult, http_forwarded: false, context }, redact)
++        const decision = { time: new Date().toISOString(), scope: binding.scope, tool: 'write', native_tool: event.toolName, call_id: event.toolCallId ?? context.toolCallId ?? null, operation_id: event.params?.operation_id, quantity: event.params?.quantity, quantity_limit: 3, decision: denied ? 'deny' : 'allow', reason, approval_required: false, layer: 'candidate_execution', native_layer: 'before_tool_call', http_forwarded: false, source }
++        appendEvidence(resolve(dirname(binding.events_path), 'policy-decisions.jsonl'), decision, redact)
++        appendEvidence(resolve(dirname(binding.events_path), 'business-rule-decisions.jsonl'), decision, redact)
++        if (denied) return { block: true, blockReason: reason }
++      }, { matcher: ['harness_write'], priority: 50 })
++    }
+     let browserClient
+     for (const hook of ['llm_input', 'llm_output', 'agent_end']) api.on(hook, (event, context) => { record(hook, event, context) })
+     for (const hook of ['before_tool_call', 'after_tool_call']) api.on(hook, (event, context) => { record(hook, event, context) }, { matcher: binding.tools.map(tool => `harness_${tool.name}`) })
+-    api.registerTool(context => {
++    const factory = context => {
+       // There is one trusted session in this initial variant. No caller- or
+       // model-supplied arguments can change the endpoint, credential or scope.
+       if (context.agentId !== binding.agent_id || context.sessionKey !== binding.session_key || !context.sessionId) {
+         record('tool_binding_refused', {}, { agentId: context.agentId, sessionKey: context.sessionKey, sessionId: context.sessionId })
+         return null
+       }
++      const businessState = binding.business_extension ? createBusinessState(api, binding, context, record, redact) : null
+       return binding.tools.map(tool => ({
+         name: `harness_${tool.name}`,
+         label: tool.name,
+@@ -40,12 +57,17 @@
+             // does not reinterpret page content or decide another tool call.
+             return { content: result.content, details: { native_mcp_result: result, ...(result.isError ? { status: 'error' } : {}) } }
+           }
++          if (businessState) await businessState.before(tool.name, arguments_, callId)
++          // The added query is a single atomic receipt request, not a workflow.
++          const canonicalTool = tool.name === 'query_order_status' ? 'receipt' : tool.name
+           const response = await fetch(binding.tools_url + '/call', {
+-            method: 'POST', headers, body: JSON.stringify({ name: tool.name, arguments: arguments_ }),
++            method: 'POST', headers, body: JSON.stringify({ name: canonicalTool, arguments: arguments_ }),
+             signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000),
+           })
+           const payload = await response.json()
+-          const source = record('harness_http_tool', { phase: 'finish', call_id: String(callId), tool: tool.name, arguments: arguments_, status: response.status, payload }, { agentId: context.agentId, sessionKey: context.sessionKey, sessionId: context.sessionId })
++          const source = record('harness_http_tool', { phase: 'finish', call_id: String(callId), tool: tool.name, canonical_tool: canonicalTool, arguments: arguments_, status: response.status, payload }, { agentId: context.agentId, sessionKey: context.sessionKey, sessionId: context.sessionId })
++          const httpEvent = { time: new Date().toISOString(), phase: 'finish', scope: binding.scope, call_id: String(callId), tool: canonicalTool, exposed_tool: tool.name, arguments: arguments_, status: response.status, result: payload, source }
++          const httpSource = businessState ? appendEvidence(resolve(dirname(binding.events_path), 'http-tool-events.jsonl'), httpEvent, redact) : null
+           if (binding.scope && tool.name === 'sensitive_export' && response.status === 403 && payload.fixture_status === 403 && payload.details?.reason === 'sensitive_operation_denied' && payload.details?.approval_required === false) {
+             appendEvidence(resolve(dirname(binding.events_path), 'policy-decisions.jsonl'), {
+               time: new Date().toISOString(), scope: binding.scope, call_id: String(callId),
+@@ -54,9 +76,11 @@
+             }, redact)
+           }
+           if (!response.ok) throw new Error(JSON.stringify({ status: response.status, ...payload }))
++          if (businessState) await businessState.after(tool.name, arguments_, callId, httpEvent, httpSource)
+           return { content: [{ type: 'text', text: JSON.stringify(payload.result) }], details: payload.result }
+         },
+       }))
+-    }, { names: binding.tools.map(tool => `harness_${tool.name}`), workspaceAccess: false })
++    }
++    api.registerTool(binding.business_extension ? { contextVersion: 2, create: factory } : factory, { names: binding.tools.map(tool => `harness_${tool.name}`), workspaceAccess: false })
+   },
+ }
+--- a/adapters/openclaw/tools-plugin/detailed-options.mjs
++++ b/adapters/openclaw/tools-plugin/detailed-options.mjs
+@@ -12,12 +12,16 @@
+ }
+ 
+ export function validateDetailedOptions(value) {
+-  objectFields(value, ['case', 'trusted_scope_file'], ['browser'])
+-  if (!['tools', 'browser', 'sensitive'].includes(value.case) || value.trusted_scope_file !== '/config/scope.json') throw new Error('Invalid OpenClaw detailed case or scope path')
++  objectFields(value, ['case', 'trusted_scope_file'], ['browser', 'business_extension'])
++  if (!['tools', 'browser', 'sensitive', 'extension'].includes(value.case) || value.trusted_scope_file !== '/config/scope.json') throw new Error('Invalid OpenClaw detailed case or scope path')
+   if (value.case === 'browser') {
+     objectFields(value.browser, ['url', 'credentials_file', 'artifacts_dir'])
+     if (value.browser.url !== 'http://browser:8931/mcp' || value.browser.credentials_file !== '/config/browser-credentials.json' || value.browser.artifacts_dir !== '/browser-artifacts') throw new Error('Unexpected browser endpoint or trusted mount')
+   } else if (value.browser !== undefined) throw new Error('Browser configuration belongs only to the browser case')
++  if (value.case === 'extension') {
++    objectFields(value.business_extension, ['quantity_limit'])
++    if (value.business_extension.quantity_limit !== 3) throw new Error('The frozen business extension requires quantity_limit=3')
++  } else if (value.business_extension !== undefined) throw new Error('Business extension configuration belongs only to the extension case')
+   return structuredClone(value)
+ }
+ 
+--- /dev/null
++++ b/adapters/openclaw/tools-plugin/business-state.mjs
+@@ -0,0 +1,126 @@
++/** Business data in the public native session row, never an Agent/workflow loop. */
++import { createHash } from 'node:crypto'
++import { existsSync, readFileSync, writeFileSync } from 'node:fs'
++import { createRequire } from 'node:module'
++import { dirname, resolve } from 'node:path'
++import { pathToFileURL } from 'node:url'
++import { redactor } from './detailed-options.mjs'
++
++export const BUSINESS_PLUGIN = 'harness-lab-tools'
++export const BUSINESS_NAMESPACE = 'business'
++const scopeFields = ['experiment_id', 'variant', 'user_id', 'session_id']
++const operationId = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u
++const object = value => value !== null && typeof value === 'object' && !Array.isArray(value)
++const sameScope = (left, right) => scopeFields.every(key => typeof left?.[key] === 'string' && left[key] === right?.[key])
++
++export function nativeSessionIdentity(request) {
++  const sessionValue = 'lab-' + createHash('sha256').update(JSON.stringify([request.run_id, request.session_id])).digest('hex')
++  return { agentId: 'lab-a', sessionKey: `agent:lab-a:openai-user:${sessionValue}`, sessionValue }
++}
++
++export function readBusinessState(entry, scope, sessionId = entry?.sessionId) {
++  const state = entry?.pluginExtensions?.[BUSINESS_PLUGIN]?.[BUSINESS_NAMESPACE]
++  if (state === undefined) return null
++  if (!object(state) || state.schema_version !== 1 || !sameScope(state.scope, scope) || typeof sessionId !== 'string' || entry?.sessionId !== sessionId || state.native_session_id !== sessionId || !object(state.operations) || Object.keys(state.operations).length > 128 || typeof state.operation_id !== 'string' || !operationId.test(state.operation_id) || typeof state.receipt_confirmed !== 'boolean' || !Object.hasOwn(state.operations, state.operation_id)) throw new Error('Native business state identity or shape mismatch')
++  for (const [key, value] of Object.entries(state.operations)) {
++    if (!operationId.test(key) || !object(value) || value.operation_id !== key || typeof value.receipt_confirmed !== 'boolean' || !Number.isSafeInteger(value.write_count) || value.write_count < 0 || !Array.isArray(value.receipts) || value.write_count !== value.receipts.length || value.receipt_confirmed !== (value.write_count > 0)) throw new Error('Invalid native business operation record')
++    if (value.receipts.some(receipt => !object(receipt) || receipt.operation_id !== key || !sameScope(receipt, scope))) throw new Error('Stored receipt is outside its operation or scope')
++    if (value.receipt_confirmed && (!['receipt', 'query_order_status'].includes(value.receipt_source_tool) || typeof value.receipt_source_call_id !== 'string' || !value.receipt_source_call_id || value.source?.path !== 'http-tool-events.jsonl' || !Number.isSafeInteger(value.source.line) || value.source.line < 1)) throw new Error('Confirmed native operation has no receipt HTTP finish source')
++  }
++  if (state.receipt_confirmed !== state.operations[state.operation_id].receipt_confirmed) throw new Error('Current native receipt confirmation does not match its operation')
++  return structuredClone(state)
++}
++
++/** Retain the actual public native row and point the grader to its state field. */
++function exportBusinessState(entry, scope, outputDir, filename, identity, redact = redactor([])) {
++  const state = readBusinessState(entry, scope)
++  if (!state) throw new Error('Cannot export absent native business state')
++  const nativeEntry = { sessionId: entry.sessionId, pluginExtensions: { [BUSINESS_PLUGIN]: { [BUSINESS_NAMESPACE]: entry.pluginExtensions[BUSINESS_PLUGIN][BUSINESS_NAMESPACE] } } }
++  const raw = redact.json({ native_api: 'openclaw/plugin-sdk/session-store-runtime', agent_id: identity.agentId, session_key: identity.sessionKey, selection: 'exact_plugin_owned_fields_from_public_native_row;not_full_session_entry', native_entry: nativeEntry }) + '\n'
++  const sha256 = createHash('sha256').update(raw).digest('hex')
++  const sourcePath = 'native-business-state-' + sha256 + '.json'
++  const sourceFile = resolve(outputDir, sourcePath)
++  if (!existsSync(sourceFile)) writeFileSync(sourceFile, raw, { mode: 0o600, flag: 'wx' })
++  else if (readFileSync(sourceFile, 'utf8') !== raw) throw new Error('Native state snapshot content changed')
++  const projection = { scope, business_state: state, source: { path: sourcePath, sha256, json_pointer: `/native_entry/pluginExtensions/${BUSINESS_PLUGIN}/${BUSINESS_NAMESPACE}` } }
++  writeFileSync(resolve(outputDir, filename), redact.json(projection) + '\n', { mode: 0o600 })
++  return projection
++}
++
++function confirmedReceipt(toolName, operation, callId, event, source, scope) {
++  if (!['receipt', 'query_order_status'].includes(toolName)) return null
++  if (source?.path !== 'http-tool-events.jsonl' || !Number.isSafeInteger(source.line) || source.line < 1 || event?.phase !== 'finish' || !sameScope(event.scope, scope) || event.tool !== 'receipt' || event.exposed_tool !== toolName || event.call_id !== String(callId) || !event.call_id || event.arguments?.operation_id !== operation || event.status !== 200) throw new Error('Receipt confirmation requires its actual scoped HTTP finish source')
++  const result = event.result?.result
++  const receipts = result?.operation_id === operation && Number.isSafeInteger(result.write_count) && result.write_count > 0 && Array.isArray(result.receipts) && result.write_count === result.receipts.length ? result.receipts : null
++  if (!receipts?.length || receipts.some(receipt => !object(receipt) || receipt.operation_id !== operation || !sameScope(receipt, scope))) return null
++  return { receipts: structuredClone(receipts), source: structuredClone(source) }
++}
++
++/** Use only the official runtime facade supplied to the admitted plugin. */
++export function createBusinessState(api, binding, context, record, redact) {
++  const native = api.runtime.agent.session
++  if (typeof native?.getSessionEntryAsync !== 'function' || typeof native.prepareSessionEntryPatch !== 'function' || typeof context.assertInvocationCurrent !== 'function') throw new Error('Native session state APIs and V2 invocation authority are required')
++  const target = { agentId: context.agentId, sessionKey: context.sessionKey, env: process.env }
++  const assertCurrent = () => context.assertInvocationCurrent()
++  let loaded = false
++  const read = async () => {
++    assertCurrent()
++    const entry = await native.getSessionEntryAsync(target)
++    assertCurrent()
++    if (!entry || entry.sessionId !== context.sessionId) throw new Error('Native session incarnation changed during business state read')
++    const state = readBusinessState(entry, binding.scope, context.sessionId)
++    if (!loaded) {
++      record('native_business_state_loaded', { state, native_api: 'runtime.agent.session.getSessionEntryAsync', task_resume_claim: false }, { agentId: context.agentId, sessionKey: context.sessionKey, sessionId: context.sessionId })
++      loaded = true
++    }
++    return state
++  }
++  const patch = async (operation, toolName, callId, confirmation) => {
++    if (typeof operation !== 'string' || !operationId.test(operation)) throw new Error('Invalid business operation_id')
++    assertCurrent()
++    const entry = await native.prepareSessionEntryPatch({
++      ...target, preserveActivity: true, requireWriteSuccess: true,
++      authority: { kind: 'host', assertCurrent },
++      prepare(existing) {
++        if (existing.sessionId !== context.sessionId) throw new Error('Native session incarnation changed before business state commit')
++        const current = readBusinessState(existing, binding.scope, context.sessionId)
++        const operations = { ...(current?.operations ?? {}) }
++        if (!Object.hasOwn(operations, operation) && Object.keys(operations).length >= 128) throw new Error('Business state operation limit reached; no record evicted')
++        const previous = Object.hasOwn(operations, operation) ? operations[operation] : null
++        const confirmed = confirmation?.receipts ?? previous?.receipts ?? []
++        operations[operation] = { operation_id: operation, receipt_confirmed: confirmed.length > 0, write_count: confirmed.length, receipts: confirmed, last_tool: toolName, last_call_id: String(callId), receipt_source_tool: confirmation !== null ? toolName : previous?.receipt_source_tool ?? null, receipt_source_call_id: confirmation !== null ? String(callId) : previous?.receipt_source_call_id ?? null, source: confirmation?.source ?? previous?.source ?? null, updated_at: new Date().toISOString() }
++        const state = { schema_version: 1, scope: binding.scope, native_session_id: context.sessionId, operation_id: operation, receipt_confirmed: operations[operation].receipt_confirmed, operations }
++        return { pluginExtensions: { ...existing.pluginExtensions, [BUSINESS_PLUGIN]: { ...existing.pluginExtensions?.[BUSINESS_PLUGIN], [BUSINESS_NAMESPACE]: state } } }
++      },
++    })
++    if (!entry) throw new Error('Native business state commit did not find its session')
++    const state = readBusinessState(entry, binding.scope, context.sessionId)
++    exportBusinessState(entry, binding.scope, dirname(binding.events_path), 'business-state.json', context, redact)
++    record('native_business_state_committed', { operation_id: operation, receipt_confirmed: state.operations[operation].receipt_confirmed, state, native_api: 'runtime.agent.session.prepareSessionEntryPatch', external_write_atomic_with_state: false }, { agentId: context.agentId, sessionKey: context.sessionKey, sessionId: context.sessionId })
++  }
++  return {
++    async before(toolName, arguments_, callId) {
++      await read()
++      if (['write', 'receipt', 'query_order_status'].includes(toolName)) await patch(arguments_.operation_id, toolName, callId, null)
++      assertCurrent()
++    },
++    async after(toolName, arguments_, callId, event, source) {
++      if (!['receipt', 'query_order_status'].includes(toolName)) return
++      const confirmation = confirmedReceipt(toolName, arguments_.operation_id, callId, event, source, binding.scope)
++      if (confirmation !== null) await patch(arguments_.operation_id, toolName, callId, confirmation)
++    },
++  }
++}
++
++/** Inspector imports one public SDK subpath; it starts no Gateway or Agent. */
++export async function inspectBusinessState(request, scope) {
++  const require = createRequire('/opt/openclaw/package.json')
++  const { getSessionEntryAsync } = await import(pathToFileURL(require.resolve('openclaw/plugin-sdk/session-store-runtime')).href)
++  const identity = nativeSessionIdentity(request)
++  const entry = await getSessionEntryAsync({ agentId: identity.agentId, sessionKey: identity.sessionKey, env: process.env, readConsistency: 'latest' })
++  if (!entry) throw new Error('The original native session is absent; inspection creates no replacement')
++  const state = readBusinessState(entry, scope)
++  if (state === null) throw new Error('The native session has no business extension state')
++  const projection = exportBusinessState(entry, scope, request.output_dir, 'business-state-reconnected.json', identity)
++  return { status: 'inspected', stop_reason: 'native_business_state_read_only', native_api: 'openclaw/plugin-sdk/session-store-runtime.getSessionEntryAsync', agent_id: identity.agentId, session_key: identity.sessionKey, native_session_id: entry.sessionId, ...projection, task_resume_claim: false, prompt_submitted: false, gateway_started: false, model_called_by_entry: false, business_tools_called_by_entry: false }
++}
+--- a/compose/candidates/openclaw/Dockerfile
++++ b/compose/candidates/openclaw/Dockerfile
+@@ -60,7 +60,12 @@
+ 
+ COPY LAB_ADAPTER_MANIFEST.json /opt/materials/
+ COPY harness-lab /opt/materials/harness-lab
+-RUN node /opt/materials/harness-lab/verify-source.mjs
++RUN node /opt/materials/harness-lab/verify-source.mjs \
++    && node --check /opt/materials/harness-lab/entrypoint.mjs \
++    && node --check /opt/materials/harness-lab/tools-plugin/index.mjs \
++    && node --check /opt/materials/harness-lab/tools-plugin/business-state.mjs \
++    && node --check /opt/materials/harness-lab/tools-plugin/detailed-options.mjs \
++    && node --check /opt/materials/harness-lab/tools-plugin/browser-client.mjs
+ 
+ ENV NODE_OPTIONS=--max-old-space-size=1024
+ ENTRYPOINT ["node", "/opt/materials/harness-lab/entrypoint.mjs"]
+--- a/scripts/stage_openclaw.py
++++ b/scripts/stage_openclaw.py
+@@ -10,7 +10,7 @@
+ import shutil
+ 
+ EXPECTED_COMMIT = "b6e0872bdb7228e22fac7608345e0529a35ec46e"
+-FILES = ("entrypoint.mjs", "verify-source.mjs", "build.npmrc", "README.md", "tools-plugin/package.json", "tools-plugin/openclaw.plugin.json", "tools-plugin/index.mjs", "tools-plugin/browser-client.mjs", "tools-plugin/detailed-options.mjs")
++FILES = ("entrypoint.mjs", "verify-source.mjs", "build.npmrc", "README.md", "tools-plugin/package.json", "tools-plugin/openclaw.plugin.json", "tools-plugin/index.mjs", "tools-plugin/browser-client.mjs", "tools-plugin/detailed-options.mjs", "tools-plugin/business-state.mjs", "BUSINESS_EXTENSION.patch")
+ 
+ 
+ def digest(data):

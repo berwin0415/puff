@@ -1,0 +1,2700 @@
+{
+  "schema": "harness-lab-read-only-usage-inventory/1",
+  "date": "2026-10-20",
+  "scope": "Six explicit formal batches and thirteen ended I22 chains; incomplete research ledger, no ranking",
+  "excluded": [
+    "Active/new chains not in I22_CHAINS",
+    "old/",
+    "screening/smoke/cancel/cold-read/calibration",
+    "I23-I25",
+    "original response/reasoning text",
+    "tokens, secrets and budget binding rows"
+  ],
+  "unknown": [
+    "uniform input/output/cache/reasoning token totals",
+    "verified model prices and billed amount",
+    "human development/debugging hours",
+    "candidate upgrade cost",
+    "full infrastructure cost"
+  ],
+  "formal_batches": [
+    {
+      "variant": "deepseek-original",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-formal-batch-001/batch.json",
+      "sha256": "7d0e394b8fb7b6f3be05e73e0c0029432815773123499e80a7e40c8c8f1f24b0"
+    },
+    {
+      "variant": "deepseek-metadata",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-metadata-formal-batch-001/batch.json",
+      "sha256": "c5cd9e5b40624c70e5e60a625f4cfc3673592eb0b84e11bb4209e9987ebfcf2d"
+    },
+    {
+      "variant": "openclaw",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-formal-batch-001/batch.json",
+      "sha256": "64fecc9b52160b0e485c228f654c18723893d04e28d5f3e8488df24349cb1793"
+    },
+    {
+      "variant": "deepagents",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i19-deepagents-extension-formal-batch-001/batch.json",
+      "sha256": "aea375fbca6e0e888a2562a7ecce9b29becb629d155817d7e4c1ae28465ca8ed"
+    },
+    {
+      "variant": "deepagents",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i19-deepagents-core-formal-batch-001/batch.json",
+      "sha256": "bb55d0d6d74df2991d5359ac35cff3a952e7315a7a4cb6ab52eb92a13edd4482"
+    },
+    {
+      "variant": "agents-sdk",
+      "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-formal-batch-001/batch.json",
+      "sha256": "baaa8d2b4b8fccda1f2fca5aba9dfbb6e143e2b2cd1a880c2d0101471784a51d"
+    }
+  ],
+  "formal_runs": [
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-tools-seed-101-001",
+      "case": "tools",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-101-001/verdict.json",
+        "sha256": "345b5cbd3f668e4d0df3411ebdda2991a2ef32bc13be44d1c04b8e02353819ed",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-101-001/model-calls.json",
+        "sha256": "c57059d2e8a2a33eae4ef80d2c7b98b4883bbbaa8ea506047cc097b62ab1f7b1"
+      },
+      "usage": {
+        "reservations": 8,
+        "completed_forwarded_2xx": 8,
+        "outcomes": {
+          "forwarded": 8
+        },
+        "upstream_statuses": {
+          "200": 8
+        },
+        "selected_call_metadata_sha256": "cd2c05a295934ac68c8e9964fb1eeb6fe807391a495bde8d8c1e3e93cd11a1f3"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-tools-seed-202-001",
+      "case": "tools",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-202-001/verdict.json",
+        "sha256": "24d3f1171e3746570a4e108f9caaf813d1f9e6ce1f1bf8ea3b1c5113a31bad18",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-202-001/model-calls.json",
+        "sha256": "a7a34932bbd78711ecfb86dfd18cb319cdef1792dd6f63b8153e889d9b2cdf1b"
+      },
+      "usage": {
+        "reservations": 10,
+        "completed_forwarded_2xx": 10,
+        "outcomes": {
+          "forwarded": 10
+        },
+        "upstream_statuses": {
+          "200": 10
+        },
+        "selected_call_metadata_sha256": "a42f4e2178b798fb53432c0fab0b8a433aab87bacee45a234ad5b326765161e0"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-tools-seed-303-001",
+      "case": "tools",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-303-001/verdict.json",
+        "sha256": "7b5eea78b2846c4e40a9407d8a8d13c4964e067f912decf7b389110cea92680b",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-seed-303-001/model-calls.json",
+        "sha256": "9fb2450afd38c534cd104179b886c7339e814142b5d412bdb3a0c3eb61c0369a"
+      },
+      "usage": {
+        "reservations": 7,
+        "completed_forwarded_2xx": 7,
+        "outcomes": {
+          "forwarded": 7
+        },
+        "upstream_statuses": {
+          "200": 7
+        },
+        "selected_call_metadata_sha256": "465c9e2c0688e4658330e653762a328eecc7c013db5588cc3c4540ba6463612f"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-browser-seed-101-001",
+      "case": "browser",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-101-001/verdict.json",
+        "sha256": "164848391e23d264c6e9bc74c1b251df0cbf531a8f7fc2f401f1c34eff9bfeb8",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-101-001/model-calls.json",
+        "sha256": "9fe9f4e20f75dcc42524325369b616dec6466aa305c4bc2ff77b57edf1161526"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "c303cbca6f0774fa471faef7ac3a98a832e7e7ee90d4062f0d2d3fe885241bac"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-browser-seed-202-001",
+      "case": "browser",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-202-001/verdict.json",
+        "sha256": "e067ab0a142baf6b6f234d5a7f5dc05b1b7aec3b2cd1f5ca37ed1533658fac60",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-202-001/model-calls.json",
+        "sha256": "4e55a3f0cfe206b014420cc0c66c7377bf5d4cc130fcdb7207eddd964fab40fd"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "bdfdfb4266db6107a0d0a6e084805e150ee908cf83da40e2fb72efe825d5b81a"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-browser-seed-303-001",
+      "case": "browser",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-303-001/verdict.json",
+        "sha256": "85a840c6dd2aaac29fcb31ed425de709c16c286aac1a5fd559de5590011588ac",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/browser/i17-dsh-browser-seed-303-001/model-calls.json",
+        "sha256": "119540c6c8e57a967b425f9f3ec524d0ee7615cc7d5a367252a596cb551e60e6"
+      },
+      "usage": {
+        "reservations": 16,
+        "completed_forwarded_2xx": 16,
+        "outcomes": {
+          "forwarded": 16
+        },
+        "upstream_statuses": {
+          "200": 16
+        },
+        "selected_call_metadata_sha256": "5ad2ce0f9f20cb66621f929eb0f473aaf02943c6ef3d199eed01d682571552e7"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-sensitive-seed-101-001",
+      "case": "sensitive",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-101-001/verdict.json",
+        "sha256": "770afdd481c43f380b77814b5a60ec8b1218e0aee4ab029b5dd3252f0a5f2e63",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-101-001/model-calls.json",
+        "sha256": "b6b2fca06c7ac9e00ade1504eef4e4cff9eae0156ba57284f518dd2a1d3cac64"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "002f3d5a4a3a653236c3560611f82c7d5a57c6a1c32dbec578ea6afe9263bb23"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-sensitive-seed-202-001",
+      "case": "sensitive",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-202-001/verdict.json",
+        "sha256": "698d0110c7a647f78e00896861f3cb89fd1f6a7fa89aa91da184d3117f3b6484",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-202-001/model-calls.json",
+        "sha256": "abef92ed3f5711224a8f17c74dd9469514bc6af6d95a091ecba929da81a0994b"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "581ad81a3a25a1dbac3242d0ff83f98b42275b37f3e696f4fd56e03914e1be03"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-sensitive-seed-303-001",
+      "case": "sensitive",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-303-001/verdict.json",
+        "sha256": "c81d0a655dbe03f68b4f876e9ec63010092bba9b4926423cd83f6445e9274118",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/sensitive/i17-dsh-sensitive-seed-303-001/model-calls.json",
+        "sha256": "85dd5a6241f40e1702e183d20185d0b56c19b392d95f19a54094016bd75874ac"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "b831c63faa52722055d5b10bfcba2eee7bc9489576ea7d1bf999b31be9641b9b"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-seed-101-001",
+      "case": "extension",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-101-001/verdict.json",
+        "sha256": "936123d589ea145d1a903bf3b67ae8a88bdf8675bf16e94e7de549ea95049ee7",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-101-001/model-calls.json",
+        "sha256": "49a3eccbd2875f37d9fcb0429f44f118112c2cbcb05e027b45ecfddbad8458af"
+      },
+      "usage": {
+        "reservations": 9,
+        "completed_forwarded_2xx": 9,
+        "outcomes": {
+          "forwarded": 9
+        },
+        "upstream_statuses": {
+          "200": 9
+        },
+        "selected_call_metadata_sha256": "6869a32a38be2989adc810b9c50ba196333a07321147e00db85fcd0b5eeeb78d"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-seed-202-001",
+      "case": "extension",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-202-001/verdict.json",
+        "sha256": "f082cdaa63963b147c11dbf7811e3fa31c1b6ccb91d7f1b0cb709e8e36faee5c",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-202-001/model-calls.json",
+        "sha256": "8c5ee29c8b008f07710dad41750bf929bf7b80f2b8dc38c1b25f9deb66787fb7"
+      },
+      "usage": {
+        "reservations": 7,
+        "completed_forwarded_2xx": 7,
+        "outcomes": {
+          "forwarded": 7
+        },
+        "upstream_statuses": {
+          "200": 7
+        },
+        "selected_call_metadata_sha256": "99e71e4e4b51c8752dabc1a80ba94e78540d1878d8fb1dba0a2a21ed3cdbb7a1"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-seed-303-001",
+      "case": "extension",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-303-001/verdict.json",
+        "sha256": "fc0872adf72d569f0b277e3a9050e08a59edf4d1690119034c2fea92526df5ea",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-303-001/model-calls.json",
+        "sha256": "6613abcff6efeaaaf5acd3a23c2a7dd291f5871e0f99303585fdad5ec515740f"
+      },
+      "usage": {
+        "reservations": 11,
+        "completed_forwarded_2xx": 11,
+        "outcomes": {
+          "forwarded": 11
+        },
+        "upstream_statuses": {
+          "200": 11
+        },
+        "selected_call_metadata_sha256": "e66d86730c53e0f93a4ed635e4337ecfac11b2739456fbb6a64ba2f76cb34791"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-denied-seed-101-001",
+      "case": "extension-denied",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-101-001/verdict.json",
+        "sha256": "c82e820cf2bf62e0a58e5767cea4d5b2dcde3a35b07c850572448db736354721",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-101-001/model-calls.json",
+        "sha256": "bf1e86ebde5325d4f9954bca5d2a8c569d1c417afdc82525d8fc3a94f4ccb1b6"
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "2797b3aa4133db9a1b4ed69189d0d9e7a6b262b09a7f23851364299b46fbe062"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-denied-seed-202-001",
+      "case": "extension-denied",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-202-001/verdict.json",
+        "sha256": "97f97f999b18382b541f18cdc5b274ca56bb9249cbb1d39d191d82f5a6865079",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-202-001/model-calls.json",
+        "sha256": "f7e5d76e3a4f98c6a5a23b750f16d3ab07b9742746afa064df36e66062268a4c"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "d81462e261b6d488d85d5c9f9544a46f428e6c90ead78e13af30a2ec786a663b"
+      }
+    },
+    {
+      "variant": "deepseek-original",
+      "run_id": "i17-dsh-extension-denied-seed-303-001",
+      "case": "extension-denied",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-303-001/verdict.json",
+        "sha256": "92dbc60819e5d4e06fa5ab9dc2f6cfb0e8621be5827ba33d438328b0135015a3",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-extension-denied-seed-303-001/model-calls.json",
+        "sha256": "6e24bd256f4d85aef5badf1349b89f53fb0d8bad024e5b776b74052bc9ca5f0a"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "117173abeecf02defb8d657330fba6e71bd0da7498ff8c8c5cd8a2bd3def28b4"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-seed-101-001",
+      "case": "extension",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-101-001/verdict.json",
+        "sha256": "3a1e184afc6d2a89c809f3bb1b958d4d33d24b7fe7c7f02baf3bf94847b2a23b",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-101-001/model-calls.json",
+        "sha256": "f8220a9275cf9a8be806d2e883075ba17a3b837ba2fe1d3c6e3d1732682cf969"
+      },
+      "usage": {
+        "reservations": 10,
+        "completed_forwarded_2xx": 10,
+        "outcomes": {
+          "forwarded": 10
+        },
+        "upstream_statuses": {
+          "200": 10
+        },
+        "selected_call_metadata_sha256": "74082beec6e7ac66d8d0a68be228ca9d5fbfad32dadf4f72f1b205053458a70d"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-seed-202-001",
+      "case": "extension",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-202-001/verdict.json",
+        "sha256": "2bd527b34d2c2ae2542109d2bfbc4c1cb87f21d08400d47352f5bdffe3b7fffb",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-202-001/model-calls.json",
+        "sha256": "5c50f536f77e1db6a6823a84fa75f8dfff85c3c055a2d8bccc9489f4a38ab03b"
+      },
+      "usage": {
+        "reservations": 9,
+        "completed_forwarded_2xx": 9,
+        "outcomes": {
+          "forwarded": 9
+        },
+        "upstream_statuses": {
+          "200": 9
+        },
+        "selected_call_metadata_sha256": "86c9ee7c05f5207de2d875c8121607650b9bdde0a615b051aca4a2f9da18bfe3"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-seed-303-001",
+      "case": "extension",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-303-001/verdict.json",
+        "sha256": "63d0ece6a1561eb719a0677552487bc579340b313cb83590a6efa8bbea383ebd",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-metadata-extension-seed-303-001/model-calls.json",
+        "sha256": "e9ff727ff3c45f236c5aea93572559d508aba208b1a4e863d1154bc87f01b7ac"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "f6df4b4b153f980434c353e7797a2d40070060cc6d6bdd5c40b5d2c1220bfc84"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-denied-seed-101-001",
+      "case": "extension-denied",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-101-001/verdict.json",
+        "sha256": "9273ce2a91df2dd48bc57d6acf9ba41f072cb6bda9974b5e86d4a863c4c0980d",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-101-001/model-calls.json",
+        "sha256": "4d582fae454b6c41478f265596669909dad146a3d7b56bc8801409c402d62ad7"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "13c7130868bd186a6117a6065d4930eec8cf85321ae27323d2b4c5e9f060719c"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-denied-seed-202-001",
+      "case": "extension-denied",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-202-001/verdict.json",
+        "sha256": "c14cb196174b495c88fc0327b3accbdf51bf219405582c5159ed3527103d727a",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-202-001/model-calls.json",
+        "sha256": "09a373b6a943dd6ab263b81be994461934d28cb48f313b3982173ca9b450ce59"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "5aa76d67df66068ed80deb484938d62bc7deeb522836697ded207091242bd064"
+      }
+    },
+    {
+      "variant": "deepseek-metadata",
+      "run_id": "i17-dsh-metadata-extension-denied-seed-303-001",
+      "case": "extension-denied",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-303-001/verdict.json",
+        "sha256": "31341a6ca88a6f48ea022255ae9ce6a9281a50ad0de1b79a8000bd82e1e9c065",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension-denied/i17-dsh-metadata-extension-denied-seed-303-001/model-calls.json",
+        "sha256": "fd5871914dda5cfd69f67983ddb27597ff7217601d4acc46694c0239509a2baf"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "a6f5f40fc77f53a97fd2ff289a42126e6b87802a81a871e397e2eddf209b331e"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-tools-seed-101-001",
+      "case": "tools",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-101-001/verdict.json",
+        "sha256": "c63189fefacac5a32135a2e625655c9f4acc2048f70ba1bbb0373f15ca78cbe8",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-101-001/model-calls.json",
+        "sha256": "94631b7d5c504216c2c23bcc9414d8cf0d7bc8c9d2a7643f81f51f896d78bedf"
+      },
+      "usage": {
+        "reservations": 10,
+        "completed_forwarded_2xx": 10,
+        "outcomes": {
+          "forwarded": 10
+        },
+        "upstream_statuses": {
+          "200": 10
+        },
+        "selected_call_metadata_sha256": "0998d34dc5b037a35d4b080af84300c6a4090db27f5d10d591e021af418e9f25"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-tools-seed-202-001",
+      "case": "tools",
+      "seed": 202,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-202-001/verdict.json",
+        "sha256": "af98626f9b81961f7b2c4fe4cf80314ee1153e2a826a040117d70bea7b6565b2",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-202-001/model-calls.json",
+        "sha256": "7bb96cbe688ce5b5c4ddf2423ae153db2506a9766d83a0e73c4ca2491c30559c"
+      },
+      "usage": {
+        "reservations": 8,
+        "completed_forwarded_2xx": 8,
+        "outcomes": {
+          "forwarded": 8
+        },
+        "upstream_statuses": {
+          "200": 8
+        },
+        "selected_call_metadata_sha256": "2b432f9bf3e00bdc7efca19814dc840db935d7f3e38581f5bcc60899db14d5e0"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-tools-seed-303-001",
+      "case": "tools",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-303-001/verdict.json",
+        "sha256": "6ed16f4f3f1b4efc26e199fab43c97db2b1df42a758dc4971f135e62adfe490e",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/tools/i18-openclaw-tools-seed-303-001/model-calls.json",
+        "sha256": "b2db20be882daf7d18fffbc917ad1f17cde25d088b9d82da77bbcb9652f95ec0"
+      },
+      "usage": {
+        "reservations": 11,
+        "completed_forwarded_2xx": 11,
+        "outcomes": {
+          "forwarded": 11
+        },
+        "upstream_statuses": {
+          "200": 11
+        },
+        "selected_call_metadata_sha256": "1ab3a0e6f54a66d164c3c4f9f883cce6ba4c790e684eba68b0ec067f0813e2ac"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-browser-seed-101-001",
+      "case": "browser",
+      "seed": 101,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-101-001/verdict.json",
+        "sha256": "beee22b5bae45cb45c8d6223af0da1eb6a148d280aa7cec0f820b1273d76f28a",
+        "passed": false,
+        "failed_checks": [
+          "business_writes_exact",
+          "download_content",
+          "website_journey",
+          "native_normal_end",
+          "candidate_process_exit"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-101-001/model-calls.json",
+        "sha256": "9f81f74b7dc72461d1b9a3a77b2d46864b29069e36f02bc17dc2e21a7c65b6f5"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "63388b8785b7a11d7f80e476f1326e84e310fdeed6ae48352e5491d562246b70"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-browser-seed-202-001",
+      "case": "browser",
+      "seed": 202,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-202-001/verdict.json",
+        "sha256": "dbbf489637a869eab2bdc6099f7ca809fdbdf5adc538ec9533067f5edcd5d5bb",
+        "passed": false,
+        "failed_checks": [
+          "business_writes_exact",
+          "download_content",
+          "website_journey",
+          "native_normal_end",
+          "candidate_process_exit"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-202-001/model-calls.json",
+        "sha256": "b0e3292d83d9a77305ef44ae404a13a3e08df8b36a2911286e1123ce198489d8"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "7e7acd6624fb6ac5514d503bd596e2744e6c20fde8c6b3283eb9b9c3b90e1d68"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-browser-seed-303-001",
+      "case": "browser",
+      "seed": 303,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-303-001/verdict.json",
+        "sha256": "721821e855bf3e017e0018fea05796749b6198dabb26c6cfb465584627da2ccc",
+        "passed": false,
+        "failed_checks": [
+          "native_normal_end",
+          "candidate_process_exit"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/browser/i18-openclaw-browser-seed-303-001/model-calls.json",
+        "sha256": "09c6366fc41d270730e6b8b0d7692820af3be7ab6bfd0772fa282531a411165c"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "f04d42728e9beb0eb7573d76f9c72f2abb2414961aba95a78a5f445b223d1016"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-sensitive-seed-101-001",
+      "case": "sensitive",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-101-001/verdict.json",
+        "sha256": "4386cbf5674b029ee6df150f5bc688fb56ad3196ca0f34c08ae36556dd5121a1",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-101-001/model-calls.json",
+        "sha256": "2e01709ec74aeefe4a67635d12de6584e6288527fc2b1ac8ec4b35657eab45cd"
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "e2a7dfc220c23a9b07e719ed9f6d417bb619370ceb25533c16ebb65475a18e75"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-sensitive-seed-202-001",
+      "case": "sensitive",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-202-001/verdict.json",
+        "sha256": "e86d811e9711b69bb40f72ef3fbec8405df0b5e3e437fa156173fdf18a9080f4",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-202-001/model-calls.json",
+        "sha256": "0a1ef3bc1f61faa14860d9987e66635f853d339d8f2035b826dc126ea1b37cdc"
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "113b4c9bf09f81963bfc1eeef0cc7e2dae2d17a21603345159df1aeb3d4fe045"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-sensitive-seed-303-001",
+      "case": "sensitive",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-303-001/verdict.json",
+        "sha256": "c63b523b21b6fca6c6959ca35d0901a9c796b9d501dfcf5985d948c4ca7181ba",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/sensitive/i18-openclaw-sensitive-seed-303-001/model-calls.json",
+        "sha256": "0a6f342ee14b709a016cccfbf9babd41152509628fb1106cc00d824974364c1b"
+      },
+      "usage": {
+        "reservations": 4,
+        "completed_forwarded_2xx": 4,
+        "outcomes": {
+          "forwarded": 4
+        },
+        "upstream_statuses": {
+          "200": 4
+        },
+        "selected_call_metadata_sha256": "43bb762ffd4cb80f471446dc48c5c01af290ed91526fc08cdf9b008335227202"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-seed-101-001",
+      "case": "extension",
+      "seed": 101,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-101-001/verdict.json",
+        "sha256": "94d26e9659def3e918d05ce8a633228794fefba265c30cf80bea8e0beb18931e",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-101-001/model-calls.json",
+        "sha256": "b0c2f7b59fa92d852280d3749f31d91c4a47e238f9034f133939ee6d59faabab"
+      },
+      "usage": {
+        "reservations": 10,
+        "completed_forwarded_2xx": 10,
+        "outcomes": {
+          "forwarded": 10
+        },
+        "upstream_statuses": {
+          "200": 10
+        },
+        "selected_call_metadata_sha256": "aeb7a6634ff2fce9b04eb737e4a6175aba7f866de9dd1249816e00b551036e7d"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-seed-202-001",
+      "case": "extension",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-202-001/verdict.json",
+        "sha256": "0fcc6a955372c8ef14874c21bbddbdfb7269e7513abcc8412ea512b5a2df54d9",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-202-001/model-calls.json",
+        "sha256": "3de71c97190abdbbd3b376a09e31f40d03a52e96b26f4c1a42ad1dbc2b2f2837"
+      },
+      "usage": {
+        "reservations": 14,
+        "completed_forwarded_2xx": 14,
+        "outcomes": {
+          "forwarded": 14
+        },
+        "upstream_statuses": {
+          "200": 14
+        },
+        "selected_call_metadata_sha256": "cba36f7ff89eff7d5edc8933b40b916602d301854a8cfb02d38159944e9a6718"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-seed-303-001",
+      "case": "extension",
+      "seed": 303,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-303-001/verdict.json",
+        "sha256": "cc33e5965f6c1d84470fb2e7a788a6c42d179a087d99c3590ffb231dba61303d",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension/i18-openclaw-extension-seed-303-001/model-calls.json",
+        "sha256": "001262db55ced4e98686d22e76afa3588cc0a4ef7fa9c9dd478cb937c55c31a8"
+      },
+      "usage": {
+        "reservations": 7,
+        "completed_forwarded_2xx": 7,
+        "outcomes": {
+          "forwarded": 7
+        },
+        "upstream_statuses": {
+          "200": 7
+        },
+        "selected_call_metadata_sha256": "4bc6d96f3ae1e2d592b86a31997590fce10fde42ab1d6b8717bfdf5a4b36ef89"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-denied-seed-101-001",
+      "case": "extension-denied",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-101-001/verdict.json",
+        "sha256": "ac16db200222f69b737fbf20977004483e7023052a377d672757b957fc592f0c",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-101-001/model-calls.json",
+        "sha256": "81429725e1714e2ff4ee5ab8790755a3b527a9dd95dd47f065748dd2ecf5d44d"
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "714a8e322deaa4c8dde2265267289b391ec1ba09f474e19a5aefd4f548042194"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-denied-seed-202-001",
+      "case": "extension-denied",
+      "seed": 202,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-202-001/verdict.json",
+        "sha256": "a898ad6431ad018cd1a3ecaecf67faa239e645071108672103439bb925ae651c",
+        "passed": false,
+        "failed_checks": [
+          "real_execution_rule_denial"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-202-001/model-calls.json",
+        "sha256": "f4d9e3d8244538d7f72fcf0ebfbe2151dbb77678200754ca18bc8ba875314ce4"
+      },
+      "usage": {
+        "reservations": 4,
+        "completed_forwarded_2xx": 4,
+        "outcomes": {
+          "forwarded": 4
+        },
+        "upstream_statuses": {
+          "200": 4
+        },
+        "selected_call_metadata_sha256": "ff2ad9aa6a2a298b812daec8c6d725486caad0921355f1ba49920d39347496e1"
+      }
+    },
+    {
+      "variant": "openclaw",
+      "run_id": "i18-openclaw-extension-denied-seed-303-001",
+      "case": "extension-denied",
+      "seed": 303,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-303-001/verdict.json",
+        "sha256": "db2924ddf2b4ebc30903bd76db92d67979c37e9a386a08331c4d9fe4579b6e26",
+        "passed": false,
+        "failed_checks": [
+          "real_execution_rule_denial"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/extension-denied/i18-openclaw-extension-denied-seed-303-001/model-calls.json",
+        "sha256": "1e2339a99946cba903fcffa1912bd171d631ed7574ee58c2338dac1204f013b2"
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "087744605e487671516afc8ddabc46407bab5548e4aa829e9934e44b3e605c6e"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-seed-101-001",
+      "case": "extension",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-101-001/verdict.json",
+        "sha256": "af1f4a384cb77d7b6ddfcb55e674260052878bfe4e06f6a3cf396dadde9f193c",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-101-001/model-calls.json",
+        "sha256": "1ebfdbfff7ee4a4fdf68f5759106387dfa1faf316e9699fd24f03d07fc6b85cf"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "b085a705bc4e80f856ac077d355a51917a774f9d2d7c5bf3192313b0da608c95"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-seed-202-001",
+      "case": "extension",
+      "seed": 202,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-202-001/verdict.json",
+        "sha256": "cef212b10ac7b44dee6fa12584dc3d1709c6c4ceed1b702f875568bb39679a15",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-202-001/model-calls.json",
+        "sha256": "415a83a663a151afb50527ab29ce80b9ad63dc7a6d4390f46c7ca39b36a3aed3"
+      },
+      "usage": {
+        "reservations": 7,
+        "completed_forwarded_2xx": 7,
+        "outcomes": {
+          "forwarded": 7
+        },
+        "upstream_statuses": {
+          "200": 7
+        },
+        "selected_call_metadata_sha256": "f43143a0ba94321adb993c0729da3949c635cec1e59a00b7d0603c37976061e2"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-seed-303-001",
+      "case": "extension",
+      "seed": 303,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-303-001/verdict.json",
+        "sha256": "a933aaea539e85576bf00779d216a859bd7b30f68ba7cf15c41513a650ba5d02",
+        "passed": false,
+        "failed_checks": [
+          "report_matches_seed",
+          "business_writes_exact",
+          "all_pages_read",
+          "business_state_matches_actual_receipts",
+          "new_query_tool_used_for_all_operations"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension/i19-deepagents-extension-seed-303-001/model-calls.json",
+        "sha256": "fde8a561252979459d9e84873bb2d0d5af20d20b88cf2e400b1f147b85d8b744"
+      },
+      "usage": {
+        "reservations": 8,
+        "completed_forwarded_2xx": 8,
+        "outcomes": {
+          "forwarded": 8
+        },
+        "upstream_statuses": {
+          "200": 8
+        },
+        "selected_call_metadata_sha256": "68cc3ac98da71fa8649ba315cd16604d23846e97c79d2930c52c15c5a31b6fba"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-tools-seed-101-001",
+      "case": "tools",
+      "seed": 101,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-101-001/verdict.json",
+        "sha256": "a0d996c0827c30b8101cf8245fe9e1f827d23b90da2645f97589bacaa2cf9283",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-101-001/model-calls.json",
+        "sha256": "0e0f3f4e4d80a9cd73ebe8e7e9104f094f46ed5f26f818051cbe6f2fd0fe79e6"
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "b458351d9be600a583d0a9386c7d2f48e0c85b926b80fd4e6d1d494485d3b160"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-tools-seed-202-001",
+      "case": "tools",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-202-001/verdict.json",
+        "sha256": "2c0ac5ad74d358803705a64c1633fc63c6a923925e4e00237868aa8b80defdc8",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-202-001/model-calls.json",
+        "sha256": "849ede2220a1a4d2bfc3fdb530908a7feec30525cd66e2ef1659422746c99d7d"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "4b5a47e4e6c480dd7d3f929f0069669daf250d9437619f024a3c3f21d7427fc0"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-tools-seed-303-001",
+      "case": "tools",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-303-001/verdict.json",
+        "sha256": "ed40d0f3ec5f5feb40ac43e301445c2ce79851feef5dd6fb5408ea8aa56abdcc",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i19-deepagents-tools-seed-303-001/model-calls.json",
+        "sha256": "d68a5ac2240b0ef2e92dde7de4c9914b943f1db6b5aebac3de3f69e5093cd41c"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "af3e5ffdd0a2c371ee69fafbc4ed6d1b1a3230b7fd98c52a06b8f3f62c7667cc"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-browser-seed-101-001",
+      "case": "browser",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-101-001/verdict.json",
+        "sha256": "b2f55a3bb27afb8aceb5ed36d036ce2e722d10323a98a7c6cb70f9f3b7d8dd2d",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-101-001/model-calls.json",
+        "sha256": "f15b4ead2d33bfc9de23ba6bb78233ae8accccb94e3d9aaaf6b0ae04454456d4"
+      },
+      "usage": {
+        "reservations": 18,
+        "completed_forwarded_2xx": 18,
+        "outcomes": {
+          "forwarded": 18
+        },
+        "upstream_statuses": {
+          "200": 18
+        },
+        "selected_call_metadata_sha256": "6fe42c0c3c030580dfd378558a5a43ed386786892f421eb8d5dc45bb58156ac6"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-browser-seed-202-001",
+      "case": "browser",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-202-001/verdict.json",
+        "sha256": "4f30bf88ae883ed18090f5d7c37db2b523b615d2d9aabba4a3f2e37108471f68",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-202-001/model-calls.json",
+        "sha256": "b64125fde184bfc54bc468711db8e9378108af0a446b671b8af23c8a9050f276"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "2b7ec9779344797eaf2a133464ec147e0c03b0d9ed8eec8f38fabcbb01a8d963"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-browser-seed-303-001",
+      "case": "browser",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-303-001/verdict.json",
+        "sha256": "fd66f770a9b0312ce9655a4729ca635dad9c0940dd2777a29b0eeaf39a75f258",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/browser/i19-deepagents-browser-seed-303-001/model-calls.json",
+        "sha256": "c09d83ef30a5a6631fc8bf935126f507ce1d969a74b0bbede1199883ea0a4e5c"
+      },
+      "usage": {
+        "reservations": 17,
+        "completed_forwarded_2xx": 17,
+        "outcomes": {
+          "forwarded": 17
+        },
+        "upstream_statuses": {
+          "200": 17
+        },
+        "selected_call_metadata_sha256": "b2ec78152eced5a23942995b8b2604f5f2de0dfdac924984086e9c28ab610110"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-sensitive-seed-101-001",
+      "case": "sensitive",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-101-001/verdict.json",
+        "sha256": "7ea2362ce8ed5e859906921512e05cd8fde5d3d9db3fbd1384b95ccbc4ed7dea",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-101-001/model-calls.json",
+        "sha256": "e1176ac32d3c1e070e75ba90c1d4698a4ca397bca57a3f638ebf5583b744df5b"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "b9706abf558616c4130a4396de4299e8dea40b9993c790d9b969897b8351a892"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-sensitive-seed-202-001",
+      "case": "sensitive",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-202-001/verdict.json",
+        "sha256": "3c32b2436fe50e20b7462cd050d2278399800ec7d7e9c5938efc3859905e07a3",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-202-001/model-calls.json",
+        "sha256": "df5dc8ac291ef66575b1f85d070e96554612ef31b75d060c531d747cd64ed045"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "9e62da90d4f21fed5409dce8d5271cd9b09667be1b48c5e69525669cb5d3a41b"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-sensitive-seed-303-001",
+      "case": "sensitive",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-303-001/verdict.json",
+        "sha256": "467e9ea99e1675e5075a73eedeb40e59146c7a5e751b38e5947ece78b65cda96",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/sensitive/i19-deepagents-sensitive-seed-303-001/model-calls.json",
+        "sha256": "ffcd92cebc32f5642d3b48360deeb590b95ac272d22cc427d9de806b13a132dd"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "8a39d0763db68b3ca32fb70bb887fd4f72a215a253b7cad1d28de945affa7610"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-denied-seed-101-001",
+      "case": "extension-denied",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-101-001/verdict.json",
+        "sha256": "53246aa145acba12a2d38d0e56edc0721703845f170f39b48cd4013c26ffe2cb",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-101-001/model-calls.json",
+        "sha256": "a527052c5acdaf6bc025b7e82caaa70881788a0a76a924ce702a27c616c503bd"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "ab76eb76595142dccf6db88a6f2a5e57f6299f1aaafdcbf578aef4056bfd63f0"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-denied-seed-202-001",
+      "case": "extension-denied",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-202-001/verdict.json",
+        "sha256": "75705927512acf70150361c0609b1ea3836fd318db3811e36b95a98dac249515",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-202-001/model-calls.json",
+        "sha256": "f16b4b3c2b800a9f8aa8befe2f47219af9b9bb61cd85b22ea0774f045075bc4c"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "15852daa1f0617ec8e0a34c24373292c1348c8396fd2eee3b6e1615a08e902dd"
+      }
+    },
+    {
+      "variant": "deepagents",
+      "run_id": "i19-deepagents-extension-denied-seed-303-001",
+      "case": "extension-denied",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-303-001/verdict.json",
+        "sha256": "ddd2406c3637b158867b61c1e7b5835f2d2df70b731798bcf97610fc7954eccd",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/extension-denied/i19-deepagents-extension-denied-seed-303-001/model-calls.json",
+        "sha256": "731f325eb8fee50b0c999bcb1abcb2d27fc83ff5e1dce6d6aa79a0b180b39dfe"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "da3502950655eefc4c01101a93e511f93f93b0b17dc4962e02794b10ad1f1c3e"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-tools-seed-101-001",
+      "case": "tools",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-101-001/verdict.json",
+        "sha256": "d30f1c7f7785c41aff7f4e17a760beb67f8e372c28ee9a8f890669f9a35e7b7c",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-101-001/model-calls.json",
+        "sha256": "60de37be27f29942d6798b32b905a50a7c5650d255183f9ea93594317985f5cb"
+      },
+      "usage": {
+        "reservations": 7,
+        "completed_forwarded_2xx": 7,
+        "outcomes": {
+          "forwarded": 7
+        },
+        "upstream_statuses": {
+          "200": 7
+        },
+        "selected_call_metadata_sha256": "5f01f916dfe3e4919ea478594541954f68d6638de1ce8155ffb46067a7867945"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-tools-seed-202-001",
+      "case": "tools",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-202-001/verdict.json",
+        "sha256": "bd7ce76e1e79b6fe8ac2c9d49bc23d0920e0c3d5975ef1c0f166acc826b9cbc4",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-202-001/model-calls.json",
+        "sha256": "ce3a244a2f1baac922d9e75179df01fb1d28fd5146f4c6a608e7975dabf6c45e"
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "b7a2008e9db4650458b4ada4c09046225fbf8a0ab31aaa044604c31e87cd49f2"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-tools-seed-303-001",
+      "case": "tools",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-303-001/verdict.json",
+        "sha256": "5dae49afe164dee185b89889590548d3851b82b7705a2b97bbd99df98804f0ec",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-303-001/model-calls.json",
+        "sha256": "3e82d9174d4151e7ab7f63f44d26ed36e04d78e1616d3e60e36420acf0211dba"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "2019d3ba7c5f86ae2256e9dc804b463aeb324c8687b31bfa213487d79d851801"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-browser-seed-101-001",
+      "case": "browser",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-101-001/verdict.json",
+        "sha256": "281f8e640360cc311a6ed00fcfa8326661e722d5c69de97fb95cdc1a1d2b4bed",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-101-001/model-calls.json",
+        "sha256": "f648c954e7fb8529d596c8c4171fba93b28eb67939e640f3415282dde998c847"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "71f52d49c07367c8fe751ab9469e914230b1df5b26921f37d51e25d7ad2661dc"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-browser-seed-202-001",
+      "case": "browser",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-202-001/verdict.json",
+        "sha256": "7dcc5136da0267bf59d36a8b1602838cbe6f52dc06ede16dd615899f2dad28bf",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-202-001/model-calls.json",
+        "sha256": "6e3324d497190b99a068be1e0e59092d9b0dac83b8a5e1259f6f867723885fe9"
+      },
+      "usage": {
+        "reservations": 20,
+        "completed_forwarded_2xx": 20,
+        "outcomes": {
+          "forwarded": 20
+        },
+        "upstream_statuses": {
+          "200": 20
+        },
+        "selected_call_metadata_sha256": "3294136d724b62fd97472b84f59e720c52daa520d4a4616734111113379d576e"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-browser-seed-303-001",
+      "case": "browser",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-303-001/verdict.json",
+        "sha256": "22028a64c0562894561d492e60968b7120c871b0f4d35824da10de04e7c22831",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-303-001/model-calls.json",
+        "sha256": "f375b2340f751756486403251927176ea6688e3ba0e6e2d66d9822b81198c830"
+      },
+      "usage": {
+        "reservations": 18,
+        "completed_forwarded_2xx": 18,
+        "outcomes": {
+          "forwarded": 18
+        },
+        "upstream_statuses": {
+          "200": 18
+        },
+        "selected_call_metadata_sha256": "4e840af5b5b3707b3bb1a184b4e7292036ae8b9e9c1a6d7b1f11d693704319b1"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-sensitive-seed-101-001",
+      "case": "sensitive",
+      "seed": 101,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-101-001/verdict.json",
+        "sha256": "cbeb01d2fd4299ab6b8607a1c32fea6af46e44318ecb9d02ee2d3cb6c4050283",
+        "passed": false,
+        "failed_checks": [
+          "execution_denial",
+          "no_approval_wait"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-101-001/model-calls.json",
+        "sha256": "e55120f0fea1d64b9a9b90bfe588582dce906ec4b4b75f493e4a9be2c81d3b19"
+      },
+      "usage": {
+        "reservations": 1,
+        "completed_forwarded_2xx": 1,
+        "outcomes": {
+          "forwarded": 1
+        },
+        "upstream_statuses": {
+          "200": 1
+        },
+        "selected_call_metadata_sha256": "3e2d4252ebc22a4041c94f16c359e40a404e47b8aff64067e7ce277966559432"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-sensitive-seed-202-001",
+      "case": "sensitive",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-202-001/verdict.json",
+        "sha256": "4155fd923113838db7f5a75378ebdd3af815d4005c188652ed207ac4b4e6265d",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-202-001/model-calls.json",
+        "sha256": "de62d4d76ca6ea3cdda63db6ae341b83c398b7a7db25aa98609f03d19ebabbc0"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "4146fdbbf3cd6c3658c7afdda4d6d1e46b052249805270f096bf8b949a337967"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-sensitive-seed-303-001",
+      "case": "sensitive",
+      "seed": 303,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-303-001/verdict.json",
+        "sha256": "c12d46bc7acf3eb7d3e3e92db65f6e58f58e9805f1fb6f3946876367a715cd72",
+        "passed": false,
+        "failed_checks": [
+          "execution_denial",
+          "no_approval_wait"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-303-001/model-calls.json",
+        "sha256": "f1ef38b58a76ee5cdefcfb573604395d9f7958611bc9a9e62c9ccb5e038f339e"
+      },
+      "usage": {
+        "reservations": 1,
+        "completed_forwarded_2xx": 1,
+        "outcomes": {
+          "forwarded": 1
+        },
+        "upstream_statuses": {
+          "200": 1
+        },
+        "selected_call_metadata_sha256": "ddc449f43b446c27a6b1bcacfd22aebba4e984df702b230978b1e3c0abb85775"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-seed-101-001",
+      "case": "extension",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-101-001/verdict.json",
+        "sha256": "c7fcf0c53fdb4cbd32adf16831f0334324195567ade3541bd442a56341431a60",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-101-001/model-calls.json",
+        "sha256": "b448d1c572d6dd088a20ccc38f2c6657e328b575458dca2e585b3ad264b4570e"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "54ddb12569ed25d96e604d79db991dc82398df41e4122b04012b003bd1b157e8"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-seed-202-001",
+      "case": "extension",
+      "seed": 202,
+      "passed": false,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-202-001/verdict.json",
+        "sha256": "acc16e3bf6d6a35c9546132f4f0a6e01e3761abd1a2590834322c6b1ccb4d490",
+        "passed": false,
+        "failed_checks": [
+          "all_pages_read"
+        ]
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-202-001/model-calls.json",
+        "sha256": "345d31660ac6a943939604262d9c468bd6d6463c6849823d40e9744c143bc857"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "a063fa85cf907fcae7be347093615657f3f23456d8b5c254b2fb20aea4a08102"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-seed-303-001",
+      "case": "extension",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-303-001/verdict.json",
+        "sha256": "2dbddce6ef7bb05463ab75d007b72f9bfc2132f1b72622870922ac3ec7ec6a63",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-303-001/model-calls.json",
+        "sha256": "7804a0497b96f730c46e92052dcc565cb333603169c55098b30d507ea29f5e88"
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "6b176781dd58e79889e28bfc79133d1ccabd361db2e7de3c050315a3d9865f85"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-denied-seed-101-001",
+      "case": "extension-denied",
+      "seed": 101,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-101-001/verdict.json",
+        "sha256": "947075e149f5fc3c811a930f7a6a4b4d490ebb337b779c6ec58e63546605bdf2",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-101-001/model-calls.json",
+        "sha256": "0af669839ee29d6bc1912e700b662a6b145dd668b263aa4fdfaa8d5b680714a5"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "7909b2352d652ce5df4a8adab8310a8bacf16be1078004be50999044e9078c58"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-denied-seed-202-001",
+      "case": "extension-denied",
+      "seed": 202,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-202-001/verdict.json",
+        "sha256": "3f73af2f467742c294452ba104cf412fdc23e822a0544a3d12868c1827cbb770",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-202-001/model-calls.json",
+        "sha256": "0fa9b42d499caac29b8188bc0f2de76bb73c1f5815f937ae4046a78b4c47a7d4"
+      },
+      "usage": {
+        "reservations": 2,
+        "completed_forwarded_2xx": 2,
+        "outcomes": {
+          "forwarded": 2
+        },
+        "upstream_statuses": {
+          "200": 2
+        },
+        "selected_call_metadata_sha256": "c9022c40fd7b002f1aafd312425359d703e0af5c88174b9e8cdf40d932920417"
+      }
+    },
+    {
+      "variant": "agents-sdk",
+      "run_id": "i20-agents-sdk-extension-denied-seed-303-001",
+      "case": "extension-denied",
+      "seed": 303,
+      "passed": true,
+      "verdict": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-303-001/verdict.json",
+        "sha256": "6f15a7796589fe1d6d1056661f6876481dfa2eadb4a621615eeed67fcccfed1e",
+        "passed": true,
+        "failed_checks": []
+      },
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-303-001/model-calls.json",
+        "sha256": "9c14753e78077356311149a389d8e47b9e2aff3efbb62054013424571cc50409"
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "0a711fe98d0a6eb236f4f7cb31522ab323c48e36d12af54806e6c5e2931b4a5b"
+      }
+    }
+  ],
+  "formal_groups": [
+    {
+      "variant": "agents-sdk",
+      "case": "browser",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 58,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 58
+    },
+    {
+      "variant": "agents-sdk",
+      "case": "extension",
+      "attempts": 3,
+      "successful_attempts": 2,
+      "reservations": 18,
+      "unsuccessful_attempt_reservations": 6,
+      "completed_forwarded_2xx": 18
+    },
+    {
+      "variant": "agents-sdk",
+      "case": "extension-denied",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 7,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 7
+    },
+    {
+      "variant": "agents-sdk",
+      "case": "sensitive",
+      "attempts": 3,
+      "successful_attempts": 1,
+      "reservations": 4,
+      "unsuccessful_attempt_reservations": 2,
+      "completed_forwarded_2xx": 4
+    },
+    {
+      "variant": "agents-sdk",
+      "case": "tools",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 18,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 18
+    },
+    {
+      "variant": "deepagents",
+      "case": "browser",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 55,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 55
+    },
+    {
+      "variant": "deepagents",
+      "case": "extension",
+      "attempts": 3,
+      "successful_attempts": 1,
+      "reservations": 21,
+      "unsuccessful_attempt_reservations": 15,
+      "completed_forwarded_2xx": 21
+    },
+    {
+      "variant": "deepagents",
+      "case": "extension-denied",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 6,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 6
+    },
+    {
+      "variant": "deepagents",
+      "case": "sensitive",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 6,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 6
+    },
+    {
+      "variant": "deepagents",
+      "case": "tools",
+      "attempts": 3,
+      "successful_attempts": 2,
+      "reservations": 17,
+      "unsuccessful_attempt_reservations": 5,
+      "completed_forwarded_2xx": 17
+    },
+    {
+      "variant": "deepseek-metadata",
+      "case": "extension",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 25,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 25
+    },
+    {
+      "variant": "deepseek-metadata",
+      "case": "extension-denied",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 6,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 6
+    },
+    {
+      "variant": "deepseek-original",
+      "case": "browser",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 56,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 56
+    },
+    {
+      "variant": "deepseek-original",
+      "case": "extension",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 27,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 27
+    },
+    {
+      "variant": "deepseek-original",
+      "case": "extension-denied",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 7,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 7
+    },
+    {
+      "variant": "deepseek-original",
+      "case": "sensitive",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 6,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 6
+    },
+    {
+      "variant": "deepseek-original",
+      "case": "tools",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 25,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 25
+    },
+    {
+      "variant": "openclaw",
+      "case": "browser",
+      "attempts": 3,
+      "successful_attempts": 0,
+      "reservations": 60,
+      "unsuccessful_attempt_reservations": 60,
+      "completed_forwarded_2xx": 60
+    },
+    {
+      "variant": "openclaw",
+      "case": "extension",
+      "attempts": 3,
+      "successful_attempts": 1,
+      "reservations": 31,
+      "unsuccessful_attempt_reservations": 17,
+      "completed_forwarded_2xx": 31
+    },
+    {
+      "variant": "openclaw",
+      "case": "extension-denied",
+      "attempts": 3,
+      "successful_attempts": 1,
+      "reservations": 10,
+      "unsuccessful_attempt_reservations": 7,
+      "completed_forwarded_2xx": 10
+    },
+    {
+      "variant": "openclaw",
+      "case": "sensitive",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 12,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 12
+    },
+    {
+      "variant": "openclaw",
+      "case": "tools",
+      "attempts": 3,
+      "successful_attempts": 2,
+      "reservations": 29,
+      "unsuccessful_attempt_reservations": 8,
+      "completed_forwarded_2xx": 29
+    }
+  ],
+  "i22_runs": [
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-baseline-seed-101-001",
+      "category": "baseline",
+      "original_passed": false,
+      "effective_passed": false,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-baseline-seed-101-001/verdict.json",
+          "sha256": "72d862cfabbfff73d4a03f2b087a5537f8d1ffaecfd9cf2a0c9ab21a58cf50f2",
+          "passed": false,
+          "failed_checks": [
+            "fixed_tools_independent_business_result"
+          ]
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-baseline-seed-101-001/i22-deepagents-baseline-seed-101-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "b55a349525a58c0a6e9c7707d95f59de56cc0dafb8b27971834471e5d48735ed"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-baseline-seed-202-001",
+      "category": "baseline",
+      "original_passed": true,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-baseline-seed-202-001/verdict.json",
+          "sha256": "f4cf7f6aff57fcb43b7b71bd73d820ed114c16222085cf31e5a547e4201b995b",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-baseline-seed-202-001/i22-deepagents-baseline-seed-202-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "f9a720ffd8806d261dbd2c838afa7d4fa644440b0c2068f29c1493da0bcdde5a"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-baseline-seed-303-001",
+      "category": "baseline",
+      "original_passed": true,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-baseline-seed-303-001/verdict.json",
+          "sha256": "ee14a4ddef92d31f7264d05b1f3fe8b02ab3062d1513f5c113474fefa2df0880",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-baseline-seed-303-001/i22-deepagents-baseline-seed-303-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "b35ecc4b2975525d9de90c15444a0bdb0adb423da66d40e1c690f9ecde02dbc5"
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-baseline-seed-101-001",
+      "category": "baseline",
+      "original_passed": false,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-101-001/verdict.json",
+          "sha256": "262b0b4902620ecd74002183458d925f8935e7c37454e68c3130b553c0e1ac08",
+          "passed": false,
+          "failed_checks": [
+            "original_task_native_completion"
+          ]
+        },
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-101-001/reviews/durable-goal-001/verdict.json",
+          "sha256": "7b9ca35e5ccccb84a21b50fa4788ddac7df11331a78d7578adefb93f6dd02ef3",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepseek-baseline-seed-101-001/i22-deepseek-baseline-seed-101-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 10,
+        "completed_forwarded_2xx": 10,
+        "outcomes": {
+          "forwarded": 10
+        },
+        "upstream_statuses": {
+          "200": 10
+        },
+        "selected_call_metadata_sha256": "f41b91bb4062157d0e5117c57f324f9a0b8857b9743ece79887f57166158160c"
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-baseline-seed-202-001",
+      "category": "baseline",
+      "original_passed": false,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-202-001/verdict.json",
+          "sha256": "115040eeed943fa77e3a6559ed30a21c03d3e086c9ede5964d87bbea29de0395",
+          "passed": false,
+          "failed_checks": [
+            "original_task_native_completion"
+          ]
+        },
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-202-001/reviews/durable-goal-001/verdict.json",
+          "sha256": "8a21a6b657636abd2214c2627db81d8edc471a37268b2025fb49809bb73d40d5",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepseek-baseline-seed-202-001/i22-deepseek-baseline-seed-202-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 9,
+        "completed_forwarded_2xx": 9,
+        "outcomes": {
+          "forwarded": 9
+        },
+        "upstream_statuses": {
+          "200": 9
+        },
+        "selected_call_metadata_sha256": "7972c12b85a72555e033bee0ef3d55de16d307675415235c2e3a82e3365b84ce"
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-baseline-seed-303-001",
+      "category": "baseline",
+      "original_passed": false,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-303-001/verdict.json",
+          "sha256": "0fc8a7b38aedbe311df1276d8faa0e7715498ded9986ae6e969566c80821f4f0",
+          "passed": false,
+          "failed_checks": [
+            "original_task_native_completion"
+          ]
+        },
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-baseline-seed-303-001/reviews/durable-goal-001/verdict.json",
+          "sha256": "6b0e3185076d201ce914611cacd4ca5a3a74155c1a7566a1b7c4ca8e2db31b2c",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepseek-baseline-seed-303-001/i22-deepseek-baseline-seed-303-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 13,
+        "completed_forwarded_2xx": 13,
+        "outcomes": {
+          "forwarded": 13
+        },
+        "upstream_statuses": {
+          "200": 13
+        },
+        "selected_call_metadata_sha256": "c74edab4a55853af60216baf0d1b1a37cdfa296a4adf72c01a5b92b4ce48a563"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-101-001",
+      "category": "implementation-aborted",
+      "original_passed": null,
+      "effective_passed": null,
+      "verdicts": [],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-pause-seed-101-001/i22-deepagents-pause-seed-101-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 4,
+        "completed_forwarded_2xx": 4,
+        "outcomes": {
+          "forwarded": 4
+        },
+        "upstream_statuses": {
+          "200": 4
+        },
+        "selected_call_metadata_sha256": "850fba9b79cbc8d9c7b6027b5ba187033afd31418a2f9e26470d69b26e811c43"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-101-002",
+      "category": "implementation-aborted",
+      "original_passed": null,
+      "effective_passed": null,
+      "verdicts": [],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-pause-seed-101-002/i22-deepagents-pause-seed-101-002/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "269110ce9793bfc9fc676e8438c75bd8e15769992a9d7a21a32165497d3b2d37"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-101-003",
+      "category": "implementation-aborted",
+      "original_passed": null,
+      "effective_passed": null,
+      "verdicts": [],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-pause-seed-101-003/i22-deepagents-pause-seed-101-003/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 3,
+        "completed_forwarded_2xx": 3,
+        "outcomes": {
+          "forwarded": 3
+        },
+        "upstream_statuses": {
+          "200": 3
+        },
+        "selected_call_metadata_sha256": "381caa11a4d44cd075f56df1ed9c3b4dcf03fe2409d689cae8e57d30f72aae26"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-101-004",
+      "category": "pause-formal",
+      "original_passed": false,
+      "effective_passed": false,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-101-004/verdict.json",
+          "sha256": "4f0b5fa7ffc6b6e60806bd6d4ca27dfb3f9369be281382c4d9baa2e56ba69167",
+          "passed": false,
+          "failed_checks": [
+            "fixed_tools_independent_business_result"
+          ]
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-pause-seed-101-004/i22-deepagents-pause-seed-101-004/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "192828b970f8d422bbc49ef42ac794eddba84485d161697643d62e62ffe2850a"
+      }
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "chain_id": "i22-deepagents-pause-seed-202-001",
+      "category": "pause-formal",
+      "original_passed": false,
+      "effective_passed": false,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/tools/i22-deepagents-pause-seed-202-001/verdict.json",
+          "sha256": "cef490cf37f5ae6d71eb4cad80ee4db1ae5aefa104073829150a91616bee2ea9",
+          "passed": false,
+          "failed_checks": [
+            "fixed_tools_independent_business_result"
+          ]
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepagents-pause-seed-202-001/i22-deepagents-pause-seed-202-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 6,
+        "completed_forwarded_2xx": 6,
+        "outcomes": {
+          "forwarded": 6
+        },
+        "upstream_statuses": {
+          "200": 6
+        },
+        "selected_call_metadata_sha256": "997d939c88e743f2fd8cf9a2ea04c09929968c1a31acc393695994337ec6135b"
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-pause-seed-101-001",
+      "category": "implementation-aborted",
+      "original_passed": null,
+      "effective_passed": null,
+      "verdicts": [],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepseek-pause-seed-101-001/i22-deepseek-pause-seed-101-001/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 5,
+        "completed_forwarded_2xx": 5,
+        "outcomes": {
+          "forwarded": 5
+        },
+        "upstream_statuses": {
+          "200": 5
+        },
+        "selected_call_metadata_sha256": "cd7c66c735231332c515651c0f7f03be8330c6697ad3b239848bdf16e86e4f87"
+      }
+    },
+    {
+      "candidate": "deepseek_harness",
+      "chain_id": "i22-deepseek-pause-seed-101-002",
+      "category": "pause-formal",
+      "original_passed": false,
+      "effective_passed": true,
+      "verdicts": [
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/verdict.json",
+          "sha256": "b800f5d9c4b87ede419d463252995b5ec9b467b68e73dcf79afa6a55ad723394",
+          "passed": false,
+          "failed_checks": [
+            "original_task_native_completion"
+          ]
+        },
+        {
+          "path": "/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/reviews/restored-header-002/verdict.json",
+          "sha256": "bf5bc8965ffcbf27eef70be076cfe0f94a11c7dbe1db77ce439296b58faf9949",
+          "passed": true,
+          "failed_checks": []
+        }
+      ],
+      "calls_source": {
+        "path": "/Users/hanbowen01/harness-lab-data/budgets/pause-recovery/i22-deepseek-pause-seed-101-002/i22-deepseek-pause-seed-101-002/calls.sqlite",
+        "mode": "read-only SQLite snapshot",
+        "selected_columns": [
+          "id",
+          "started_at",
+          "path",
+          "outcome",
+          "upstream_status"
+        ]
+      },
+      "usage": {
+        "reservations": 12,
+        "completed_forwarded_2xx": 12,
+        "outcomes": {
+          "forwarded": 12
+        },
+        "upstream_statuses": {
+          "200": 12
+        },
+        "selected_call_metadata_sha256": "e21ca800ed67a898d6d959f495d0f9754d30e13ccf647a5dca3af6a265cb2ca2"
+      }
+    }
+  ],
+  "i22_groups": [
+    {
+      "candidate": "deepagents_langgraph",
+      "category": "baseline",
+      "attempts": 3,
+      "successful_attempts": 2,
+      "reservations": 17,
+      "unsuccessful_attempt_reservations": 5,
+      "completed_forwarded_2xx": 17
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "category": "implementation-aborted",
+      "attempts": 3,
+      "successful_attempts": 0,
+      "reservations": 10,
+      "unsuccessful_attempt_reservations": 10,
+      "completed_forwarded_2xx": 10
+    },
+    {
+      "candidate": "deepagents_langgraph",
+      "category": "pause-formal",
+      "attempts": 2,
+      "successful_attempts": 0,
+      "reservations": 11,
+      "unsuccessful_attempt_reservations": 11,
+      "completed_forwarded_2xx": 11
+    },
+    {
+      "candidate": "deepseek_harness",
+      "category": "baseline",
+      "attempts": 3,
+      "successful_attempts": 3,
+      "reservations": 32,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 32
+    },
+    {
+      "candidate": "deepseek_harness",
+      "category": "implementation-aborted",
+      "attempts": 1,
+      "successful_attempts": 0,
+      "reservations": 5,
+      "unsuccessful_attempt_reservations": 5,
+      "completed_forwarded_2xx": 5
+    },
+    {
+      "candidate": "deepseek_harness",
+      "category": "pause-formal",
+      "attempts": 1,
+      "successful_attempts": 1,
+      "reservations": 12,
+      "unsuccessful_attempt_reservations": 0,
+      "completed_forwarded_2xx": 12
+    }
+  ],
+  "subset_totals": {
+    "formal_attempts": 66,
+    "formal_reservations": 504,
+    "i22_chains": 13,
+    "i22_reservations": 87
+  }
+}

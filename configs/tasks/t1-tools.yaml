@@ -1,7 +1,0 @@
-task_id: t1-tools
-category: deterministic_tools
-description: Call a deterministic local tool chain and validate a structured result.
-timeout_seconds: 120
-budget_usd: 0.25
-grader: structured_json
-side_effects: none

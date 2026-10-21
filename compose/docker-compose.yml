@@ -1,63 +1,315 @@
 name: harness-lab
-
 services:
+  bench:
+    image: harness-lab-bench:local
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.bench
+    platform: linux/arm64
+    labels:
+      org.harness-lab.role: acceptance
+      org.harness-lab.experiment: current
+    profiles: [bench]
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 128
+    environment:
+      HARNESS_LAB_ENVIRONMENT: container
+    volumes:
+      - type: bind
+        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/state
+        target: /data/state
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/workspaces
+        target: /data/workspaces
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/fixtures
+        target: /data/fixtures
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/budgets
+        target: /data/budgets
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/runs
+        target: /data/runs
+        bind: {create_host_path: false}
+    networks: [lab]
   fixtures:
+    image: harness-lab-services:local
     build:
       context: ..
-      dockerfile: compose/Dockerfile.fixtures
-    environment:
-      FIXTURE_HOST: 0.0.0.0
-      FIXTURE_PORT: 8080
-      FIXTURE_STATE_FILE: /data/fixture-state.json
+      dockerfile: compose/Dockerfile.services
+    platform: linux/arm64
+    profiles: [services]
+    read_only: true
+    tmpfs: [/tmp:size=32m]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    command: ["-m", "fixtures.service.server", "--db", "/data/fixtures/${LAB_EXPERIMENT_ID:-infrastructure}/${LAB_VARIANT:-smoke}/ledger.sqlite"]
     volumes:
-      - ../var/fixtures:/data
-    ports:
-      - "18080:8080"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
-      interval: 2s
-      timeout: 2s
-      retries: 10
-
-  execution:
-    build:
-      context: ..
-      dockerfile: compose/Dockerfile.execution
-    command: ["python", "-m", "http.server", "8080", "--directory", "/workspace"]
+      - ${HARNESS_LAB_DATA_ROOT}/fixtures:/data/fixtures
+    networks: [lab]
+  site:
+    image: harness-lab-services:local
+    platform: linux/arm64
+    profiles: [browser]
+    read_only: true
+    tmpfs: [/tmp:size=32m]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    command: ["-m", "fixtures.browser_site.server", "--users-file", "/config/users.json", "--actions-file", "/evidence/site-actions.jsonl"]
     volumes:
-      - ../var/execution:/workspace
-    ports:
-      - "18082:8080"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/')"]
-      interval: 2s
-      timeout: 2s
-      retries: 10
-
-  runner:
+      - ${HARNESS_LAB_DATA_ROOT}/fixtures/${LAB_EXPERIMENT_ID:-infrastructure}/${LAB_VARIANT:-smoke}/browser-users.json:/config/users.json:ro
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/infrastructure-smoke}:/evidence
+    networks: [lab]
+  tools:
+    image: harness-lab-services:local
+    platform: linux/arm64
+    profiles: [services]
+    read_only: true
+    tmpfs: [/tmp:size=32m]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    command: ["-m", "execution.tools.server", "--binding-file", "/config/binding.json"]
+    volumes:
+      - ${HARNESS_LAB_DATA_ROOT}/fixtures/${LAB_EXPERIMENT_ID:-infrastructure}/${LAB_VARIANT:-smoke}/tool-binding.json:/config/binding.json:ro
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/infrastructure-smoke}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/infrastructure-smoke}:/evidence
+    networks: [lab]
+  model-proxy:
+    image: harness-lab-services:local
+    platform: linux/arm64
+    profiles: [model]
+    read_only: true
+    tmpfs: [/tmp:size=32m]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    env_file: ../.env
+    command: ["-m", "execution.model_proxy", "--database", "/budget/calls.sqlite", "--run-token-file", "/budget/run.token", "--cap", "${LAB_MAX_MODEL_CALLS:-20}", "--port", "8082"]
+    volumes:
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/infrastructure-smoke}:/budget
+    networks: [lab]
+  browser:
+    image: harness-lab-browser:local
     build:
       context: ..
-      dockerfile: compose/Dockerfile.runner
+      dockerfile: compose/Dockerfile.browser
+    platform: linux/arm64
+    profiles: [browser]
+    read_only: true
+    tmpfs: [/tmp:size=256m]
+    shm_size: 256m
+    mem_limit: 1536m
+    cpus: 0.5
+    pids_limit: 256
     environment:
-      FIXTURE_URL: http://fixtures:8080
-      EXECUTION_URL: http://execution:8080
-    depends_on:
-      fixtures:
-        condition: service_healthy
-      execution:
-        condition: service_healthy
-    ports:
-      - "18081:8081"
-
-  adapter:
+      HOME: /tmp
+    volumes:
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/infrastructure-smoke}/browser:/data/browser-artifacts
+    networks: [lab]
+  deepseek-harness:
+    image: harness-lab-deepseek-harness:local
     build:
-      context: ..
-      dockerfile: compose/Dockerfile.adapter
+      context: ../external/build-context/deepseek_harness
+    platform: linux/arm64
+    profiles: [deepseek-harness]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
     environment:
-      FIXTURE_URL: http://fixtures:8080
-      EXECUTION_URL: http://execution:8080
-    depends_on:
-      fixtures:
-        condition: service_healthy
-      execution:
-        condition: service_healthy
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  openclaw:
+    image: harness-lab-openclaw:local
+    build:
+      context: ../external/build-context/openclaw
+    platform: linux/arm64
+    profiles: [openclaw]
+    read_only: true
+    tmpfs: [/tmp:size=256m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  deepagents-langgraph:
+    image: harness-lab-deepagents-langgraph:local
+    build:
+      context: ../external/build-context/deepagents_langgraph
+    platform: linux/arm64
+    profiles: [deepagents-langgraph]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  pi-agent-core:
+    image: harness-lab-pi-agent-core:local
+    build:
+      context: ../external/build-context/pi_agent_core
+    platform: linux/arm64
+    profiles: [pi-agent-core]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  google-adk:
+    image: harness-lab-google-adk:local
+    build:
+      context: ../external/build-context/google_adk
+    platform: linux/arm64
+    profiles: [google-adk]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  openai-agents-sdk:
+    image: harness-lab-openai-agents-sdk:local
+    build:
+      context: ../external/build-context/openai_agents_sdk
+    platform: linux/arm64
+    profiles: [openai-agents-sdk]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  openhands:
+    image: harness-lab-openhands:local
+    build:
+      context: ../external/build-context/openhands
+    platform: linux/arm64
+    profiles: [openhands]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+  codex-sdk:
+    image: harness-lab-codex-sdk:local
+    build:
+      context: ../external/build-context/codex_sdk
+    platform: linux/arm64
+    profiles: [codex-sdk]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MODEL_API_BASE_URL: http://model-proxy:8082/v1
+      MODEL_RUN_TOKEN_FILE: /config/model-run.token
+      MODEL_NAME: ${LAB_MODEL_NAME:-not-configured}
+    command: ["--request", "/config/request.json"]
+    volumes:
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/candidate-request.json:/config/request.json:ro
+      - ${LAB_FIXTURE_HOST:-/Users/hanbowen01/harness-lab-data/fixtures/not-configured}/scope.token:/config/scope.token:ro
+      - ${LAB_BUDGET_HOST:-/Users/hanbowen01/harness-lab-data/budgets/not-configured}/run.token:/config/model-run.token:ro
+      - ${LAB_STATE_HOST:-/Users/hanbowen01/harness-lab-data/state/not-configured}:/state
+      - ${LAB_WORKSPACE_HOST:-/Users/hanbowen01/harness-lab-data/workspaces/not-configured}:/workspace
+      - ${LAB_EVIDENCE_HOST:-/Users/hanbowen01/harness-lab-data/runs/not-configured}/candidate:/evidence
+    networks: [lab]
+networks:
+  lab:
+    labels:
+      org.harness-lab.experiment: current
