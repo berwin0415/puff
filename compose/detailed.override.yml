@@ -29,3 +29,11 @@ services:
     volumes: *detailed-volumes
   openai-agents-sdk:
     volumes: *detailed-volumes
+  pi-agent-core:
+    volumes: *detailed-volumes
+  google-adk:
+    volumes: *detailed-volumes
+  openhands:
+    volumes: *detailed-volumes
+  codex-sdk:
+    volumes: *detailed-volumes

@@ -64,6 +64,12 @@ class HttpTools:
             trust_env=False, transport=httpx.HTTPTransport(retries=0), timeout=30,
         )
         self.schemas = []
+        self.quantity_rule = None
+
+    def enable_quantity_rule(self, quantity_limit, evidence, scope):
+        """在执行前拦截超量写入；数量在限额内的写入照常执行。"""
+        from business_extension import QuantityRuleExecutor
+        self.quantity_rule = (quantity_limit, evidence, scope)
 
     def load(self):
         remaining = self.deadline - time.monotonic()
@@ -86,9 +92,12 @@ class HttpTools:
                 raise ValueError("可信工具结构无效")
             seen.add(name)
             specification = ClientToolSpec(name=name, description=description, parameters=schema)
-            tool = HttpTool.from_spec(specification).model_copy(update={
-                "executor": HttpExecutor(self.client, name, schema["properties"], self.deadline),
-            })
+            executor = HttpExecutor(self.client, name, schema["properties"], self.deadline)
+            if self.quantity_rule is not None and name == "write":
+                from business_extension import QuantityRuleExecutor
+                limit, evidence, scope = self.quantity_rule
+                executor = QuantityRuleExecutor(executor, limit, evidence, scope)
+            tool = HttpTool.from_spec(specification).model_copy(update={"executor": executor})
             exported = tool.to_openai_tool(add_security_risk_prediction=True)["function"]
             if tool.name != name or exported["name"] != name or exported["parameters"] != schema:
                 raise ValueError("OpenHands 更改了共享工具结构")

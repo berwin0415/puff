@@ -568,7 +568,9 @@ def test_nonbrowser_mount_placeholders_and_old_request_protocol(tmp_path, monkey
     _, _, paths, scope = setup_case(tmp_path, monkeypatch, case, "pi_agent_core")
     assert json.loads((paths.fixture / "browser-credentials.json").read_text()) == {}
     assert json.loads((paths.fixture / "scope.json").read_text()) == scope
-    assert len(json.loads((paths.fixture / "candidate-request.json").read_text())) == 11
+    # 已接通 candidate_options 的候选在详细用例会收到第 12 个可选字段。
+    request_keys = json.loads((paths.fixture / "candidate-request.json").read_text())
+    assert len(request_keys) == 12 and request_keys["candidate_options"]["case"] == case
     assert (paths.run / "browser").is_dir()
 
 
@@ -835,11 +837,12 @@ def test_host_docker_fault_cannot_be_masked_by_successful_compose_exit(tmp_path,
 
 
 def test_unsupported_cases_do_not_launch_any_docker_command(tmp_path):
+    """八条路线均已接通浏览器与扩展；此处改用未接通的取消用例。"""
     lab = FakeDetailedLab(tmp_path)
-    with pytest.raises(ValueError, match='尚未接通'):
-        lab.run_detailed("pi_agent_core", "browser", 101, "unsupported-unit")
-    with pytest.raises(ValueError, match='尚未接通'):
-        lab.run_detailed("codex_sdk", "browser", 101, "unsupported-unit")
+    with pytest.raises(ValueError, match='尚未接通原生取消触发器'):
+        lab.run_detailed("pi_agent_core", "cancel", 101, "unsupported-unit")
+    with pytest.raises(ValueError, match='尚未接通原生取消触发器'):
+        lab.run_detailed("codex_sdk", "cancel", 101, "unsupported-unit")
     assert lab.commands == []
 
 

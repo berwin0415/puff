@@ -9,6 +9,8 @@ dependencies = [
     "google-genai==2.30.0",
     "httpx==0.28.1",
     "flit-core==3.12.0",
+    # 详细用例的浏览器接入使用官方 MCP 客户端。
+    "mcp==1.28.1",
 ]
 
 [tool.uv]
@@ -18,9 +20,9 @@ environments = ["sys_platform == 'linux' and platform_machine == 'aarch64'"]
 [tool.uv.sources]
 google-adk = { path = "../sources/main" }
 
-# 使用固定源码 pyproject.toml 的精确基础运行时元数据，
-# 避免在宿主机准备锁定文件时执行其动态版本构建后端。
-# 扩展仅选择 LiteLLM，不使用其他集成。
+# Exact base runtime metadata from the pinned source pyproject.toml. This
+# avoids executing its dynamic-version build backend during host lock prep.
+# Only LiteLLM is selected from extensions; other integrations are not used.
 [[tool.uv.dependency-metadata]]
 name = "google-adk"
 version = "2.12.0"

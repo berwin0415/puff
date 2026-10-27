@@ -23,8 +23,10 @@ from runner.grading import (audited_calls, browser_prompt, grade_browser,
 from runner.process_observation import WorkerExpectation, grade_process_observation, read_evidence
 
 CASES = ("tools", "browser", "sensitive", "extension", "extension-denied", "diagnostic", "diagnostic-timeout", "cancel")
-CASE_OPTIONS_CANDIDATES = frozenset(("deepseek_harness", "openclaw", "deepagents_langgraph", "openai_agents_sdk"))
-BROWSER_CANDIDATES = CASE_OPTIONS_CANDIDATES
+# 已接通 candidate_options 的候选；扩展、两类拒绝与状态读取需要此接法。
+CASE_OPTIONS_CANDIDATES = frozenset(PROFILES)
+# 浏览器用例依赖各候选的 MCP 客户端接线，按候选分别验收。
+BROWSER_CANDIDATES = frozenset(PROFILES)
 CANCEL_EXIT_CODES = {"deepseek_harness": 1, "openai_agents_sdk": 1, "deepagents_langgraph": 0, "openclaw": 1}
 TASK_FILES = {"tools": "tools.yaml", "browser": "browser.yaml", "sensitive": "control-policy.yaml",
               "extension": "business-extension.yaml", "extension-denied": "business-extension.yaml",

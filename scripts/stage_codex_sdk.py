@@ -22,7 +22,9 @@ PACKAGES = (
     ("cli", "@openai/codex", "0.163.0", "@openai/codex", "sha512-HNd7vR9oTK6M2ikxFnvNDCdYUgAsyo9VVnd5KnEd2ON0GYI++7MiX9XNPUkhtdgGKFPsWS+CEppQ1UU63uVhUw=="),
     ("linux-arm64", "@openai/codex", "0.163.0-linux-arm64", "@openai/codex-linux-arm64", "sha512-IH2/R+4OarjGvsAf1ll3fdyLwrPgYLl3uzp6u9CyD9sj2Lw+ViDSe3QBZVHdcHJs0eIiZFg6Wprcuy4CRZaUGw=="),
 )
-ADAPTER_FILES = ("entrypoint.mjs", "http-mcp-bridge.mjs", "verify-source.mjs", "README.md")
+ADAPTER_FILES = ("entrypoint.mjs", "http-mcp-bridge.mjs", "verify-source.mjs", "README.md",
+                 # 详细用例接入：可信输入校验、浏览器 MCP 代理与业务扩展。
+                 "detailed_support.mjs", "browser-mcp-proxy.mjs")
 
 
 def digest(data: bytes) -> str:

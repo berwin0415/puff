@@ -8,7 +8,9 @@ from pathlib import Path
 import shutil
 
 
-FILES = ("entrypoint.py", "http_tools.py", "verify_source.py", "pyproject.toml", "uv.lock", "bootstrap-requirements.txt", "README.md")
+FILES = ("entrypoint.py", "http_tools.py", "verify_source.py", "pyproject.toml", "uv.lock", "bootstrap-requirements.txt", "README.md",
+         # 详细用例接入：可信输入校验、浏览器 MCP 桥与业务扩展。
+         "detailed_support.py", "browser_tools.py", "business_extension.py")
 COMMIT = "365084db7b14e796f36ad2929f987e8d83874961"
 ARCHIVE_HASH = "1738a04484fb362e3cc7891b6b3593eadc64a86df1b63839e34e2df1e6317571"
 EXPORT_HASH = "b02725196e3e362f0e389c68a0ff35ba83ee163932f9cd564c66e919aa5ac905"

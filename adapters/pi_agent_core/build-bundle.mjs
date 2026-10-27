@@ -17,6 +17,9 @@ const aliases = {
   '@earendil-works/pi-agent-core': resolve(root, 'packages/agent/src/index.ts'),
   '@earendil-works/pi-ai': resolve(root, 'packages/ai/src/index.ts'),
   '@earendil-works/pi-telemetry': resolve(root, 'packages/telemetry/src/index.ts'),
+  // 浏览器用例使用官方 pi-mcp 客户端（Streamable HTTP），
+  // 与 Pi 生态的 MCP 接法一致，不引入第三方 MCP SDK。
+  '@earendil-works/pi-mcp': resolve(root, 'packages/mcp/src/index.ts'),
 }
 // npm 将 AI 包依赖的 OpenAI 7 保留在此工作区下，因为另一个
 // 工作区固定使用 OpenAI 6。保留 Node 官方的工作区解析方式。
@@ -24,11 +27,11 @@ const output = resolve(root, 'packages/ai/pi-core.bundle.mjs')
 const result = await build({
   absWorkingDir: root,
   stdin: {
-    contents: 'export { Agent } from "@earendil-works/pi-agent-core"; export { streamSimple } from "./packages/ai/src/api/openai-completions.ts";',
+    contents: 'export { Agent } from "@earendil-works/pi-agent-core"; export { streamSimple } from "./packages/ai/src/api/openai-completions.ts"; export { McpClient, StreamableHttpTransport } from "@earendil-works/pi-mcp";',
     resolveDir: root, sourcefile: 'harness-lab-public-entry.ts', loader: 'ts',
   },
   plugins: [{ name: 'verified-official-workspace', setup(build) {
-    build.onResolve({ filter: /^@earendil-works\/pi-(agent-core|ai|telemetry)$/ }, args => ({ path: aliases[args.path] }))
+    build.onResolve({ filter: /^@earendil-works\/pi-(agent-core|ai|telemetry|mcp)$/ }, args => ({ path: aliases[args.path] }))
   } }],
   outfile: output, bundle: true, platform: 'node', format: 'esm', target: 'node24',
   // 上游 tsconfig 将 "typebox" 映射到 node_modules。显式声明的外部依赖

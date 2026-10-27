@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,10 @@ import re
 import sys
 import time
 from uuid import NAMESPACE_URL, uuid5
+
+# 以绝对路径启动时，脚本目录不一定在工作目录里；
+# 显式加入同目录接入模块的搜索路径。
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from verify_source import verify_source
 
@@ -59,8 +64,11 @@ def request_from_file():
     parser.add_argument("--request", required=True)
     request = json.loads(trusted_path(parser.parse_args().request).read_bytes())
     keys = {"run_id", "session_id", "prompt", "workspace", "state_dir", "output_dir", "tools_url", "tool_token_file", "max_output_tokens", "timeout_seconds", "max_retries"}
-    if not isinstance(request, dict) or set(request) != keys:
+    if not isinstance(request, dict) or not keys <= set(request) or set(request) - keys - {"candidate_options"}:
         raise ValueError("可信运行请求字段无效")
+    if "candidate_options" in request:
+        from detailed_support import validate_options
+        validate_options(request["candidate_options"])
     for name in ("run_id", "session_id"):
         if not isinstance(request[name], str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", request[name]) or request[name].lower() == "old":
             raise ValueError("运行或会话标识无效")
@@ -116,7 +124,20 @@ async def main():
     output = Path(request["output_dir"])
     started = time.monotonic()
     deadline = started + request["timeout_seconds"]
-    tools = HttpTools(request["tools_url"], tool_token, deadline)
+    options = request.get("candidate_options")
+    browser_case = bool(options and options["case"] == "browser")
+    extension_case = bool(options and options["case"] == "extension")
+    from detailed_support import Evidence, read_credentials, read_scope
+    scope = read_scope(options["trusted_scope_file"], request["session_id"]) if options else None
+    evidence = Evidence(output, lambda value: encoded(value), scope) if options else None
+    credentials = read_credentials(options["browser"]["credentials_file"], scope["user_id"]) if browser_case else None
+    if credentials is not None:
+        SECRETS.append(credentials["password"])
+        request["prompt"] = (request["prompt"] + f"\n\n本轮测试登录资料：站点 {credentials['url']}，"
+                             f"用户名 {credentials['username']}，密码 {credentials['password']}。")
+    browser = None
+    observations = []
+    tools = None if browser_case else HttpTools(request["tools_url"], tool_token, deadline)
     conversation = None
     final_response = None
     finish_action_id = None
@@ -166,7 +187,23 @@ async def main():
         }))
 
     try:
-        specifications = tools.load()
+        if browser_case:
+            from browser_tools import BrowserBridge
+            from browser_specs import browser_specifications
+            browser = BrowserBridge(options["browser"], request["workspace"], evidence, request["timeout_seconds"])
+            definitions = browser.open()
+            specifications = browser_specifications(browser, definitions)
+            tool_schemas = [{"name": name, "input_schema": definitions[name].inputSchema} for name in sorted(definitions)]
+        else:
+            if extension_case:
+                tools.enable_quantity_rule(options["business_extension"]["quantity_limit"], evidence, scope)
+            specifications = tools.load()
+            tool_schemas = tools.schemas
+            if extension_case:
+                receipt_schema = next(entry["input_schema"] for entry in tools.schemas if entry["name"] == "receipt")
+                from business_extension import install_query_tool
+                specifications.append(install_query_tool(
+                    tools.client, deadline, evidence, scope, receipt_schema, observations))
         llm = LLM(
             model="openai/" + model_name, base_url=os.environ["MODEL_API_BASE_URL"],
             api_key=SecretStr(token), api_mode="chat", native_tool_calling=True,
@@ -201,8 +238,16 @@ async def main():
             "model_endpoint": "http://model-proxy:8082/v1/chat/completions",
             "max_retries": request["max_retries"], "native_num_retries_total_attempts": request["max_retries"] + 1,
             "litellm_transport_max_retries": 0, "provenance": provenance,
-            "tool_schemas": tools.schemas, "builtin_tools": ["finish"],
-            "tool_executor": "real_http_no_retries", "confirmation_policy": "NeverConfirm",
+            "tool_schemas": tool_schemas, "builtin_tools": ["finish"],
+            "detailed_case": options["case"] if options else None,
+            "business_extension": {"added_tool": "query_order_status -> receipt",
+                                   "quantity_limit": options["business_extension"]["quantity_limit"]}
+                if extension_case else None,
+            "browser_case": {"transport": "official_mcp_streamable_http_client",
+                             "artifact_source": "只读 /browser-artifacts；仅从真实已完成的下载事件导出"}
+                if browser_case else None,
+            "tool_executor": "official_mcp_call_tool" if browser_case else "real_http_no_retries",
+            "confirmation_policy": "NeverConfirm",
             "controls": {"pause": "not_implemented_by_this_entry", "resume": "not_yet_verified", "cancel": "active_timeout_cancellation_only"},
             "cost_authority": "independent_model_proxy；SDK 费用估算尚未验证",
         }, pretty=True))
@@ -234,7 +279,22 @@ async def main():
         if conversation is not None:
             try:
                 snapshot = conversation.state.model_dump(mode="json")
+                # 业务扩展：把由真实回执聚合的状态写入原生快照，
+                # 再据此生成带哈希与 JSON 指针的只读投影。
+                if extension_case:
+                    from business_extension import aggregate_business_state
+                    snapshot["harness_lab_business_state"] = aggregate_business_state(scope, observations)
                 (output / "state-snapshot.json").write_text(encoded(snapshot, pretty=True))
+                if extension_case:
+                    data = (output / "state-snapshot.json").read_bytes()
+                    evidence.save("business-state.json", {
+                        "scope": scope,
+                        "source": {"path": "state-snapshot.json",
+                                   "sha256": hashlib.sha256(data).hexdigest(),
+                                   "json_pointer": "/harness_lab_business_state"},
+                        "business_state": snapshot["harness_lab_business_state"],
+                    })
+                    evidence.finalize()
                 summary["native_execution_status"] = conversation.state.execution_status.value
                 summary["conversation_id"] = str(conversation.id)
             except Exception as error:
@@ -244,7 +304,7 @@ async def main():
             except Exception as error:
                 summary.update({"status": "failed", "stop_reason": "cleanup_error", "cleanup_error": str(error)})
         try:
-            tools.close()
+            (browser.close if browser_case else tools.close)()
         except Exception as error:
             summary.update({"status": "failed", "stop_reason": "cleanup_error", "tools_cleanup_error": str(error)})
         raw.close()

@@ -8,7 +8,9 @@ from pathlib import Path
 import shutil
 
 
-FILES = ("entrypoint.mjs", "build-bundle.mjs", "verify-source.mjs", "README.md")
+FILES = ("entrypoint.mjs", "build-bundle.mjs", "verify-source.mjs", "README.md",
+         # 详细用例接入：可信输入校验、官方 pi-mcp 浏览器桥与业务扩展。
+         "detailed_support.mjs", "browser_tools.mjs", "business_extension.mjs")
 COMMIT = "73f8de80bc87021375f8b525292ac07492253002"
 ARCHIVE_HASH = "ce969e2917f93ed49d8be62fc7e7a0a02caa02959f40c28c2fb87f2a62639fd8"
 EXPORT_HASH = "493304f15f7b2f15789a00353eb16215dd27346948a99e51372c4369c3dbda59"

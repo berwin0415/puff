@@ -68,8 +68,12 @@ def read_request() -> dict:
     args = parser.parse_args()
     request = json.loads(trusted_path(args.request).read_bytes())
     keys = {"run_id", "session_id", "prompt", "workspace", "state_dir", "output_dir", "tools_url", "tool_token_file", "max_output_tokens", "timeout_seconds", "max_retries"}
-    if not isinstance(request, dict) or set(request) != keys:
+    if not isinstance(request, dict) or not keys <= set(request) or set(request) - keys - {"candidate_options"}:
         raise ValueError("可信运行请求字段无效")
+    if "candidate_options" in request:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from detailed_support import validate_options
+        validate_options(request["candidate_options"])
     for name in ("run_id", "session_id"):
         if not isinstance(request[name], str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", request[name]) or request[name].lower() == "old":
             raise ValueError("运行或会话标识无效")
@@ -97,7 +101,9 @@ async def main() -> int:
         SECRETS.append(token)
     else:
         token = read_token(os.environ.get("MODEL_RUN_TOKEN_FILE"))
-    tool_token = read_token(request["tool_token_file"])
+    # 浏览器用例不挂 HTTP 业务工具，因此不需要工具令牌。
+    browser_case = bool(request.get("candidate_options", {}).get("case") == "browser")
+    tool_token = None if browser_case else read_token(request["tool_token_file"])
     # 此路线不需要 Google 托管运行时或远程模型目录。
     os.environ["LITELLM_TELEMETRY"] = "false"
     os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "true"
@@ -120,6 +126,23 @@ async def main() -> int:
 
     started = time.monotonic()
     output = Path(request["output_dir"])
+    options = request.get("candidate_options")
+    extension_case = bool(options and options["case"] == "extension")
+    browser_case = bool(options and options["case"] == "browser")
+    scope = evidence = None
+    observations = []
+    bridge = None
+    if options:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from detailed_support import Evidence, read_credentials, read_scope
+        scope = read_scope(options["trusted_scope_file"], request["session_id"])
+        evidence = Evidence(output, lambda value: encoded(value), scope)
+        if browser_case:
+            credentials = read_credentials(options["browser"]["credentials_file"], scope["user_id"])
+            SECRETS.append(credentials["password"])
+            request["prompt"] = (request["prompt"]
+                                 + f"\n\n本轮测试登录资料：站点 {credentials['url']}，"
+                                   f"用户名 {credentials['username']}，密码 {credentials['password']}。")
     raw = (output / "raw-events.jsonl").open("w", encoding="utf-8", buffering=1)
     app_name, user_id, agent_name = "harness_lab_google_adk", "screening", "lab_agent"
     sessions = SqliteSessionService(db_path=str(Path(request["state_dir"]) / "sessions.sqlite"))
@@ -143,7 +166,25 @@ async def main() -> int:
                 timeout=request["timeout_seconds"], trust_env=False,
                 transport=httpx.AsyncHTTPTransport(retries=0),
             ) as client:
-                tools = await load_tools(client)
+                if browser_case:
+                    from browser_tools import BrowserBridge
+                    bridge = BrowserBridge(options["browser"], request["workspace"], evidence,
+                                           request["timeout_seconds"])
+                    tools = await bridge.open()
+                else:
+                    tools = await load_tools(client)
+                if extension_case:
+                    from business_extension import QuantityRuleTool, QueryReceiptTool
+                    definitions = {tool.name: tool.schema for tool in tools}
+                    limit = options["business_extension"]["quantity_limit"]
+                    tools = [
+                        QuantityRuleTool({"name": "write", "description": "提交一次业务写入（含写入前数量规则）。",
+                                          "input_schema": definitions["write"]},
+                                         client, limit, evidence, scope)
+                        if tool.name == "write" else tool
+                        for tool in tools
+                    ]
+                    tools.append(QueryReceiptTool(client, definitions["receipt"], evidence, scope, observations))
                 model = LiteLlm(
                     model="openai/" + os.environ["MODEL_NAME"],
                     api_base=os.environ["MODEL_API_BASE_URL"], api_key=token,
@@ -209,7 +250,23 @@ async def main() -> int:
         cleanup_errors = []
         try:
             snapshot = await sessions.get_session(app_name=app_name, user_id=user_id, session_id=request["session_id"])
-            (output / "state-snapshot.json").write_text(encoded(snapshot, pretty=True))
+            payload = json.loads(encoded(snapshot, pretty=True))
+            if extension_case:
+                from business_extension import aggregate_business_state
+                payload["harness_lab_business_state"] = aggregate_business_state(scope, observations)
+            (output / "state-snapshot.json").write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+            if extension_case:
+                data = (output / "state-snapshot.json").read_bytes()
+                import hashlib
+                evidence.save("business-state.json", {
+                    "scope": scope,
+                    "source": {"path": "state-snapshot.json",
+                               "sha256": hashlib.sha256(data).hexdigest(),
+                               "json_pointer": "/harness_lab_business_state"},
+                    "business_state": payload["harness_lab_business_state"],
+                })
+                evidence.finalize()
         except Exception as error:
             cleanup_errors.append({"operation": "session_snapshot", "error_type": type(error).__name__, "error": str(error)})
         if runner:
@@ -221,6 +278,11 @@ async def main() -> int:
             await sessions.close()
         except Exception as error:
             cleanup_errors.append({"operation": "session_service_close", "error_type": type(error).__name__, "error": str(error)})
+        if bridge is not None:
+            try:
+                await bridge.close()
+            except Exception as error:
+                cleanup_errors.append({"operation": "browser_mcp_close", "error_type": type(error).__name__, "error": str(error)})
         if cleanup_errors:
             summary["cleanup_errors"] = cleanup_errors
             if summary["status"] == "completed":

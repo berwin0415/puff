@@ -11,6 +11,8 @@ import shutil
 FILES = (
     "entrypoint.py", "http_tools.py", "verify_source.py", "requirements-linux-aarch64.txt",
     "bootstrap-requirements.txt", "LOCK_PROVENANCE.json", "README.md",
+    # 详细用例接入：可信输入校验、浏览器 MCP 桥与业务扩展。
+    "detailed_support.py", "browser_tools.py", "browser_specs.py", "business_extension.py",
 )
 PINS = {
     "sdk": ("33d8aa29c3078d074799e2fbf5e847aeb2d71360", "70a8be4642612b7a6a1b43bc4dca5cc4be92fae58f98dfd10d0ff82b780b675c"),

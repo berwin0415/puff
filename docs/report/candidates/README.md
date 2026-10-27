@@ -18,10 +18,10 @@
 | Deep Agents + LangGraph | 详细 + 暂停 + 故障 + 多人 + 成本 | [deepagents_langgraph.md](deepagents_langgraph.md) | 图状态与公开控制最好，业务约束需自行解决 |
 | OpenClaw | 详细（未进入专项） | [openclaw.md](openclaw.md) | 对应现有云端业务，插件面完整但预算吃紧 |
 | OpenAI Agents SDK | 详细（未进入专项） | [openai_agents_sdk.md](openai_agents_sdk.md) | 轻量、控制直接，持久能力需补建 |
-| Pi Agent Core | 初筛 + 本轮补测 | [pi_agent_core.md](pi_agent_core.md) | 最轻的核心库，状态与恢复全在应用侧 |
-| Google ADK | 初筛 + 本轮补测 | [google_adk.md](google_adk.md) | 会话服务齐全，分页约束本轮最稳 |
-| OpenHands | 初筛 + 本轮补测 | [openhands.md](openhands.md) | 会话持久设计完整，本轮仅测核心库入口 |
-| Codex SDK | 初筛 + 本轮补测 | [codex_sdk.md](codex_sdk.md) | 原生 CLI 能力最强，输出上限是已知缺口 |
+| Pi Agent Core | 详细五类（15/15） | [pi_agent_core.md](pi_agent_core.md) | 最轻的核心库，自带官方 MCP 客户端；状态全在应用侧 |
+| Google ADK | 详细五类（15/15） | [google_adk.md](google_adk.md) | 会话服务齐全，补齐路线中唯一零失败 |
+| OpenHands | 详细五类（15/15） | [openhands.md](openhands.md) | 会话持久设计完整，接入成本最低；仅测核心库入口 |
+| Codex SDK | 详细五类（11/15） | [codex_sdk.md](codex_sdk.md) | 原生 CLI 能力最强；网页撞预算上限，调用消耗偏高 |
 
 ## 每份报告的回答顺序
 

@@ -20,8 +20,13 @@ from runner.detailed import CANCEL_EXIT_CODES
 from runner.metrics import summarize
 from scripts.lab import CANDIDATES, Lab
 
-BROWSER_CANDIDATES = frozenset(("deepseek_harness", "openclaw", "deepagents_langgraph", "openai_agents_sdk"))
-CASE_OPTIONS_CANDIDATES = BROWSER_CANDIDATES
+# 已接通 candidate_options 的候选；扩展、拒绝与状态读取需要此接法。
+CASE_OPTIONS_CANDIDATES = frozenset(CANDIDATES)
+# 浏览器用例依赖各候选的 MCP 客户端接线，按候选分别验收。
+BROWSER_CANDIDATES = frozenset((
+    "deepseek_harness", "openclaw", "deepagents_langgraph", "openai_agents_sdk",
+    "pi_agent_core", "google_adk", "openhands", "codex_sdk",
+))
 CANCEL_CANDIDATES = frozenset(CANCEL_EXIT_CODES)
 
 
