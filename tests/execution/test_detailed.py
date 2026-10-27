@@ -836,6 +836,20 @@ def test_host_docker_fault_cannot_be_masked_by_successful_compose_exit(tmp_path,
     assert json.loads((evidence / "process-validation.json").read_text())["passed"] is False
 
 
+def test_model_call_cap_follows_frozen_task_budget():
+    """网页用例单独使用 40 次上限，其余用例保持全局 20 次。"""
+    config = load_config()
+    caps = {case: detailed.model_call_cap(detailed.task_definition(case)[0], config)
+            for case in ("tools", "browser", "sensitive", "extension", "extension-denied")}
+    assert caps["browser"] == 40
+    assert all(caps[case] == config.budget.max_model_calls for case in caps if case != "browser")
+    # 缺省回落到全局值；非法值必须拒绝。
+    assert detailed.model_call_cap({}, config) == config.budget.max_model_calls
+    for bad in (0, -1, True, "40"):
+        with pytest.raises(ValueError, match="任务级模型请求上限"):
+            detailed.model_call_cap({"budget": {"max_model_calls": bad}}, config)
+
+
 def test_unsupported_cases_do_not_launch_any_docker_command(tmp_path):
     """八条路线均已接通浏览器与扩展；此处改用未接通的取消用例。"""
     lab = FakeDetailedLab(tmp_path)

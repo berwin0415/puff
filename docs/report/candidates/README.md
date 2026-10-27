@@ -16,12 +16,12 @@
 | --- | --- | --- | --- |
 | DeepSeek Harness | 详细 + 暂停 + 故障 + 多人 + 成本 | [deepseek_harness.md](deepseek_harness.md) | 与现有客户端同源，本轮证据最完整 |
 | Deep Agents + LangGraph | 详细 + 暂停 + 故障 + 多人 + 成本 | [deepagents_langgraph.md](deepagents_langgraph.md) | 图状态与公开控制最好，业务约束需自行解决 |
-| OpenClaw | 详细（未进入专项） | [openclaw.md](openclaw.md) | 对应现有云端业务，插件面完整但预算吃紧 |
+| OpenClaw | 详细（未进入专项） | [openclaw.md](openclaw.md) | 对应现有云端业务；网页提高预算后首次通过，但平均需 31.7 次调用 |
 | OpenAI Agents SDK | 详细（未进入专项） | [openai_agents_sdk.md](openai_agents_sdk.md) | 轻量、控制直接，持久能力需补建 |
 | Pi Agent Core | 详细五类（15/15） | [pi_agent_core.md](pi_agent_core.md) | 最轻的核心库，自带官方 MCP 客户端；状态全在应用侧 |
 | Google ADK | 详细五类（15/15） | [google_adk.md](google_adk.md) | 会话服务齐全，补齐路线中唯一零失败 |
 | OpenHands | 详细五类（15/15） | [openhands.md](openhands.md) | 会话持久设计完整，接入成本最低；仅测核心库入口 |
-| Codex SDK | 详细五类（11/15） | [codex_sdk.md](codex_sdk.md) | 原生 CLI 能力最强；网页撞预算上限，调用消耗偏高 |
+| Codex SDK | 详细五类（14/15） | [codex_sdk.md](codex_sdk.md) | 原生 CLI 能力最强；网页四十次预算下通过，但调用消耗最高 |
 
 ## 每份报告的回答顺序
 

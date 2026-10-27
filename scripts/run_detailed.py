@@ -16,7 +16,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from runner.bench import identifier
-from runner.detailed import CANCEL_EXIT_CODES
+from runner.detailed import CANCEL_EXIT_CODES, model_call_cap, task_definition
 from runner.metrics import summarize
 from scripts.lab import CANDIDATES, Lab
 
@@ -188,7 +188,9 @@ class DetailedLab(Lab):
                          "LAB_STATE_HOST": str(paths.state), "LAB_BUDGET_HOST": str(paths.budget),
                          "LAB_FIXTURE_HOST": str(paths.fixture),
                          "LAB_MODEL_TIMEOUT_AT": "1" if case == "diagnostic-timeout" else "",
-                         "LAB_MAX_MODEL_CALLS": str(self.config.budget.max_model_calls)})
+                         # 预算按用例取自冻结任务定义：网页用例单独使用更高上限，
+                         # 其余用例仍为全局值。代理的 cap 会写入一次性预算库。
+                         "LAB_MAX_MODEL_CALLS": str(model_call_cap(task_definition(case)[0], self.config))})
         # Compose 解析 .env 引号，其中可能有真实密钥。该对象
         # 仅留在内存；提取非敏感模型名后立即丢弃。
         service, prefix, profile, _ = CANDIDATES[candidate]

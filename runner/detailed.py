@@ -64,6 +64,20 @@ def task_definition(case):
     return yaml.safe_load(path.read_text()), hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def model_call_cap(task, config):
+    """按用例读取冻结的任务级模型请求上限；缺省回落到全局配置。
+
+    每个任务配置都显式声明 budget.max_model_calls。网页用例因其页面
+    交互步数更多，单独使用更高的上限，其余用例仍为全局值。
+    """
+    declared = (task.get("budget") or {}).get("max_model_calls")
+    if declared is None:
+        return config.budget.max_model_calls
+    if type(declared) is not int or declared < 1:
+        raise ValueError("任务级模型请求上限必须是正整数")
+    return declared
+
+
 def private_json(path, value):
     # 测试凭证独立存放，绝不放入 input.json 或 stdout。
     with path.open("x", encoding="utf-8") as stream:
@@ -147,11 +161,12 @@ def prepare(args):
                                   "credentials_file": "/config/browser-credentials.json",
                                   "artifacts_dir": "/browser-artifacts"}
         request["candidate_options"] = options
+    cap = model_call_cap(task, config)
     save(paths.fixture / "candidate-request.json", request)
     save(paths.run / "input.json", {
         "candidate": args.candidate, "run_id": args.run_id, "experiment_id": args.experiment_id,
         "case": args.case, "seed": args.seed, "scope": scope, "prompt": prompt,
-        "model_call_cap": config.budget.max_model_calls,
+        "model_call_cap": cap,
         "active_timeout_seconds": config.budget.active_timeout_seconds,
         "expected_answer_delivered": False, "profile": PROFILES[args.candidate],
         "task_file": "configs/tasks/" + TASK_FILES[args.case], "task_sha256": task_hash,
@@ -719,7 +734,7 @@ def add_check(result, name, passed, detail):
     result["passed"] = result["passed"] and bool(passed)
 
 
-def model_checks(result, paths, config, *, cancelled=False):
+def model_checks(result, paths, config, *, cancelled=False, cap=None):
     database = paths.budget / "calls.sqlite"
     if not database.exists():
         add_check(result, "model_counter_exists", False, "缺少独立模型预算数据库")
@@ -733,11 +748,11 @@ def model_checks(result, paths, config, *, cancelled=False):
         add_check(result, "model_counter_readable", False, "无法读取独立模型数据库")
         return
     save(paths.run / "model-calls.json", calls)
-    result["metrics"].update({"model_requests": len(calls),
-                               "enforced_model_call_cap": config.budget.max_model_calls})
+    effective = config.budget.max_model_calls if cap is None else cap
+    result["metrics"].update({"model_requests": len(calls), "enforced_model_call_cap": effective})
     checks = {
-        "model_calls_within_cap": (0 if cancelled else 1) <= len(calls) <= config.budget.max_model_calls,
-        "model_cap_matches_config": saved_cap == (config.budget.max_model_calls,)}
+        "model_calls_within_cap": (0 if cancelled else 1) <= len(calls) <= effective,
+        "model_cap_matches_config": saved_cap == (effective,)}
     if not cancelled:
         checks["real_upstream_success"] = any(c["outcome"] == "forwarded" and 200 <= (c["upstream_status"] or 0) < 300 for c in calls)
     for name, passed in checks.items():
@@ -848,7 +863,8 @@ def grade(args):
               and input_record.get("scope") == scope and input_record.get("seed") == args.seed
               and input_record.get("case") == args.case and input_record.get("candidate") == args.candidate,
               "准备任务哈希、种子、用例、候选框架和可信作用域匹配判定输入")
-    model_checks(result, paths, config, cancelled=args.case == "cancel")
+    model_checks(result, paths, config, cancelled=args.case == "cancel",
+                 cap=model_call_cap(task, config))
     if args.case == "diagnostic-timeout":
         calls = json.loads((paths.run / "model-calls.json").read_text()) if (paths.run / "model-calls.json").exists() else []
         add_check(result, "injected_504_then_native_retry", bool(calls) and calls[0]["outcome"] == "injected_timeout"

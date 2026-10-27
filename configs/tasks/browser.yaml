@@ -12,7 +12,11 @@ final_seeds:
 - 505
 budget:
   active_timeout_seconds: 300
-  max_model_calls: 20
+  # 网页任务在 20 次预算下，八条路线中多条用满或接近用满（17–20 次），
+  # Codex 三轮全部撞线失败，无法区分“能力不足”与“预算不足”。
+  # 本轮把网页用例的单任务模型请求上限提高到 40 次，其余用例保持 20 次。
+  # 提高预算后的网页结果不再与首轮 20 次预算的结果直接可比。
+  max_model_calls: 40
   max_retries: 2
 execution:
   environment: local_docker
