@@ -1,9 +1,7 @@
-"""Bench-only acceptance of native state inspection in a replacement container.
+"""仅在 bench 中验收替换容器内的原生状态检查。
 
-This is a cold read/deserialization check, never a task pause/resume verdict.
-The old receipt references deliberately resolve against the original evidence,
-because the replacement is forbidden from querying business tools again.
-"""
+此处检查冷读取和反序列化，不判定任务暂停/恢复。
+旧回执引用有意解析到原始证据，因为替换容器不得重新查询业务工具。"""
 from __future__ import annotations
 
 import argparse
@@ -31,39 +29,39 @@ def save(path, value):
 def safe(path, root):
     path, root = Path(path).absolute(), Path(root).absolute()
     if not path.is_relative_to(root) or ".." in path.parts:
-        raise ValueError("Native evidence path escaped its declared mount")
+        raise ValueError("原生证据路径超出声明挂载")
     current = root
     if current.is_symlink():
-        raise ValueError("Native evidence cannot follow symlinks")
+        raise ValueError("原生证据不能跟随符号链接")
     for part in path.relative_to(root).parts:
         current /= part
         if current.is_symlink():
-            raise ValueError("Native evidence cannot follow symlinks")
+            raise ValueError("原生证据不能跟随符号链接")
     return path
 
 
 def bytes_at(path, root):
     path = safe(path, root)
     if not path.is_file():
-        raise ValueError("Native evidence must be a regular file")
+        raise ValueError("原生证据必须是普通文件")
     return path.read_bytes()
 
 
 def read(path, root):
     value = json.loads(bytes_at(path, root))
     if not isinstance(value, dict):
-        raise ValueError("Expected an evidence object")
+        raise ValueError("预期为证据对象")
     return value
 
 
 def inventory(directory):
     directory = Path(directory)
     if not directory.is_dir() or directory.is_symlink():
-        raise ValueError("Expected the original mounted directory")
+        raise ValueError("预期为原始挂载目录")
     result = {}
     def visit(parent):
-        # Native runtimes may retain links in their state. Inventory the link
-        # itself; never traverse it or read the file/directory it points to.
+        # 原生运行时可能在状态中保留链接。只盘点链接
+        # 本身，不遍历它，也不读取其指向的文件或目录。
         with os.scandir(parent) as entries:
             children = sorted(entries, key=lambda entry: entry.name)
         for entry in children:
@@ -86,13 +84,11 @@ def inventory(directory):
 
 
 def cold_sqlite_inventory(database, root):
-    """Admit immutable reads only for an externally stopped, read-only store.
+    """仅对外部已停止、只读的存储允许 immutable 读取。
 
-    immutable=1 ignores WAL/journals and locking. Never use it to hide a
-    possible committed transaction: conservatively reject nonempty WAL or
-    rollback journal, and retain all companion-file identities before/after.
-    The caller must independently exclude writers throughout this inspection.
-    """
+    immutable=1 会忽略 WAL、日志和锁。不能借此掩盖可能已提交的事务：
+    保守拒绝非空 WAL 或回滚日志，并保留前后全部伴随文件身份。
+    调用方必须独立保证整个检查期间没有写入者。"""
     database = safe(database, root)
     result = {"directory_entries": sorted(path.name for path in database.parent.iterdir()), "files": {}}
     for suffix in ("", "-wal", "-shm", "-journal"):
@@ -101,12 +97,12 @@ def cold_sqlite_inventory(database, root):
             metadata = path.lstat()
         except FileNotFoundError:
             if not suffix:
-                raise ValueError("Missing original native SQLite database") from None
+                raise ValueError("缺少原始原生 SQLite 数据库") from None
             continue
         if not stat.S_ISREG(metadata.st_mode):
-            raise ValueError("SQLite database/companion must be a regular file, never a symlink")
+            raise ValueError("SQLite 数据库或伴随文件必须是普通文件，不能是符号链接")
         if suffix in {"-wal", "-journal"} and metadata.st_size:
-            raise ValueError("Nonempty SQLite WAL/journal requires a separate consistent snapshot; immutable cold read refused")
+            raise ValueError("非空 SQLite WAL 或日志需要单独的一致性快照；已拒绝不可变冷读取")
         data = bytes_at(path, root)
         result["files"][path.name] = {"bytes": len(data), "mode": stat.S_IMODE(metadata.st_mode),
             "sha256": hashlib.sha256(data).hexdigest()}
@@ -115,7 +111,7 @@ def cold_sqlite_inventory(database, root):
 
 def pointer(value, pointer_):
     if not isinstance(pointer_, str) or not pointer_.startswith("/"):
-        raise ValueError("Native source requires a JSON pointer")
+        raise ValueError("原生来源必须包含 JSON 指针")
     for part in pointer_[1:].split("/"):
         key = part.replace("~1", "/").replace("~0", "~")
         value = value[int(key)] if isinstance(value, list) else value[key]
@@ -126,31 +122,31 @@ def projection(directory, filename, scope):
     record = read(directory / filename, directory)
     source, state = record.get("source"), record.get("business_state")
     if not same_scope(record.get("scope", {}), scope) or not isinstance(source, dict) or not isinstance(state, dict):
-        raise ValueError("Business projection has no scoped native source")
+        raise ValueError("业务投影没有作用域内的原生来源")
     name = source.get("path")
     if not isinstance(name, str):
-        raise ValueError("Missing native source path")
+        raise ValueError("缺少原生来源路径")
     if name.startswith("/state/"):
         path, root = Path(name), Path("/state")
     else:
         relative = Path(name.removeprefix("/evidence/"))
         if relative.is_absolute() or ".." in relative.parts:
-            raise ValueError("Invalid native evidence source path")
+            raise ValueError("原生证据来源路径无效")
         path, root = directory / relative, directory
     data = bytes_at(path, root)
     if hashlib.sha256(data).hexdigest() != source.get("sha256"):
-        raise ValueError("Native source byte hash mismatch")
+        raise ValueError("原生来源字节哈希不匹配")
     if "line" in source:
         line = source["line"]
         if type(line) is not int or line < 1:
-            raise ValueError("Invalid native source line")
+            raise ValueError("原生来源行无效")
         native = json.loads(data.splitlines()[line - 1])
     else:
         native = json.loads(data)
     if pointer(native, source.get("json_pointer")) != state:
-        raise ValueError("Business fields differ from the retained native source")
+        raise ValueError("业务字段与留存原生来源不一致")
     if state.get("schema_version") != 1 or not isinstance(state.get("operations"), dict) or state.get("receipt_confirmed") is not True:
-        raise ValueError("Original extension task must have confirmed native business fields")
+        raise ValueError("原始扩展任务必须具有已确认的原生业务字段")
     return record, native
 
 
@@ -158,11 +154,11 @@ def receipt_sources(state, directory, scope):
     audit = [json.loads(line) for line in bytes_at(directory.parent / "tool-events.jsonl", directory.parent).splitlines()]
     audit_ok, pairs = audited_calls(audit, scope)
     if not audit_ok or not state["operations"]:
-        raise ValueError("Original independent tool audit is incomplete")
+        raise ValueError("原始独立工具审计不完整")
     for operation, entry in state["operations"].items():
         source = entry.get("source")
         if not isinstance(source, dict) or source.get("path") != "http-tool-events.jsonl" or type(source.get("line")) is not int or source["line"] < 1:
-            raise ValueError("Confirmed state must reference its actual original receipt finish")
+            raise ValueError("确认状态必须引用真实原始回执完成记录")
         lines = bytes_at(directory / source["path"], directory).splitlines()
         row = json.loads(lines[source["line"] - 1])
         actual = row.get("result", {}).get("result")
@@ -176,7 +172,7 @@ def receipt_sources(state, directory, scope):
                 or entry["write_count"] < 1 or entry["write_count"] != len(entry["receipts"])
                 or not any(start.get("tool") == "receipt" and start.get("arguments") == arguments
                            and finish.get("status") == 200 and finish.get("result") == actual for start, finish in pairs)):
-            raise ValueError("Native confirmation does not match an independently audited actual receipt")
+            raise ValueError("原生确认与独立审计的真实回执不匹配")
 
 
 def context(args):
@@ -185,35 +181,33 @@ def context(args):
     manifest = read(run / "manifest.json", run)
     candidate = manifest.get("candidate")
     if candidate not in SUPPORTED or manifest.get("case") != "extension" or manifest.get("candidate_exit_code") != 0 or manifest.get("grade_exit_code") != 0:
-        raise ValueError("The original extension run must have completed and passed")
+        raise ValueError("原始扩展运行必须已完成且通过")
     input_ = read(run / "input.json", run)
     scope = input_.get("scope", {})
     expected_scope = {"experiment_id": manifest["experiment_id"], "variant": manifest["run_id"], "user_id": "alice", "session_id": "main"}
     if scope != expected_scope:
-        raise ValueError("Original run scope differs from its manifest")
+        raise ValueError("原始运行作用域与清单不一致")
     paths = config.paths_for(manifest["experiment_id"], manifest["run_id"], candidate, "alice", "main",
         manifest["run_id"], case="extension", date=run.parent.parent.parent.name)
     if run != paths.run:
-        raise ValueError("Original evidence path differs from current experiment layout")
+        raise ValueError("原始证据路径与当前实验布局不一致")
     return config, paths, scope, manifest
 
 
 def state_path(name, paths):
     if not isinstance(name, str) or not name.startswith("/state/"):
-        raise ValueError("Native origin must be inside the original state mount")
+        raise ValueError("原生来源必须位于原始状态挂载内")
     return safe(paths.state / Path(name).relative_to("/state"), paths.state)
 
 
 def dsh_metadata_binding(record, event, state, rows, paths, scope):
-    """Bind the real scheduler result to its native call and actual receipt.
+    """将真实调度器结果与原生调用及实际回执绑定。
 
-    The tool body supplies canonical output, the official presentationMeta
-    projection stores its state, and the official scheduler owns tool/result.
-    An adapter snapshot or an arbitrary metadata-shaped object is insufficient.
-    """
+    工具正文提供规范输出，官方 presentationMeta 投影保存其状态，
+    官方调度器负责工具/结果归属。适配器快照或任意类似元数据的对象不足以证明。"""
     if (not isinstance(event.get("data"), dict) or not isinstance(event["data"].get("meta"), dict)
             or type(event.get("seq")) is not int or not all(isinstance(row, dict) for row in rows)):
-        raise ValueError("DSH metadata source is not a native event object")
+        raise ValueError("DSH 元数据来源不是原生事件对象")
     meta = event["data"]["meta"]
     if (record.get("source", {}).get("json_pointer") != "/data/meta/business_state"
             or meta.get("kind") != "harness-lab/business-state/v1" or meta.get("business_state") != state
@@ -221,24 +215,24 @@ def dsh_metadata_binding(record, event, state, rows, paths, scope):
             or record.get("native_origin", {}).get("session_id") != scope["session_id"]
             or type(record["native_origin"].get("event_seq")) is not int
             or record["native_origin"]["event_seq"] != event["seq"]):
-        raise ValueError("DSH required business state has no exact native metadata identity/pointer")
+        raise ValueError("DSH 必需业务状态缺少精确原生元数据身份或指针")
     operation = state.get("operation_id")
     if operation not in state["operations"] or state.get("receipt_confirmed") is not True:
-        raise ValueError("DSH metadata has no current confirmed operation")
+        raise ValueError("DSH 元数据没有当前已确认操作")
     current_result = None
     audit_path = paths.run / "candidate/http-tool-events.jsonl"
     audit = [json.loads(line) for line in bytes_at(audit_path, paths.run / "candidate").splitlines()]
     for operation_id, entry in state["operations"].items():
         if not isinstance(entry, dict) or not isinstance(entry.get("source"), dict):
-            raise ValueError("DSH metadata operation is not a complete receipt observation")
+            raise ValueError("DSH 元数据操作不是完整回执观测")
         source = entry.get("source", {})
         line = source.get("line")
         if source.get("path") != "http-tool-events.jsonl" or type(line) is not int or line < 1:
-            raise ValueError("DSH metadata receipt lacks its original HTTP observation")
+            raise ValueError("DSH 元数据回执缺少原始 HTTP 观测")
         finish = audit[line - 1]
         if (not isinstance(finish, dict) or not isinstance(finish.get("result"), dict)
                 or not isinstance(finish.get("arguments"), dict)):
-            raise ValueError("DSH receipt source is not an actual HTTP finish object")
+            raise ValueError("DSH 回执来源不是真实 HTTP 完成对象")
         call_id = finish.get("call_id")
         actual = finish.get("result", {}).get("result")
         if (not isinstance(call_id, str) or not call_id or finish.get("scope") != scope
@@ -248,13 +242,13 @@ def dsh_metadata_binding(record, event, state, rows, paths, scope):
                 or not isinstance(actual, dict) or actual.get("operation_id") != operation_id
                 or entry.get("operation_id") != operation_id or entry.get("receipt_confirmed") is not True
                 or actual.get("write_count") != entry.get("write_count") or actual.get("receipts") != entry.get("receipts")):
-            raise ValueError("DSH metadata operation differs from its actual receipt source")
+            raise ValueError("DSH 元数据操作与真实回执来源不一致")
         results = [row for row in rows if row.get("type") == "tool/result"
                    and isinstance(row.get("data"), dict) and isinstance(row["data"].get("message"), dict)
                    and isinstance(row["data"]["message"].get("source"), dict)
                    and row["data"]["message"]["source"].get("callId") == call_id]
         if len(results) != 1:
-            raise ValueError("DSH receipt observation lacks exactly one native tool result")
+            raise ValueError("DSH 回执观测必须恰好包含一个原生工具结果")
         result = results[0]
         data = result.get("data", {})
         message = data.get("message", {})
@@ -268,76 +262,76 @@ def dsh_metadata_binding(record, event, state, rows, paths, scope):
                 or not isinstance(refs, list) or len(refs) != 1 or type(refs[0]) is not int
                 or type(result.get("seq")) is not int or result["seq"] > event["seq"]
                 or type(data.get("turn")) is not int or type(data.get("step")) is not int):
-            raise ValueError("DSH native receipt result identity/outcome is invalid")
+            raise ValueError("DSH 原生回执结果身份或结果状态无效")
         content = blocks[0].get("content", [])
         if (not isinstance(content, list) or len(content) != 1 or not isinstance(content[0], dict) or content[0].get("type") != "text"
                 or not isinstance(content[0].get("text"), str) or json.loads(content[0]["text"]) != actual):
-            raise ValueError("DSH native receipt content differs from its actual HTTP result")
+            raise ValueError("DSH 原生回执内容与真实 HTTP 结果不一致")
         calls = [row for row in rows if row.get("seq") == refs[0]]
         if len(calls) != 1:
-            raise ValueError("DSH native receipt result has no unique source call")
+            raise ValueError("DSH 原生回执结果没有唯一来源调用")
         call = calls[0]
         call_data = call.get("data", {})
         if not isinstance(call_data, dict):
-            raise ValueError("DSH native receipt call has no argument object")
+            raise ValueError("DSH 原生回执调用缺少参数对象")
         if (call.get("type") != "tool/call" or call["seq"] >= result["seq"]
                 or call_data.get("name") != "query_order_status" or call_data.get("callId") != call_id
                 or call_data.get("turn") != data.get("turn") or call_data.get("step") != data.get("step")
                 or json.loads(call_data.get("arguments", "null")) != finish.get("arguments")):
-            raise ValueError("DSH native receipt is not the actual alias invocation and operation")
+            raise ValueError("DSH 原生回执不是真实别名调用及操作")
         if operation_id == operation:
             current_result = result
     if current_result != event:
-        raise ValueError("DSH metadata record is not the current operation's actual receipt result")
+        raise ValueError("DSH 元数据记录不是当前操作的真实回执结果")
     for row in rows:
         if type(row.get("seq")) is not int or row["seq"] <= event["seq"]:
             continue
         row_data = row.get("data", {})
         if not isinstance(row_data, dict):
-            raise ValueError("DSH native event has no data object")
+            raise ValueError("DSH 原生事件没有 data 对象")
         later_meta = row_data.get("meta")
         if row.get("type") == "tool/result" and isinstance(later_meta, dict) and later_meta.get("kind") == meta["kind"]:
-            raise ValueError("DSH source omits a later native business metadata result")
+            raise ValueError("DSH 来源遗漏了后续原生业务元数据结果")
         if row.get("type") == "tool/call" and row_data.get("name") == "write":
             args = json.loads(row_data.get("arguments", "null"))
             if isinstance(args, dict) and args.get("operation_id") in state["operations"]:
-                raise ValueError("DSH source precedes an unconfirmed native write")
+                raise ValueError("DSH 来源早于未确认原生写入")
 
 
 def native_binding(candidate, record, native, state, paths, scope):
-    """Cross-check the reported API source against actual original state files."""
+    """将报告的 API 来源与实际原始状态文件交叉核对。"""
     if candidate == "deepseek_harness":
         origin = record.get("native_origin", {})
         path = state_path(origin.get("path"), paths)
         data = bytes_at(path, paths.state)
         if hashlib.sha256(data).hexdigest() != origin.get("physical_sha256"):
-            raise ValueError("Native DSH session physical hash differs from its reported origin")
+            raise ValueError("原生 DSH 会话物理哈希与报告来源不一致")
         line = origin.get("line")
         if type(line) is not int or line < 1:
-            raise ValueError("Native DSH record has no exact original line")
+            raise ValueError("原生 DSH 记录没有精确原始行")
         rows = [json.loads(row) for row in data.splitlines()]
         event = rows[line - 1]
         if event != native:
-            raise ValueError("DSH public projection differs from the actual original session record")
+            raise ValueError("DSH 公共投影与真实原始会话记录不一致")
         if event.get("type") == "harness-lab/business-state":
-            # Preserve the earlier custom-event variant as evidence, including
-            # its real fixed-upstream reload refusal. Never rewrite old logs.
+            # 将早期自定义事件变体保留为证据，包括
+            # 真实固定上游拒绝重载的结果。绝不改写旧日志。
             if event.get("data") != state or record.get("source", {}).get("json_pointer") != "/data":
-                raise ValueError("DSH legacy custom event differs from its retained state")
+                raise ValueError("DSH 旧自定义事件与留存状态不一致")
         elif event.get("type") == "tool/result":
             dsh_metadata_binding(record, event, state, rows, paths, scope)
         else:
-            raise ValueError("DSH required business state is not an admitted native source")
+            raise ValueError("DSH 必需业务状态不是准入原生来源")
         return {"path": str(path.relative_to(paths.state)), "native_session_id": origin.get("session_id"), "event_seq": event.get("seq")}
     if candidate == "openai_agents_sdk":
         path = paths.state / "run-state.json"
         raw = bytes_at(path, paths.state)
         actual = json.loads(raw)
         if pointer(actual, "/context/context/business_state") != state or actual != native:
-            raise ValueError("SDK reconstruction differs from the actual original native RunState")
+            raise ValueError("SDK 重建与真实原始原生 RunState 不一致")
         context_ = actual.get("context", {}).get("context", {})
         if context_.get("scope") != scope or context_.get("session_id") != scope["session_id"]:
-            raise ValueError("SDK native RunState has a different original identity")
+            raise ValueError("SDK 原生 RunState 的原始身份不同")
         return {"path": "run-state.json", "sha256": hashlib.sha256(raw).hexdigest()}
     if candidate == "deepagents_langgraph":
         import ormsgpack
@@ -348,34 +342,34 @@ def native_binding(candidate, record, native, state, paths, scope):
         configurable = native.get("config", {}).get("configurable", {})
         checkpoint_id = configurable.get("checkpoint_id") or record.get("checkpoint_id")
         if configurable.get("thread_id") != scope["session_id"] or configurable.get("checkpoint_ns", "") != "":
-            raise ValueError("Public graph source has a different original thread or namespace")
-        # A cleanly closed WAL-mode DB may retain the WAL header but no shm.
-        # immutable avoids creating shm on the strictly read-only cold mount;
-        # the explicit sidecar gate above forbids silently ignoring a WAL.
+            raise ValueError("公共图来源的原始线程或命名空间不同")
+        # 正常关闭的 WAL 模式数据库可能保留 WAL 头而没有 shm。
+        # immutable 避免在严格只读冷挂载上创建 shm；
+        # 上方显式伴随文件门槛禁止静默忽略 WAL。
         with closing(sqlite3.connect(path.as_uri() + "?mode=ro&immutable=1", uri=True)) as db:
             row = db.execute("SELECT checkpoint_id,type,checkpoint FROM checkpoints WHERE thread_id=? AND checkpoint_ns='' ORDER BY checkpoint_id DESC LIMIT 1", (scope["session_id"],)).fetchone()
         after = cold_sqlite_inventory(path, paths.state)
         if before != after:
-            raise ValueError("Native SQLite database/companion inventory changed during cold inspection")
+            raise ValueError("原生 SQLite 数据库或伴随文件清单在冷检查期间变化")
         if row is None or row[0] != checkpoint_id:
-            raise ValueError("Public graph checkpoint does not identify the original database's current thread checkpoint")
-        # Fixed SqliteSaver 3.1.2 stores JsonPlusSerializer 4.3.0's typed
-        # checkpoint directly in this row. Its admitted format is msgpack.
-        # Use the already locked standard decoder, keeping unrelated message
-        # extensions opaque; never import/reconstruct candidate classes or
-        # treat the adapter's exported snapshot as the database's values.
+            raise ValueError("公共图检查点未标识原始数据库当前线程检查点")
+        # 固定 SqliteSaver 3.1.2 将 JsonPlusSerializer 4.3.0 的类型化
+        # 检查点直接存入此行，准入格式为 msgpack。
+        # 使用已锁定的标准解码器，对无关消息扩展
+        # 保持不透明；不导入或重建候选框架类，也不将
+        # 适配器导出快照当成数据库内值。
         if row[1] != "msgpack" or not isinstance(row[2], bytes):
-            raise ValueError("Native graph checkpoint has an unsupported stored serialization format")
+            raise ValueError("原生图检查点的存储序列化格式不受支持")
         actual = ormsgpack.unpackb(row[2], ext_hook=ormsgpack.Ext, option=ormsgpack.OPT_NON_STR_KEYS)
         if (not isinstance(actual, dict) or actual.get("id") != checkpoint_id
                 or not isinstance(actual.get("channel_values"), dict)
                 or actual["channel_values"].get("business_state") != state):
-            raise ValueError("Graph projection differs from the actual business values in the native checkpoint database")
+            raise ValueError("图投影与原生检查点数据库真实业务值不一致")
         if "database_sha256_after" in record and not (record.get("database_sha256_before") == record["database_sha256_after"] == digest):
-            raise ValueError("Graph checkpoint database hash changed during inspection")
+            raise ValueError("图检查点数据库哈希在检查期间变化")
         return {"path": "checkpoints.sqlite", "sha256": digest, "checkpoint_id": checkpoint_id,
                 "sqlite_files_before": before, "sqlite_files_after": after,
-                "business_values_read_by": "bench independently decodes actual SQLite checkpoint msgpack; unrelated extensions remain opaque"}
+                "business_values_read_by": "bench 独立解码真实 SQLite 检查点 msgpack；无关扩展保持不透明"}
     if candidate == "openclaw":
         entry = native.get("native_entry", {})
         session_key = native.get("session_key")
@@ -391,14 +385,14 @@ def native_binding(candidate, record, native, state, paths, scope):
                             and row.get("pluginExtensions", {}).get("harness-lab-tools", {}).get("business") == state):
                         matches.append({"path": str(database.relative_to(paths.state)), "session_key": session_key, "native_session_id": session_id})
         if len(matches) != 1:
-            raise ValueError("OpenClaw API snapshot does not match exactly one actual native session row")
+            raise ValueError("OpenClaw API 快照未恰好匹配一条真实原生会话记录")
         return matches[0]
-    raise ValueError("Unsupported native state reader")
+    raise ValueError("不支持的原生状态读取器")
 
 
 def baseline_files(paths):
     if not (paths.budget / "calls.sqlite").is_file() or not (paths.run / "tool-events.jsonl").is_file():
-        raise ValueError("Original budget database and independent HTTP audit are required")
+        raise ValueError("必须提供原始预算数据库和独立 HTTP 审计")
     return {"budget": inventory(paths.budget), "http_audit": hashlib.sha256(bytes_at(paths.run / "tool-events.jsonl", paths.run)).hexdigest(),
             "original_candidate": inventory(paths.run / "candidate"), "state": inventory(paths.state), "workspace": inventory(paths.workspace)}
 
@@ -407,16 +401,16 @@ def prepare(args):
     config, paths, scope, manifest = context(args)
     probe = PROBE_ROOT
     if any(probe.iterdir()):
-        raise ValueError("Native inspection requires fresh, separate evidence")
+        raise ValueError("原生检查必须使用全新独立证据")
     original, native = projection(paths.run / "candidate", "business-state.json", scope)
     state = original["business_state"]
     receipt_sources(state, paths.run / "candidate", scope)
     binding = native_binding(manifest["candidate"], original, native, state, paths, scope)
     request = read(paths.fixture / "candidate-request.json", paths.fixture)
     if request.get("run_id") != manifest["run_id"] or request.get("session_id") != scope["session_id"] or request.get("candidate_options", {}).get("case") != "extension":
-        raise ValueError("Original trusted request does not match the source run")
+        raise ValueError("原始可信请求与来源运行不匹配")
     if any(request.get(key) != value for key, value in {"workspace": "/workspace", "state_dir": "/state", "output_dir": "/evidence", "tools_url": "http://tools:8081"}.items()):
-        raise ValueError("Original request changed its admitted mount/service paths")
+        raise ValueError("原始请求改变了准入挂载或服务路径")
     if manifest["candidate"] == "deepseek_harness":
         request["candidate_options"] = {**request["candidate_options"], "session_action": "resume"}
         request["candidate_options"].pop("followup", None)
@@ -449,7 +443,7 @@ def state_difference(before, paths):
 
 
 def dsh_load_boundary_only(difference, original_path, paths):
-    """Allow only the fixed Session constructor's single native load marker."""
+    """仅允许固定 Session 构造器的唯一原生加载标记。"""
     if difference["added"] or difference["removed"]:
         return False
     if not difference["changed"]:
@@ -554,7 +548,7 @@ def grade(args):
     verdict = {"probe_id": args.probe_id, "candidate": manifest["candidate"], "source_run_id": manifest["run_id"],
         "scope": scope, "passed": all(checks.values()) and not errors and not orchestration.get("errors"), "checks": checks,
         "errors": errors + orchestration.get("errors", []), "state_was_read_only": manifest["candidate"] != "deepseek_harness",
-        "claim": "same business state read/reconstructed in a different container; task continuation was not tested",
+        "claim": "在不同容器中读取或重建同一业务状态；未验证任务继续执行",
         "environment": environment()}
     save(probe / "verdict.json", verdict)
     print(json.dumps({key: verdict[key] for key in ("probe_id", "candidate", "passed", "claim")}))
@@ -572,7 +566,7 @@ def wait_services():
             except httpx.HTTPError:
                 time.sleep(0.3)
         else:
-            raise RuntimeError("Original setup service did not become ready: " + service)
+            raise RuntimeError("原始初始化服务未就绪：" + service)
     return 0
 
 

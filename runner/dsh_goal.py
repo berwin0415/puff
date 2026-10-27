@@ -1,9 +1,8 @@
-"""Independent durable replay of the pinned DSH Goal format, without its runtime.
+"""独立重放已固定的 DSH Goal 持久化格式，不加载其运行时。
 
-Source: packages/goal/goal/src/{fold,types,index}.ts in the frozen DSH export.
-GoalSnapshot is nested; counters/timestamps are outside it. Activation belongs
-only to the live GoalView and MUST NOT be reconstructed from durable phase.
-"""
+来源：冻结 DSH 导出中的 packages/goal/goal/src/{fold,types,index}.ts。
+GoalSnapshot 为嵌套对象，计数器和时间戳在其外部。激活状态只属于
+运行中的 GoalView，绝不能根据持久化 phase 推断。"""
 from __future__ import annotations
 
 import re
@@ -38,7 +37,7 @@ def snapshot(value):
 
 
 def change_projection(data):
-    """Decode a non-clear durable change, without inventing live activation."""
+    """解码非 clear 的持久化变更，不虚构运行中的激活状态。"""
     need(isinstance(data, dict) and set(data) == {'kind', 'version', 'operation', 'goal', 'roundsStarted', 'createdAt', 'updatedAt'}
          and data['kind'] == 'goal/change' and type(data['version']) is int and data['version'] == 1
          and data['operation'] in {'create', 'edit', 'pause', 'resume', 'complete', 'block'}, 'change_fields')
@@ -49,16 +48,15 @@ def change_projection(data):
 
 
 def matches_live_view(view, durable, activation):
-    """Compare a reported public GoalView to independently folded durable data.
+    """将报告的公共 GoalView 与独立折叠的持久化数据比较。
 
-    The caller supplies activation only with the matching official API/event
-    semantics; this function does not infer armed/disarmed from phase.
-    """
+    调用方只有在官方 API/事件语义匹配时才可提供 activation；
+    此函数不会根据 phase 推断 armed/disarmed。"""
     return isinstance(view, dict) and durable is not None and view == {**durable, 'activation': activation}
 
 
 def fold_durable_goal(events):
-    """Mirror the official strict fold. Return flattened durable fields or None."""
+    """严格复现官方折叠规则，返回展开后的持久化字段或 None。"""
     current, seen = None, set()
     for event in events:
         if event.get('type') == 'user/message':

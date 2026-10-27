@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Export pinned third-party sources without host dependencies or credentials.
+"""导出固定版本的第三方源码，不使用宿主依赖或凭证。
 
-This is host-side build preparation only. It neither installs nor runs a candidate.
+这仅是宿主侧构建准备，不安装或运行候选。
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ def sha256(data: bytes) -> str:
 
 
 def allowed(relative: PurePosixPath) -> bool:
-    """Exclude host state and credential locations even when Git tracks them."""
+    """即使 Git 已跟踪，也排除宿主状态与凭证目录。"""
     if relative.is_absolute() or ".." in relative.parts or not relative.parts:
         return False
     if set(relative.parts) & EXCLUDED_PARTS or relative.parts[0] in PRIVATE_ROOTS:
@@ -61,14 +61,14 @@ def write_file(root: Path, relative: PurePosixPath, data: bytes, mode: int) -> N
 
 
 def write_link(root: Path, relative: PurePosixPath, target: str) -> None:
-    """Keep only links whose resolved destination stays in this exported source."""
+    """仅保留解析后目标仍位于本次源码导出目录内的链接。"""
     link = root.joinpath(*relative.parts)
     resolved = (link.parent / target).resolve()
     if Path(target).is_absolute() or not resolved.is_relative_to(root.resolve()):
-        raise ValueError(f"symlink escapes source: {relative}")
+        raise ValueError(f"符号链接越出源码目录：{relative}")
     destination = PurePosixPath(resolved.relative_to(root.resolve()).as_posix())
     if not allowed(destination):
-        raise ValueError(f"symlink points into excluded source: {relative}")
+        raise ValueError(f"符号链接指向被排除的源码位置：{relative}")
     link.parent.mkdir(parents=True, exist_ok=True)
     link.symlink_to(target)
 
@@ -77,16 +77,16 @@ def export_git(source: dict, output: Path) -> dict:
     path = Path(source["path"]).expanduser().resolve()
     commit = git(path, "rev-parse", "HEAD").decode().strip()
     if commit != source["commit"]:
-        raise ValueError(f"commit mismatch: {source['id']}")
+        raise ValueError(f"提交不匹配：{source['id']}")
     status = git(path, "status", "--porcelain", "--untracked-files=all")
     if status:
-        raise ValueError(f"dirty source refused: {source['id']} ({len(status.splitlines())} entries)")
+        raise ValueError(f"拒绝使用有未提交变更的源码：{source['id']} ({len(status.splitlines())} 个条目)")
     remote = git(path, "remote", "get-url", "origin").decode().strip()
     if remote.removesuffix(".git").rstrip("/") != source["official_url"].removesuffix(".git").rstrip("/"):
-        raise ValueError(f"origin mismatch: {source['id']}")
+        raise ValueError(f"origin 不匹配：{source['id']}")
     submodules = git(path, "submodule", "status").decode().strip()
     if submodules:
-        raise ValueError("submodules need a separately pinned source entry")
+        raise ValueError('子模块需要单独固定的源码条目')
     excluded = 0
     for raw in git(path, "ls-files", "-z").split(b"\0"):
         if not raw:
@@ -101,7 +101,7 @@ def export_git(source: dict, output: Path) -> dict:
         elif item.is_file():
             write_file(output, relative, item.read_bytes(), item.stat().st_mode)
         else:
-            raise ValueError(f"tracked source is not a regular file: {relative}")
+            raise ValueError(f"已跟踪源码不是普通文件：{relative}")
     return {"dirty": False, "status_sha256": sha256(status), "submodules": [],
             "excluded_entries": excluded, "observed_commit": commit, "observed_origin": remote}
 
@@ -110,18 +110,18 @@ def export_archive(source: dict, output: Path) -> dict:
     path = Path(source["path"]).expanduser().resolve()
     digest = sha256(path.read_bytes())
     if digest != source["sha256"]:
-        raise ValueError(f"archive hash mismatch: {source['id']}")
+        raise ValueError(f"归档哈希不匹配：{source['id']}")
     excluded = 0
     seen: set[str] = set()
     with tarfile.open(path, "r:gz") as archive:
         for item in archive:
             full = PurePosixPath(item.name)
             if full.is_absolute() or ".." in full.parts:
-                raise ValueError("unsafe archive path")
+                raise ValueError('归档路径不安全')
             if len(full.parts) < 2:
                 continue
             if full.parts[0] != source["archive_prefix"]:
-                raise ValueError("archive root does not match pinned commit")
+                raise ValueError('归档根目录与固定提交不匹配')
             relative = PurePosixPath(*full.parts[1:])
             if not allowed(relative):
                 excluded += 1
@@ -129,19 +129,19 @@ def export_archive(source: dict, output: Path) -> dict:
             if item.isdir():
                 continue
             if str(relative) in seen:
-                raise ValueError("duplicate archive entry")
+                raise ValueError('归档条目重复')
             seen.add(str(relative))
             if item.isfile():
                 stream = archive.extractfile(item)
                 if stream is None:
-                    raise ValueError("archive file has no content")
+                    raise ValueError('归档文件没有内容')
                 write_file(output, relative, stream.read(), item.mode)
             elif item.issym():
                 write_link(output, relative, item.linkname)
             else:
-                raise ValueError(f"unsupported archive entry: {relative}")
-    return {"dirty": None, "dirty_reason": "Exported directly from hash-verified archive; no working tree used.",
-            "observed_archive_sha256": digest, "excluded_entries": excluded, "submodules": "not included by GitHub source archive"}
+                raise ValueError(f"不支持的归档条目：{relative}")
+    return {"dirty": None, "dirty_reason": '直接从已核验哈希的归档导出；未使用工作区。',
+            "observed_archive_sha256": digest, "excluded_entries": excluded, "submodules": 'GitHub 源码归档未包含此项'}
 
 
 def inventory(root: Path) -> list[dict]:
@@ -163,20 +163,20 @@ def prepare(config_path: Path, destination_root: Path) -> dict:
     config = yaml.safe_load(config_bytes)
     candidate = config["candidate"]
     if not re.fullmatch(r"[a-z][a-z0-9_]*", candidate):
-        raise ValueError("invalid candidate name")
+        raise ValueError('候选名称无效')
     destination_root = destination_root.resolve()
     destination_root.mkdir(parents=True, exist_ok=True)
     destination = destination_root / candidate
     if destination.exists():
         marker = destination / "SOURCE_MANIFEST.json"
         if not marker.is_file() or json.loads(marker.read_text()).get("schema") != SCHEMA:
-            raise ValueError("refusing to replace a directory not generated by this script")
+            raise ValueError('拒绝替换非本脚本生成的目录')
     stage = Path(tempfile.mkdtemp(prefix=f".{candidate}-", dir=destination_root))
     try:
         sources = []
         for source in config["sources"]:
             if not re.fullmatch(r"[a-z][a-z0-9_-]*", source["id"]):
-                raise ValueError("invalid source id")
+                raise ValueError('源码 ID 无效')
             output = stage / "sources" / source["id"]
             output.mkdir(parents=True)
             if source["kind"] == "git":
@@ -184,7 +184,7 @@ def prepare(config_path: Path, destination_root: Path) -> dict:
             elif source["kind"] == "archive":
                 observed = export_archive(source, output)
             else:
-                raise ValueError("unsupported source kind")
+                raise ValueError('不支持的源码类型')
             sources.append({**source, **observed})
         files = inventory(stage)
         manifest = {"schema": SCHEMA, "candidate": candidate,
@@ -204,12 +204,12 @@ def prepare(config_path: Path, destination_root: Path) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, help="one candidate configuration")
-    parser.add_argument("--all", action="store_true", help="export all configs/candidates/*.yaml")
+    parser.add_argument("--config", type=Path, help='单个候选配置')
+    parser.add_argument("--all", action="store_true", help='导出全部 configs/candidates/*.yaml')
     parser.add_argument("--destination-root", type=Path, default=Path("external/build-context"))
     args = parser.parse_args()
     if bool(args.config) == args.all:
-        parser.error("choose exactly one of --config or --all")
+        parser.error('必须且只能选择 --config 或 --all 之一')
     configs = sorted(Path("configs/candidates").glob("*.yaml")) if args.all else [args.config]
     for config in configs:
         print(json.dumps(prepare(config, args.destination_root), ensure_ascii=False))

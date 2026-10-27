@@ -1,4 +1,4 @@
-"""I23 host transport contract calibration; every Docker/process call is fake."""
+"""I23 宿主传输契约校准；全部 Docker 和进程调用均为替身。"""
 import hashlib
 from copy import deepcopy
 import json
@@ -92,7 +92,7 @@ def test_fixed_image_entrypoint_and_candidate_controls_reach_exact_docker_create
 @pytest.mark.parametrize('filename', ['native-extra.json', '../trusted/pins.json', '/config/native-crash.json', 'lifecycle-pause.json'])
 def test_native_control_mounts_cannot_expand_the_candidate_whitelist(lab, filename):
     lab.args = SimpleNamespace(candidate='deepagents_langgraph', fault='none')
-    with pytest.raises(RuntimeError, match='Unexpected native control file'):
+    with pytest.raises(RuntimeError, match='原生控制文件不符合预期'):
         lab.explicit_mounts('worker-a', {'native_control_files': [filename]})
 
 
@@ -136,7 +136,7 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
         def poll(self):
             return self.returncode
         def wait(self, timeout):
-            assert not lock.held, 'Docker attach wait must permit service resource sampling'
+            assert not lock.held, '等待 Docker attach 时必须允许服务资源采样'
             assert self.returncode == 137
             calls.append('wait')
             return self.returncode
@@ -152,7 +152,7 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
             process.returncode = 137
             calls.append('kill')
         elif command[:2] == ['docker', 'rm']:
-            assert lock.held and lock.entries == 2, 'Removal cannot interrupt the sampler inventory'
+            assert lock.held and lock.entries == 2, '删除不能打断采样器盘点'
             assert command == ['docker', 'rm', IDENTITY]
             assert kwargs == {'capture': True, 'timeout': 10}
             calls.append('rm')
@@ -167,9 +167,9 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
         nonlocal snapshots
         assert identity in (IDENTITY, 'exact-a')
         if destroyed:
-            assert lock.held and lock.entries == 2, 'Exact absence inspection shares the removal lock'
+            assert lock.held and lock.entries == 2, '精确缺失检查必须共用删除锁'
             if exit_state == 'absence_error':
-                raise RuntimeError('Docker identity inspection failed; absence is unproven')
+                raise RuntimeError('Docker 身份检查失败；尚未证明对象不存在')
             if exit_state == 'id_still_present' and identity == IDENTITY:
                 return {'id': IDENTITY}
             if exit_state == 'wrong_absence_id' and identity == IDENTITY:
@@ -182,7 +182,7 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
             'Pid': 0 if snapshots == 1 else 12, 'ExitCode': 0, 'OOMKilled': False, 'Dead': False,
             'Paused': False, 'Restarting': False, 'Error': ''}
         if process.returncode is not None:
-            assert lock.held, 'Exact stopped state must be observed before releasing the boundary lock'
+            assert lock.held, '释放边界锁前必须观测到精确停止状态'
             state.update(Status='exited', Running=False, Pid=0, ExitCode=137)
             if exit_state == 'exit1': state['ExitCode'] = 1
             elif exit_state == 'still_running': state.update(Status='running', Running=True, Pid=12)
@@ -197,7 +197,7 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
     lab.bench = lambda *args, **kwargs: SimpleNamespace(returncode=0)
     monkeypatch.setattr(host.subprocess, 'Popen', lambda *args, **kwargs: process)
     if exit_state in {'exit1', 'still_running', 'oom', 'missing_exit', 'wrong_exit_id'}:
-        with pytest.raises(RuntimeError, match='independently exit137'):
+        with pytest.raises(RuntimeError, match='独立确认确切 Worker 退出 137'):
             lab.worker('worker-a')
         assert calls == ['kill'] and not destroyed and not lock.held and lock.entries == 1
         return
@@ -207,7 +207,7 @@ def test_kill_and_removal_use_separate_locks_but_attach_wait_allows_sampling(lab
         assert not (lab.paths.run / 'trusted/worker-a.json').exists()
         return
     if exit_state in {'id_still_present', 'wrong_absence_id', 'name_still_present', 'absence_error'}:
-        expected = 'absence is unproven' if exit_state == 'absence_error' else 'removal was not independently observed'
+        expected = '尚未证明对象不存在' if exit_state == 'absence_error' else '未独立观察到确切被杀 Worker 已删除'
         with pytest.raises(RuntimeError, match=expected): lab.worker('worker-a')
         assert calls == ['kill', 'wait', 'rm'] and destroyed and not lock.held
         assert not (lab.paths.run / 'trusted/worker-a.json').exists()
@@ -262,11 +262,11 @@ def test_worker_removal_cannot_split_sampler_id_list_and_batch_inspection(lab, m
             return self.returncode
 
         def wait(self, timeout):
-            assert lock.owner != worker_thread, 'Attach wait must release the kill boundary lock'
+            assert lock.owner != worker_thread, '等待 attach 时必须释放 kill 边界锁'
             if not self.waited:
                 self.waited = True
                 sampler.start()
-                assert listed.wait(2), 'Sampler must list the retained exited Worker before removal'
+                assert listed.wait(2), '删除前采样器必须列出保留的已退出 Worker'
             return self.returncode
 
     process = Attached()
@@ -281,14 +281,14 @@ def test_worker_removal_cannot_split_sampler_id_list_and_batch_inspection(lab, m
             return SimpleNamespace(stdout='', returncode=0)
         if command[:2] == ['docker', 'rm']:
             assert lock.owner == worker_thread and command == ['docker', 'rm', IDENTITY]
-            assert inspected.is_set(), 'A must remain available through the batch inspection'
+            assert inspected.is_set(), '批量检查期间 A 必须保持可用'
             order.append('rm'); destroyed = True
             return SimpleNamespace(stdout='', returncode=0)
         assert threading.get_ident() != worker_thread and lock.owner == threading.get_ident()
         if command[:3] == ['docker', 'ps', '-aq']:
             assert not destroyed
             order.append('ps'); listed.set()
-            assert removal_waiting.wait(2), 'Removal must wait for this inventory lock'
+            assert removal_waiting.wait(2), '删除必须等待此清单锁'
             return SimpleNamespace(stdout=IDENTITY + '\n', returncode=0)
         assert command == ['docker', 'inspect', IDENTITY] and not destroyed
         order.append('inspect')
@@ -471,7 +471,7 @@ def test_worker_exit1_sample_requires_registered_identity_and_redecoded_sources(
     def recheck(run, fixture, scope, pins, candidate, attempt, actual, *, state):
         calls.append((run, fixture, scope, pins, candidate, attempt, actual, state))
         if change == 'unbound_source':
-            raise ValueError('unbound failure evidence')
+            raise ValueError('未绑定的失败证据')
         return facts
     monkeypatch.setattr(host, 'controlled_failure', recheck)
     if change == 'foreign_id': after['id'] = 'f' * 64

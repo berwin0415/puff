@@ -1,4 +1,4 @@
-/** Adapter boundary calibration only: built-in node:test, fake native APIs, no model/upstream boot. */
+/** 仅校准适配器边界：使用内置 node:test 和模拟原生 API，不启动模型或上游运行时。 */
 import assert from 'node:assert/strict'
 import { appendFileSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -11,8 +11,8 @@ const detailedURL = new URL('detailed-options.mjs', adapter)
 const detailed = await import(detailedURL.href)
 let configurationRoot
 const mapped = filename => String(filename).startsWith('/config/') ? resolve(configurationRoot, String(filename).slice('/config/'.length)) : filename
-// Only translate the container mount alias. Production filesystem checks,
-// no-follow opens, bytes, hashes and complete-tree inventories remain real.
+// 仅转换容器挂载路径别名。文件系统检查、
+// 禁止跟随链接的文件打开、字节、哈希和完整目录树清单均使用真实实现。
 mock.module(detailedURL.href, { namedExports: { ...detailed,
   checkedExistingPath: filename => detailed.checkedExistingPath(mapped(filename)),
   readTrustedJson: filename => detailed.readTrustedJson(mapped(filename)),
@@ -21,8 +21,8 @@ const { canonicalJson, sha256, readGoalBinding, stateInventory, validateGoalRequ
 const { GoalRuntime } = await import(new URL('goal-runtime.ts', adapter).href)
 const objectHash = value => sha256(canonicalJson(value))
 const schemas = [
-  { name: 'write', description: 'synthetic write schema', parameters: { type: 'object', properties: { value: { type: 'string' } } } },
-  { name: 'get_goal', description: 'synthetic Goal schema', parameters: {} },
+  { name: 'write', description: '模拟写入工具结构', parameters: { type: 'object', properties: { value: { type: 'string' } } } },
+  { name: 'get_goal', description: '模拟 Goal 工具结构', parameters: {} },
 ]
 const sortedSchemas = () => structuredClone(schemas).sort((a, b) => a.name.localeCompare(b.name, 'en'))
 
@@ -77,7 +77,7 @@ function fixture(t, mode = 'new') {
 }
 
 function noModel(t) {
-  const sent = t.mock.method(globalThis, 'fetch', () => { throw new Error('No network/model allowed in adapter calibration') })
+  const sent = t.mock.method(globalThis, 'fetch', () => { throw new Error('适配器校准禁止访问网络或模型') })
   t.after(() => assert.equal(sent.mock.callCount(), 0))
 }
 function runtime(t, f, mode = f.request.lifecycle.mode) {
@@ -88,7 +88,7 @@ function runtime(t, f, mode = f.request.lifecycle.mode) {
   const events = mode === 'resume' ? [...structuredClone(f.persisted), { seq: 2, type: 'session/end-seed', time: 22, data: {} }] : []
   const agent = { id: 'main', status: 'idle', session: { header: { id: 'main', cwd: f.request.workspace }, seq: events.length, events },
     inbox: { hasPending: false, nextStep: [], nextTurn: [] }, ctx: { tools: { schemas: sortedSchemas } },
-    whenIdle: async () => {}, followup() { nativeCalls.followup++; throw new Error('Adapter must never followup in this route') } }
+    whenIdle: async () => {}, followup() { nativeCalls.followup++; throw new Error('此路径中的适配器禁止追加后续输入') } }
   const ctx = { on(name, fn) { hooks.set(name, [...(hooks.get(name) ?? []), fn]); return () => {} },
     goals: { get: () => current,
       create(_agent, spec) { nativeCalls.create++; current = { ...f.paused.goal, revision: 1, roundsStarted: 0, objective: spec.objective, maxGoalRounds: spec.maxGoalRounds, phase: 'active', activation: 'armed' }; return current },
@@ -117,7 +117,7 @@ function silentClose(control, error) {
   try { control.afterClose(error) } finally { output.mock.restore(); process.exitCode = previous }
 }
 
-test('valid new binding verifies tokens and reordered native schema without invoking a model', t => {
+test('有效的新绑定可在不调用模型时核验令牌及重排后的原生结构', t => {
   noModel(t); const f = fixture(t), trusted = f.read()
   trusted.verifyToken(f.localToken)
   trusted.verifyToolContract([...schemas].reverse())
@@ -126,33 +126,33 @@ test('valid new binding verifies tokens and reordered native schema without invo
 })
 
 for (const [label, mutate, expected] of [
-  ['scope', f => { f.binding.scope = { ...f.scope, user_id: 'bob' } }, /full-scope mismatch/],
-  ['chain', f => { f.binding.chain_id = 'chain-b' }, /full-scope mismatch/],
-  ['attempt', f => { f.binding.attempt_id = 'worker-b' }, /full-scope mismatch/],
-  ['source', f => { f.binding.materials = { ...f.binding.materials, source_export_sha256: 'd'.repeat(64) } }, /material mismatch/],
-  ['adapter', f => { f.binding.materials = { ...f.binding.materials, adapter_export_sha256: 'd'.repeat(64) } }, /material mismatch/],
-  ['image', f => { f.binding.image.original_image_id = 'sha256:' + 'd'.repeat(64) }, /image declaration mismatch/],
-  ['budget identity', f => { f.binding.model.budget_id = 'other-chain' }, /shared model budget binding/],
-  ['model cap', f => { f.binding.model.max_model_calls = 21 }, /shared model budget binding/],
-  ['model config', f => { f.request.max_retries = 1 }, /model configuration mismatch/],
-  ['tools scope config', f => { f.binding.tools.config_sha256 = 'd'.repeat(64) }, /tool configuration/],
-  ['exhausted time', f => { f.binding.active_budget.remaining_seconds = 0 }, /active-time budget/],
-  ['reset total time', f => { f.binding.active_budget.used_seconds = 1 }, /active-time budget/],
-]) test('binding rejects wrong ' + label + ' before model dispatch', t => {
+  ['scope', f => { f.binding.scope = { ...f.scope, user_id: 'bob' } }, /完整作用域不匹配/],
+  ['chain', f => { f.binding.chain_id = 'chain-b' }, /完整作用域不匹配/],
+  ['attempt', f => { f.binding.attempt_id = 'worker-b' }, /完整作用域不匹配/],
+  ['source', f => { f.binding.materials = { ...f.binding.materials, source_export_sha256: 'd'.repeat(64) } }, /材料不匹配/],
+  ['adapter', f => { f.binding.materials = { ...f.binding.materials, adapter_export_sha256: 'd'.repeat(64) } }, /材料不匹配/],
+  ['image', f => { f.binding.image.original_image_id = 'sha256:' + 'd'.repeat(64) }, /镜像声明不匹配/],
+  ['预算身份', f => { f.binding.model.budget_id = 'other-chain' }, /共享模型预算绑定/],
+  ['模型调用上限', f => { f.binding.model.max_model_calls = 21 }, /共享模型预算绑定/],
+  ['模型配置', f => { f.request.max_retries = 1 }, /模型配置不匹配/],
+  ['工具作用域配置', f => { f.binding.tools.config_sha256 = 'd'.repeat(64) }, /工具配置/],
+  ['耗尽的时间', f => { f.binding.active_budget.remaining_seconds = 0 }, /活跃时间预算/],
+  ['被重置的总时长', f => { f.binding.active_budget.used_seconds = 1 }, /活跃时间预算/],
+]) test('绑定在调用模型前拒绝错误项：' + label + '（模型调用前）', t => {
   noModel(t); const f = fixture(t); mutate(f); f.saveBinding(); assert.throws(f.read, expected)
 })
 
-test('wrong model token and changed tool descriptions/parameters cannot use a valid binding', t => {
+test('错误的模型令牌或已修改的工具说明及参数不能使用有效绑定', t => {
   noModel(t); const f = fixture(t), trusted = f.read()
-  assert.throws(() => trusted.verifyToken('other-token'), /run token changed/)
-  assert.throws(() => trusted.verifyToolContract([...schemas, { name: 'extra', description: 'x', parameters: {} }]), /surface changed/)
+  assert.throws(() => trusted.verifyToken('other-token'), /运行令牌发生变化/)
+  assert.throws(() => trusted.verifyToolContract([...schemas, { name: 'extra', description: 'x', parameters: {} }]), /接口发生变化/)
   const changed = structuredClone(schemas); changed[0].parameters.properties.value.type = 'number'
-  assert.throws(() => trusted.verifyToolContract(changed), /surface changed/)
+  assert.throws(() => trusted.verifyToolContract(changed), /接口发生变化/)
   const changedDescription = structuredClone(schemas); changedDescription[0].description += ' changed'
-  assert.throws(() => trusted.verifyToolContract(changedDescription), /surface changed/)
+  assert.throws(() => trusted.verifyToolContract(changedDescription), /接口发生变化/)
 })
 
-for (const mutation of ['add', 'delete', 'bytes', 'index bytes', 'symlink', 'hardlink']) test('complete native/workspace inventory rejects ' + mutation, t => {
+for (const mutation of ['add', 'delete', 'bytes', 'index bytes', 'symlink', 'hardlink']) test('完整的原生状态及工作区清单拒绝变更：' + mutation, t => {
   noModel(t); const f = fixture(t)
   if (mutation === 'add') writeFileSync(resolve(f.request.state_dir, 'extra.jsonl'), '{}')
   if (mutation === 'delete') unlinkSync(f.nativePath)
@@ -160,36 +160,36 @@ for (const mutation of ['add', 'delete', 'bytes', 'index bytes', 'symlink', 'har
   if (mutation === 'index bytes') appendFileSync(resolve(configurationRoot, 'lifecycle-state.json'), ' ')
   if (mutation === 'symlink') symlinkSync(f.nativePath, resolve(f.request.workspace, 'linked-native'))
   if (mutation === 'hardlink') linkSync(f.nativePath, resolve(f.request.workspace, 'linked-native'))
-  assert.throws(f.read, /inventory mismatch|bound file changed|symbolic links|Unsupported lifecycle state file/)
+  assert.throws(f.read, /清单不匹配|绑定文件发生变化|符号链接|不支持的生命周期状态文件/)
 })
 
-test('resume accepts no prompt field and rejects any original/continue/empty/null replacement', t => {
+test('恢复请求不接收 prompt 字段，拒绝原提示、继续指令、空串或 null 替代输入', t => {
   noModel(t); const f = fixture(t, 'resume')
   const validated = validateGoalRequest(f.request)
   assert.equal(validated.prompt, '')
   assert.equal(Object.hasOwn(f.request, 'prompt'), false)
-  for (const prompt of ['', null, 'continue', 'repeat the original objective']) assert.throws(() => validateGoalRequest({ ...f.request, prompt }), /Resume forbids/)
-  assert.throws(() => validateGoalRequest({ ...f.request, candidate_options: { ...f.request.candidate_options, session_action: 'resume', followup: 'continue' } }), /without legacy followup/)
-  assert.throws(() => validateGoalRequest({ ...f.request, candidate_options: { case: 'browser', trusted_scope_file: '/config/scope.json' } }), /configuration|case|fields/)
+  for (const prompt of ['', null, 'continue', 'repeat the original objective']) assert.throws(() => validateGoalRequest({ ...f.request, prompt }), /恢复请求禁止/)
+  assert.throws(() => validateGoalRequest({ ...f.request, candidate_options: { ...f.request.candidate_options, session_action: 'resume', followup: 'continue' } }), /不接受旧版 followup/)
+  assert.throws(() => validateGoalRequest({ ...f.request, candidate_options: { case: 'browser', trusted_scope_file: '/config/scope.json' } }), /配置|用例|字段/)
 })
 
-test('new rejects a missing objective; resume cannot claim worker-a or another binding mount', t => {
+test('新任务拒绝缺失目标；恢复请求不能冒用 worker-a 或其他绑定挂载点', t => {
   noModel(t); const f = fixture(t)
-  for (const prompt of ['', null, undefined]) assert.throws(() => validateGoalRequest({ ...f.request, prompt }), /bounded objective/)
-  assert.throws(() => validateGoalRequest({ ...f.request, lifecycle: { ...f.request.lifecycle, mode: 'resume' } }), /Invalid lifecycle request/)
-  assert.throws(() => validateGoalRequest({ ...f.request, lifecycle: { ...f.request.lifecycle, binding_file: '/workspace/lifecycle.json' } }), /Invalid lifecycle request/)
+  for (const prompt of ['', null, undefined]) assert.throws(() => validateGoalRequest({ ...f.request, prompt }), /长度受限的目标/)
+  assert.throws(() => validateGoalRequest({ ...f.request, lifecycle: { ...f.request.lifecycle, mode: 'resume' } }), /生命周期请求无效/)
+  assert.throws(() => validateGoalRequest({ ...f.request, lifecycle: { ...f.request.lifecycle, binding_file: '/workspace/lifecycle.json' } }), /生命周期请求无效/)
 })
 
 for (const [label, mutate] of [
   ['phase', p => { p.goal.phase = 'active' }], ['activation', p => { p.goal.activation = 'armed' }],
   ['round cap', p => { p.goal.maxGoalRounds = 7 }], ['exhausted rounds', p => { p.goal.roundsStarted = p.goal.maxGoalRounds }],
   ['scope', p => { p.scope.user_id = 'bob' }], ['session', p => { p.session.id = 'other' }],
-]) test('resume binding rejects changed paused ' + label, t => {
+]) test('恢复绑定拒绝被修改的暂停项：' + label, t => {
   noModel(t); const f = fixture(t, 'resume'); mutate(f.paused); f.savePause()
-  assert.throws(f.read, /Goal or scope|frozen rounds|Session index/)
+  assert.throws(f.read, /Goal 或作用域|冻结的轮数|Session 索引/)
 })
 
-test('resume accepts the exact persisted prefix plus one genuine end-seed marker, never a new followup', async t => {
+test('恢复仅接收原持久化前缀及一个真实的结束种子标记，不追加新输入', async t => {
   noModel(t); const f = fixture(t, 'resume'), r = runtime(t, f)
   await r.control.start(r.handle, r.before())
   assert.deepEqual(r.nativeCalls, { create: 0, resume: 1, pause: 0, followup: 0 })
@@ -202,39 +202,39 @@ for (const [label, mutate] of [
   ['wrong seed boundary', before => { before.first_live_seq-- }],
   ['extra live event', before => { before.events.push({ seq: 3, type: 'turn/start', data: { turn: 2 } }); before.next_seq++ }],
   ['changed historical prefix', before => { before.events[0].data.goal.revision = 99 }],
-]) test('native resume rejects ' + label + ' before goals.resume/model', async t => {
+]) test('原生恢复拒绝变更项：' + label + '（调用 goals.resume 或模型前）', async t => {
   noModel(t); const f = fixture(t, 'resume'), r = runtime(t, f), before = r.before(); mutate(before)
-  await assert.rejects(r.control.start(r.handle, before), /restored Goal\/Session differs/)
+  await assert.rejects(r.control.start(r.handle, before), /原生恢复的 Goal\/Session 与可信暂停源不一致/)
   assert.equal(r.nativeCalls.resume, 0); assert.equal(r.nativeCalls.followup, 0)
 })
 
-test('restored Goal spec and raw artifact are checked before native resume authority', async t => {
+test('授予原生恢复权限前检查恢复的 Goal 定义和原始产物', async t => {
   noModel(t); const f = fixture(t, 'resume'), r = runtime(t, f)
   r.setGoal({ ...f.paused.goal, maxGoalRounds: 7 })
-  await assert.rejects(r.control.start(r.handle, r.before()), /restored Goal\/Session differs/)
+  await assert.rejects(r.control.start(r.handle, r.before()), /原生恢复的 Goal\/Session 与可信暂停源不一致/)
   assert.equal(r.nativeCalls.resume, 0)
   r.setGoal(structuredClone(f.paused.goal)); r.control.beforeResumeArtifact({ physical_sha256: 'd'.repeat(64) })
-  await assert.rejects(r.control.start(r.handle, r.before()), /raw Session bytes/)
+  await assert.rejects(r.control.start(r.handle, r.before()), /原始 Session 字节/)
   assert.equal(r.nativeCalls.resume, 0)
 })
 
-test('a changed actual surface fails before trusted Goal creation', async t => {
+test('实际工具面发生变化时，在创建可信 Goal 前失败', async t => {
   noModel(t); const f = fixture(t), r = runtime(t, f)
-  r.agent.ctx.tools.schemas = () => [...schemas, { name: 'unexpected', description: 'not frozen', parameters: {} }]
-  await assert.rejects(r.control.start(r.handle, r.before()), /surface changed/)
+  r.agent.ctx.tools.schemas = () => [...schemas, { name: 'unexpected', description: '未冻结', parameters: {} }]
+  await assert.rejects(r.control.start(r.handle, r.before()), /接口发生变化/)
   assert.equal(r.nativeCalls.create, 0)
 })
 
 async function safePoint(t) {
   const f = fixture(t), r = runtime(t, f)
   await r.control.setup(r.scoped); await r.control.start(r.handle, r.before())
-  // Model/tool progress is synthetic here; these tests prove adapter checks,
-  // not DSH's actual public event generation or persistence implementation.
+  // 此处使用模拟的模型和工具进度；这些测试仅验证适配器检查，
+  // 不用于验证 DSH 实际的公开事件生成或持久化实现。
   r.setGoal({ ...r.currentGoal(), roundsStarted: 1 }); r.agent.status = 'running'; r.emit('turn/start', { turn: 1 })
   return { f, r, preStep: r.hooks.get('scoped:agent/pre-step')[0] }
 }
 
-test('a pause received during awaited downstream hook is checked again before entering a new step', async t => {
+test('等待下游钩子期间收到暂停请求时，在进入新步骤前再次检查', async t => {
   noModel(t); const { r, preStep } = await safePoint(t)
   const decision = await preStep({ agent: r.agent, messages: [], turn: 1, step: 2, signal: new AbortController().signal }, async () => {
     await Promise.resolve(); r.control.onPauseSignal(); return { kind: 'enter', messages: [{ source: { kind: 'plugin' } }] }
@@ -242,7 +242,7 @@ test('a pause received during awaited downstream hook is checked again before en
   assert.deepEqual(decision, { kind: 'reject' }); assert.equal(r.nativeCalls.pause, 1)
 })
 
-test('nonempty original claims are preserved and cannot manufacture a safe pause', async t => {
+test('保留非空的原始输入领取结果，不能据此制造安全暂停', async t => {
   noModel(t); const { r, preStep } = await safePoint(t)
   r.control.onPauseSignal()
   const messages = [{ id: 'foreign-input', source: { kind: 'user' }, content: [] }]
@@ -251,32 +251,32 @@ test('nonempty original claims are preserved and cannot manufacture a safe pause
   assert.equal(r.appended.some(row => row.value.reason === 'original_claimed_messages_nonempty'), true)
 })
 
-test('idle without the matching real blocked turn/end cannot become a pause', async t => {
+test('空闲状态缺少匹配的真实 blocked turn/end 时不能算作暂停', async t => {
   noModel(t); const { f, r, preStep } = await safePoint(t)
   r.control.onPauseSignal(); await preStep({ agent: r.agent, messages: [], turn: 1, step: 2, signal: new AbortController().signal }, async () => ({ kind: 'enter', messages: [] }))
   r.agent.status = 'idle'
-  assert.throws(() => r.control.afterIdle(r.handle, { physical_sha256: sha256(readFileSync(f.nativePath)), native_location: { path: f.nativePath } }), /matching Goal pause/)
+  assert.throws(() => r.control.afterIdle(r.handle, { physical_sha256: sha256(readFileSync(f.nativePath)), native_location: { path: f.nativePath } }), /匹配的 Goal 暂停/)
   assert.equal(r.saved.has('lifecycle-pause-candidate.json'), false)
 })
 
-test('normal close failure never publishes a candidate pause index or paused status', async t => {
+test('正常关闭失败时不发布候选暂停索引或已暂停状态', async t => {
   noModel(t); const { f, r, preStep } = await safePoint(t)
   r.control.onPauseSignal(); await preStep({ agent: r.agent, messages: [], turn: 1, step: 2, signal: new AbortController().signal }, async () => ({ kind: 'enter', messages: [] }))
   r.emit('turn/end', { turn: 1, reason: { kind: 'blocked' } }); r.agent.status = 'idle'
   assert.equal(r.control.afterIdle(r.handle, { physical_sha256: sha256(readFileSync(f.nativePath)), native_location: { path: f.nativePath } }).kind, 'paused')
   r.control.recordResult({ status: 'pause_pending_close', native_status: 'incomplete', stop_reason: 'blocked' })
-  silentClose(r.control, new Error('simulated saver close failure'))
+  silentClose(r.control, new Error('模拟保存器关闭失败'))
   assert.equal(r.saved.get('result.json').status, 'failed')
   assert.equal(r.saved.has('lifecycle-pause-candidate.json'), false)
   assert.equal(r.saved.has('native-state-index-after-close.json'), false)
 })
 
-test('changed Session bytes during close cannot publish a durable pause', async t => {
+test('关闭期间 Session 字节变化时不能发布持久暂停状态', async t => {
   noModel(t); const { f, r, preStep } = await safePoint(t)
   r.control.onPauseSignal(); await preStep({ agent: r.agent, messages: [], turn: 1, step: 2, signal: new AbortController().signal }, async () => ({ kind: 'enter', messages: [] }))
   r.emit('turn/end', { turn: 1, reason: { kind: 'blocked' } }); r.agent.status = 'idle'
   r.control.afterIdle(r.handle, { physical_sha256: sha256(readFileSync(f.nativePath)), native_location: { path: f.nativePath } })
   r.control.recordResult({ status: 'pause_pending_close' }); appendFileSync(f.nativePath, 'changed-after-flush\n')
-  assert.throws(() => silentClose(r.control), /changed during close/)
+  assert.throws(() => silentClose(r.control), /关闭期间发生变化/)
   assert.equal(r.saved.has('lifecycle-pause-candidate.json'), false)
 })

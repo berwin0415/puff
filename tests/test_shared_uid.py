@@ -1,9 +1,9 @@
-"""Opt-in real Linux subprocess calibration. Not executed by the author.
+"""显式启用的真实 Linux 子进程校准，初稿作者未执行。
 
-Run only in a NEW fixed Docker image as root, with --init and
---security-opt no-new-privileges and HARNESS_SHARED_UID_CALIBRATION=1.
-Ordinary test collection skips every case. No candidate/model/business requests run.
-Unlike the prior FakeChild tests these inspect actual UID, permissions and PIDs.
+仅在全新固定 Docker 镜像中以 root 运行，并设置 --init、
+--security-opt no-new-privileges 及 HARNESS_SHARED_UID_CALIBRATION=1。
+普通测试收集跳过全部用例。不运行候选、模型或业务请求。
+与 FakeChild 测试不同，这里检查真实 UID、权限及 PID。
 """
 from copy import deepcopy
 import hashlib
@@ -27,7 +27,7 @@ from runner.shared_supervisor import BoundaryError
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("HARNESS_SHARED_UID_CALIBRATION") != "1",
-    reason="Explicit opt-in required for new Docker-only real UID calibration",
+    reason="仅 Docker 内运行的真实 UID 新校准需要显式启用",
 )
 
 
@@ -75,18 +75,18 @@ def bounded_wait(callback, *, seconds=4):
         if value:
             return value
         if time.monotonic() >= deadline:
-            raise AssertionError("Expected actual Linux subprocess observation did not arrive")
+            raise AssertionError("未收到预期的真实 Linux 子进程观测")
         time.sleep(0.02)
 
 
 @pytest.fixture
 def shared_lab():
-    assert sys.platform == "linux", "Docker Linux calibration only; do not run this on the host"
-    assert Path("/.dockerenv").is_file(), "Docker-only calibration; no host subprocess probes"
-    assert os.geteuid() == 0, "This calibration must use the root supervisor in Docker"
-    assert _status(os.getpid()).get("NoNewPrivs") == "1", "Pass Docker --security-opt no-new-privileges"
-    # Named root-owned /tmp dir is intentional: ordinary pytest tmp parents are
-    # 0700, so a valid non-root child cannot traverse them to image-like material.
+    assert sys.platform == "linux", "仅供 Docker Linux 校准；不得在宿主机执行"
+    assert Path("/.dockerenv").is_file(), "校准仅在 Docker 内运行，不在宿主机探测子进程"
+    assert os.geteuid() == 0, "本校准必须使用 Docker 内的 root supervisor"
+    assert _status(os.getpid()).get("NoNewPrivs") == "1", "请传入 Docker --security-opt no-new-privileges"
+    # 刻意使用 root 所有的具名 /tmp 目录：普通 pytest 临时父目录
+    # 权限为0700，合法非 root 子进程无法经过它访问仿镜像材料。
     with tempfile.TemporaryDirectory(prefix="i24-real-uid-", dir="/tmp") as temporary:
         root = Path(temporary)
         root.chmod(0o711)

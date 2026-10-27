@@ -1,7 +1,7 @@
-"""I25 cost-flow boundary calibration drafts; execute only in frozen Docker.
+"""I25 成本流程边界校准初稿，只在固定 Docker 内执行。
 
-These synthetic records do not establish a real task, live overlap, resource
-saving, crash recovery or candidate capability. No SDK or Docker is invoked.
+合成记录不证明真实任务、活动重叠、资源节省、崩溃恢复或候选能力。
+不调用 SDK 或 Docker。
 """
 from copy import deepcopy
 import json
@@ -31,11 +31,11 @@ def test_full_source_plan_remains_honest_about_product_backend_and_native_recove
     assert value["fixed_allocations"][1]["allocated_cpu_nano"] == CPU
     assert value["allocation_role_alias"] == {"observer": "backend"}
     assert value["i25_complete"] is False and value["formal_i25_eligible"] is False
-    assert "no product identity" in value["orchestration_trust"]
-    assert "owner-specific tools/proxy" in value["subset_service_policy"]
+    assert '不声称产品身份' in value["orchestration_trust"]
+    assert '所有者专属工具和代理' in value["subset_service_policy"]
     assert value["business_tasks_planned_to_execute"] == 6
     assert value["business_tasks_bound"] == 8
-    assert any("uncertain-write" in row for row in value["remaining_work"])
+    assert any("不确定写入" in row for row in value["remaining_work"])
 
 
 @pytest.mark.parametrize("users", (5, 10))
@@ -55,7 +55,7 @@ def test_explicit_rotation_variant_binds_new_tasks_but_keeps_two_active_and_all_
     assert value["fixed_allocations"][1]["counts"]["worker"] == 2
     assert value["i25_complete"] is value["formal_i25_eligible"] is False
     assert flow.owners_for_kind(value, flow.INACTIVE_WAKE_KIND) == ["user-003", "user-004"]
-    with pytest.raises(ValueError, match="separate full-flow variant"):
+    with pytest.raises(ValueError, match='独立完整流程变体'):
         plan(users=users, rotate_inactive_users=True, baseline_only=True)
 
 
@@ -206,7 +206,7 @@ def test_rotation_business_missing_result_is_preserved_without_replaying_or_losi
     value, _, users = rotation_materials(tmp_path, monkeypatch)
     lab = CostFlowLab(tmp_path, value)
     monkeypatch.setattr(lab, "phase_to", lambda *_: None)
-    monkeypatch.setattr(lab, "worker", lambda *args, **kwargs: pytest.fail("No result must not start a replacement task"))
+    monkeypatch.setattr(lab, "worker", lambda *args, **kwargs: pytest.fail("缺少结果时不得启动替代任务"))
     rotated = [user for user in users if user["owner"] in {"user-003", "user-004"}]
     lab.rotation_history_reads = [{"original": "must-be-retained"}]
     lab.business_readback(rotated, kind=flow.INACTIVE_WAKE_KIND)
@@ -296,7 +296,7 @@ def test_rotation_resource_log_write_failure_cannot_be_marked_as_completed(tmp_p
 def test_rotation_resident_cli_retains_plan_and_prestart_refusal_without_creating_docker(tmp_path, monkeypatch, users):
     output = tmp_path / "new-refused-trial"
     monkeypatch.setattr(full_host, "validate_data_root", lambda *_: tmp_path)
-    monkeypatch.setattr(full_host, "CostFlowLab", lambda *_: pytest.fail("Resident allocation must refuse before Docker"))
+    monkeypatch.setattr(full_host, "CostFlowLab", lambda *_: pytest.fail("常驻分配必须在调用 Docker 前拒绝"))
     monkeypatch.setattr("sys.argv", ["run_instance_cost_full.py", "run", "--trial-id", "rotation-refusal",
         "--pair-id", "rotation-pair", "--strategy", "resident", "--users", str(users),
         "--candidate-image", "sha256:" + "1" * 64, "--bench-image", "sha256:" + "2" * 64,
@@ -407,7 +407,7 @@ def test_live_jsonl_ignores_only_incomplete_suffix_including_unfinished_first_li
     assert flow.rows(path, partial=True) == []
     path.write_bytes(b'{"time":"original"}\n{"data":"still-being-written')
     assert flow.rows(path, partial=True) == [{"time": "original"}]
-    with pytest.raises(ValueError, match="Torn final evidence line"):
+    with pytest.raises(ValueError, match='证据末行被截断'):
         flow.rows(path)
     path.write_bytes(b'{"time":"original"}\n{"data":"must-not-enter-observer-errors",}\n')
     with pytest.raises(flow.ObservationError) as caught:
@@ -661,7 +661,7 @@ def test_host_baseline_cli_reports_missing_data_root_before_evidence_or_lab(tmp_
         "--candidate-image", "sha256:" + "1" * 64, "--bench-image", "sha256:" + "2" * 64,
         "--services-image", "sha256:" + "3" * 64, "--model-name", "offline-model", "--seed", "101",
         "--output-root", str(output)])
-    monkeypatch.setattr(full_host, "CostFlowLab", lambda *_: pytest.fail("Docker lab must not be created"))
+    monkeypatch.setattr(full_host, "CostFlowLab", lambda *_: pytest.fail("不得创建 Docker 实验实例"))
     with pytest.raises(ValueError, match="^host_data_root_missing$"):
         full_host.main()
     assert not output.exists()
@@ -789,7 +789,7 @@ def test_next_bench_is_refused_when_two_workers_already_use_active_total(tmp_pat
     lab = CostFlowLab(tmp_path, plan())
     rows = [{"memory_limit": int(5.5 * 1024**3), "cpu_nano": CPU, "state": {"Running": True}}]
     lab.observations = lambda: rows
-    with pytest.raises(RuntimeError, match="before exceeding"):
+    with pytest.raises(RuntimeError, match='以免超过'):
         lab.reserve("bench")
 
 
@@ -801,7 +801,7 @@ def bench_exit_record(*, code=0):
 
 
 def fake_grade_bench(tmp_path, monkeypatch, *, passed=True, cli_exit=0, observed=None, verdict_body=None):
-    """Exercise the real check=False host path with only explicit Docker doubles."""
+    """使用显式 Docker 替身测试真实 check=False 宿主路径。"""
     (tmp_path / "protected").mkdir()
     lab = CostFlowLab(tmp_path, plan())
     record = deepcopy(observed if observed is not None else bench_exit_record(code=cli_exit))
@@ -820,7 +820,7 @@ def fake_grade_bench(tmp_path, monkeypatch, *, passed=True, cli_exit=0, observed
             return subprocess.CompletedProcess(command, cli_exit, "synthetic grade output\n", "")
         if command[1] == "rm":
             return subprocess.CompletedProcess(command, 0, "b" * 64 + "\n", "")
-        raise AssertionError("Unexpected synthetic Docker command")
+        raise AssertionError("非预期合成 Docker 命令")
     monkeypatch.setattr(lab, "call", call)
     return lab, commands, body
 
@@ -869,7 +869,7 @@ def test_written_verdict_does_not_bypass_grade_process_integrity(tmp_path, monke
     else:
         record["cpu_nano"] += 1
     lab, commands, body = fake_grade_bench(tmp_path, monkeypatch, passed=passed, cli_exit=cli_exit, observed=record)
-    with pytest.raises(RuntimeError, match="process integrity failed"):
+    with pytest.raises(RuntimeError, match='进程完整性失败'):
         lab.bench("grade", check=False)
     assert (tmp_path / "protected/flow-verdict.json").read_bytes() == body
     integrity = json.loads((tmp_path / "protected/grade-flow-process-integrity.json").read_text())
@@ -880,7 +880,7 @@ def test_written_verdict_does_not_bypass_grade_process_integrity(tmp_path, monke
 @pytest.mark.parametrize("body", (b'{"cost_subset_passed":1}\n', b'{"passed":true}\n', b'not-json\n'))
 def test_grade_exit1_cannot_replace_missing_or_malformed_boolean_verdict(tmp_path, monkeypatch, body):
     lab, _, original = fake_grade_bench(tmp_path, monkeypatch, cli_exit=1, verdict_body=body)
-    with pytest.raises(RuntimeError, match="process integrity failed"):
+    with pytest.raises(RuntimeError, match='进程完整性失败'):
         lab.bench("grade", check=False)
     assert (tmp_path / "protected/flow-verdict.json").read_bytes() == original
 

@@ -1,4 +1,4 @@
-"""File tools must never follow Agent-selected paths into another workspace."""
+"""文件工具不能沿 Agent 指定路径进入其他工作区。"""
 
 import os
 
@@ -47,7 +47,7 @@ def test_existing_and_later_symlinks_cannot_read_or_overwrite_other_user(tmp_pat
 def test_special_files_and_oversized_payload_are_rejected_without_blocking(tmp_path):
     files = WorkspaceFiles(tmp_path.resolve() / "workspace")
     os.mkfifo(files.root / "pipe")
-    with pytest.raises(ToolError, match="regular"):
+    with pytest.raises(ToolError, match='普通文件'):
         files.read_text("pipe")
     with pytest.raises(ToolError, match="2 MiB"):
         files.write_text("too-large", "x" * (2 * 1024 * 1024 + 1))

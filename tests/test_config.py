@@ -1,4 +1,4 @@
-"""Risk-focused checks for identity paths, state reuse and budget declarations."""
+"""重点校验身份路径、状态复用及预算声明风险。"""
 
 from dataclasses import asdict
 from pathlib import Path
@@ -69,7 +69,7 @@ def test_layout_preserves_archive_and_resume_chain_but_separates_variants(tmp_pa
     (baseline.state / "checkpoint").write_text("step 3", encoding="utf-8")
     (baseline.budget / "count").write_text("7", encoding="utf-8")
 
-    # Loading in a replacement process uses the same persisted identity.
+    # 替换进程加载时使用同一持久身份。
     resumed = load_config(config_path).paths_for(**identity())
     assert resumed == baseline
     assert (resumed.state / "checkpoint").read_text(encoding="utf-8") == "step 3"
@@ -107,7 +107,7 @@ def test_symlink_cannot_escape_to_other_data_or_archive(tmp_path, target):
     if target != "missing":
         destination.mkdir()
     (config.data_root / "state" / "tools-seed-101-repeat-1").symlink_to(destination, target_is_directory=True)
-    with pytest.raises(ConfigError, match="symbolic"):
+    with pytest.raises(ConfigError, match='符号链接'):
         config.paths_for(**identity())
     assert not (destination / "baseline").exists()
 
@@ -147,7 +147,7 @@ def test_duplicate_yaml_keys_are_not_silently_accepted(tmp_path):
     path = write_config(tmp_path)
     with path.open("a", encoding="utf-8") as stream:
         stream.write("\nschema_version: 1\n")
-    with pytest.raises(ConfigError, match="Duplicate"):
+    with pytest.raises(ConfigError, match='重复'):
         load_config(path)
 
 
@@ -157,11 +157,11 @@ def test_config_cannot_be_loaded_from_archive_or_symlink(tmp_path):
     archive.mkdir()
     archive_config = archive / "experiment.yaml"
     archive_config.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
-    with pytest.raises(ConfigError, match="archive"):
+    with pytest.raises(ConfigError, match='归档'):
         load_config(archive_config)
     alias = tmp_path / "alias.yaml"
     alias.symlink_to(archive_config)
-    with pytest.raises(ConfigError, match="symbolic"):
+    with pytest.raises(ConfigError, match='符号链接'):
         load_config(alias)
 
 

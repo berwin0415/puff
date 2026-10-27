@@ -1,4 +1,4 @@
-"""Real HTTP, process restarts, side effects and trusted identity boundaries."""
+"""真实 HTTP、进程重启、副作用和可信身份边界测试。"""
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -106,7 +106,7 @@ def test_write_commits_before_lost_receipt_and_restart_does_not_erase_it(fixture
     client = client_for(process, scope)
     item = client.list_items()["items"][0]
     process.fault(scope, "lost-receipt", "drop_receipt_once")
-    with pytest.raises(FixtureTransportError, match="receipt"):
+    with pytest.raises(FixtureTransportError, match='回执'):
         client.write("lost-receipt", item["item_id"], 1)
     ledger = client.ledger()
     assert (ledger["request_count"], ledger["write_count"]) == (1, 1)

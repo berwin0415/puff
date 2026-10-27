@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage Google ADK source-adapter materials; never import candidate SDK code."""
+"""准备 Google ADK 源码和适配材料；不导入候选 SDK 代码。"""
 
 import argparse
 import hashlib
@@ -21,22 +21,22 @@ def digest(data: bytes) -> str:
 def stage(context: Path, repository: Path, *, prepare_lock=False) -> dict:
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "google_adk" or source.get("export_sha256") != EXPORT_HASH:
-        raise ValueError("Expected the current Google ADK context")
+        raise ValueError('需要当前 Google ADK 上下文')
     pins = source.get("sources", [])
     if len(pins) != 1:
-        raise ValueError("Wrong source inventory")
+        raise ValueError('源码清单不匹配')
     pin = pins[0]
     if pin.get("id") != "main" or pin.get("kind") != "archive" or pin.get("commit") != COMMIT or pin.get("sha256") != ARCHIVE_HASH or pin.get("observed_archive_sha256") != ARCHIVE_HASH or pin.get("dirty") is not None:
-        raise ValueError("Wrong or unverified Google ADK source archive")
+        raise ValueError('Google ADK 源码归档不匹配或未经核验')
     destination = context / "harness-lab"
     marker = context / "LAB_LOCK_PREPARATION.json"
     if destination.exists():
         if destination.is_symlink() or not ((context / "LAB_ADAPTER_MANIFEST.json").is_file() or marker.is_file()):
-            raise ValueError("Refusing to replace unstaged adapter material")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []

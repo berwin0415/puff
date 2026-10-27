@@ -1,1 +1,1 @@
-"""Local Docker experiment orchestration and independent verification."""
+"""本地 Docker 实验编排与独立验证。"""

@@ -1,7 +1,6 @@
-"""Summarize explicitly selected I22 raw samples; never regrade a run.
+"""汇总明确选定的 I22 原始样本；不重新评分。
 
-Host-side evidence aggregation only: no candidate, tool, model or Docker API.
-Sample means are not time integrals, billing data or production savings.
+仅聚合宿主侧证据：不执行候选、工具、模型或 Docker API。样本均值不是时间积分、计费数据或生产节省比例。
 """
 from __future__ import annotations
 
@@ -34,7 +33,7 @@ CHAINS = {
 
 def regular(path):
     if any(p.is_symlink() for p in (path, *path.parents)) or not path.is_file():
-        raise ValueError('Evidence must be an existing regular file')
+        raise ValueError('证据必须是已存在的普通文件')
     return path.read_bytes()
 
 
@@ -61,7 +60,7 @@ def summarize(data_root, day):
                 sources[filename] = {'sha256': hashlib.sha256(data).hexdigest(), 'data': data}
             cleanup = json.loads(sources['cleanup.json']['data'])
             if cleanup.get('passed') is not True or cleanup.get('remaining') != []:
-                raise ValueError('Only a finished chain with successful cleanup can be summarized')
+                raise ValueError('仅可汇总已结束且清理成功的链')
             orchestration = json.loads(sources['orchestration.json']['data'])
             rows = [json.loads(line) for line in sources['resource-samples.jsonl']['data'].splitlines() if line]
             grouped = defaultdict(list)
@@ -88,13 +87,12 @@ def summarize(data_root, day):
                          'same_host_clock_timings': {
                              'signal_sent_to_a_exit_observed_seconds': elapsed(worker_a['finished_at'], worker_a['pause_request']['sent_at']),
                              'b_started_to_exit_observed_seconds': elapsed(worker_b['finished_at'], worker_b['started_at']),
-                             'note': 'Includes host polling/inspection; first native resume activity and exact safe-point latency are not inferred.'},
+                             'note': '包含宿主轮询和检查；不推算首次原生恢复活动时间或确切安全点延迟。'},
                          'phases': phases,
                          'sources': {name: {'path': str(directory / name), 'sha256': row['sha256']}
                                      for name, row in sources.items()}})
     return {'schema': 'harness-lab-pause-resource-summary/1', 'date': day, 'runs': runs,
-            'note': 'Descriptive raw-sample summary only. No regrading. Means are per sample, not time weighted. '
-                    'Paused resources include experiment services and monitor. No currency or production savings inferred.'}
+            'note': '仅描述原始样本，不重新评分。均值按样本计算，不按时间加权。暂停资源包含实验服务和监控器。不据此推断金额或生产节省比例。'}
 
 
 def main():

@@ -1,4 +1,4 @@
-"""Unrun source-only staging guards; synthetic files are not runtime evidence."""
+"""仅源码打包检查的初始反例；合成文件不是运行时证据。"""
 from copy import deepcopy
 import json
 
@@ -50,14 +50,14 @@ def test_new_runtime_copies_frozen_bytes_and_refuses_overwrite(tmp_path):
     assert runtime["runtime_verified"] is runtime["capability_verified"] is False
     assert len(runtime["sources"]) == len(stager.OVERLAYS)
     assert (context / ".dockerignore").read_bytes() == (base / ".dockerignore").read_bytes()
-    with pytest.raises(ValueError, match="cannot overwrite"):
+    with pytest.raises(ValueError, match='不能覆盖'):
         stager.stage(context, base, repository)
 
 
 def test_stager_rejects_modified_i22_bytes_before_writing(tmp_path):
     repository, base, context, _ = staging_fixture(tmp_path)
     (base / "harness-lab/goal-runtime-entrypoint.ts").write_text("changed")
-    with pytest.raises(ValueError, match="bytes changed"):
+    with pytest.raises(ValueError, match='内容已变化'):
         stager.stage(context, base, repository)
     assert not (context / "harness-lab").exists()
 
@@ -65,7 +65,7 @@ def test_stager_rejects_modified_i22_bytes_before_writing(tmp_path):
 def test_stager_cannot_target_i22_or_an_archived_context(tmp_path):
     repository, base, context, _ = staging_fixture(tmp_path)
     for forbidden in (base, repository / "external/build-context/old/new-runtime"):
-        with pytest.raises(ValueError, match="Separate current I24"):
+        with pytest.raises(ValueError, match='独立的当前 I24'):
             stager.stage(forbidden, base, repository)
 
 
@@ -74,9 +74,9 @@ def test_stager_rejects_different_export_and_linked_context(tmp_path):
     source = json.loads((context / "SOURCE_MANIFEST.json").read_text())
     source["export_sha256"] = "2" * 64
     (context / "SOURCE_MANIFEST.json").write_text(json.dumps(source))
-    with pytest.raises(ValueError, match="match the frozen I22"):
+    with pytest.raises(ValueError, match='与冻结的 I22 导出一致'):
         stager.stage(context, base, repository)
     linked = repository / "external/build-context/linked"
     linked.symlink_to(context, target_is_directory=True)
-    with pytest.raises(ValueError, match="Linked staging"):
+    with pytest.raises(ValueError, match='准备路径禁止使用链接'):
         stager.stage(linked, base, repository)

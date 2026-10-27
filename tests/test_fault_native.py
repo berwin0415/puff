@@ -1,8 +1,7 @@
-"""I23 synthetic fault-boundary calibration; no claimed live Agent recovery.
+"""I23 合成故障边界校准，不声称真实 Agent 恢复。
 
-The SQLite/WAL files below are real SQLite fixture bytes. Public native APIs
-are mocked only for binding rejection tests. A separate Docker candidate probe
-and real fault chains remain required after these tests pass.
+下方 SQLite 与 WAL 为真实数据库测试数据。公开原生 API
+仅在绑定拒绝测试中模拟。通过后仍需独立候选探针与真实故障链。
 """
 from __future__ import annotations
 
@@ -71,7 +70,7 @@ def natural(tmp_path):
 
 
 def test_wal_committed_head_and_pending_writes_are_read_without_changing_original(natural):
-    # Keeping this committed fixture connection open retains a nonempty WAL.
+    # 保持已提交的测试连接打开，使 WAL 保持非空。
     assert (natural.state / 'checkpoints.sqlite-wal').stat().st_size > 0
     original = f.io.inventory(natural.state, natural.workspace)
     audited = f.natural_sqlite_audit(natural, SCOPE, {'prompt': PROMPT})
@@ -195,7 +194,7 @@ def test_native_send_projection_matches_physical_constructor_without_changing_in
     assert original['pending'][0][2] is send and send.arg is arguments
     assert projected['pending'][0][2]['native_send']['arg'] == arguments
     assert projected['pending'][0][2]['native_send']['arg'] is not arguments
-    with pytest.raises(TypeError, match='Unsupported I23 native Send shape'):
+    with pytest.raises(TypeError, match='不支持的 I23 原生 Send 结构'):
         crash.crash_projection(Send('tools', arguments, timeout=5))
 
 
@@ -278,10 +277,10 @@ def native_message(kind, message_id, content='', **fields):
 
 @pytest.fixture
 def delta(natural):
-    """Physical delta storage: parent order differs from id order, with a fork.
+    """物理增量存储：父子顺序不同于 ID 顺序，并带有分支。
 
-    The latest checkpoint has no messages field, just like the pinned DA
-    smoke's six actual checkpoints. No SDK, model or execution state is built.
+    与固定 Deep Agents 冒烟的六条真实 checkpoint 相同，最新
+    checkpoint 不含 messages 字段。不构造 SDK、模型或执行状态。
     """
     natural.db.execute('DELETE FROM writes')
     natural.db.execute('DELETE FROM checkpoints')

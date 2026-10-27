@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Prepare a NEW I23 build context with a thin prewrite bridge overlay.
+"""使用轻量写前桥接覆盖层，准备新的 I23 构建上下文。
 
-Host materials work only. Candidate packages, models, tools and scoring never
-run here. Existing stagers and I22 bridge files remain completely unchanged.
+仅在宿主处理材料。此处不运行候选包、模型、工具或评分。已有准备脚本和 I22 桥接文件保持不变。
 """
 from __future__ import annotations
 
@@ -27,18 +26,18 @@ def stage(context, repository, candidate, *, goal_runtime=False):
     repository, context = repository.resolve(), context.resolve()
     allowed = repository / "external/build-context"
     if "old" in context.parts or not context.is_relative_to(allowed) or context == allowed:
-        raise ValueError("I23 must use a new current candidate source context")
+        raise ValueError('I23 必须使用新的当前候选源码上下文')
     if any((context / name).exists() or (context / name).is_symlink()
             for name in ("harness-lab", "LAB_ADAPTER_MANIFEST.json", "LAB_FAULT_BRIDGE_MANIFEST.json", "Dockerfile")):
-        raise ValueError("I23 overlay must never overwrite any existing staged material")
+        raise ValueError('I23 覆盖层不能覆盖任何已有准备材料')
     if candidate not in OVERLAYS or goal_runtime and candidate != "deepseek_harness":
-        raise ValueError("Unexpected candidate/Goal runtime combination")
+        raise ValueError('候选与 Goal 运行时组合不符合预期')
     payloads = {name: (repository / "adapters" / candidate / "fault" / name).read_bytes()
         for name in OVERLAYS[candidate]}
     origins = {name: f"adapters/{candidate}/fault/{name}" for name in payloads}
     if candidate == 'deepseek_harness':
         if not goal_runtime:
-            raise ValueError('DSH I23 requires the separately frozen fault Goal runtime for both A and B')
+            raise ValueError('DSH I23 的 A、B 两端均需要单独冻结的故障 Goal 运行时')
         for name in ('fault-goal-binding.mjs', 'fault-goal-runtime.ts', 'fault-goal-runtime.cordis.patch.yml',
                      'fault-goal-entrypoint.ts', 'fault-scoped-runtime-entrypoint.ts'):
             payloads[name] = (repository / 'adapters' / candidate / name).read_bytes()
@@ -80,7 +79,7 @@ def stage(context, repository, candidate, *, goal_runtime=False):
         return {"candidate": candidate, "context": str(context), "adapter_export_sha256": manifest["export_sha256"],
             "status": "materials_staged_not_runtime_verified"}
     except BaseException:
-        # Partial overlay bytes must not leave a usable-looking build context.
+        # 部分覆盖层文件不能留下看似可用的构建上下文。
         (context / "Dockerfile").unlink(missing_ok=True)
         manifest_path.unlink(missing_ok=True)
         raise

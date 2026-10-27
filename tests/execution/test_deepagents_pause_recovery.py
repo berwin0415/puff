@@ -1,8 +1,8 @@
-"""I22 wiring calibration only; no candidate SDK, real graph or model required.
+"""I22 接线校准，不需要候选 SDK、真实执行图或模型。
 
-Run after the adapter patch is applied, in the normal bench test image. SQLite
-bytes and graph snapshots below are explicit synthetic boundary inputs. Passing
-these tests does not prove that a real GraphDrained/checkpoint/resume occurred.
+在适配补丁应用后，于常规验收镜像中运行。下方 SQLite 数据与
+图快照是明确构造的边界输入；测试通过不证明发生了真实
+GraphDrained、checkpoint 或续跑。
 """
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def native_json(value):
 
 
 def canonical(value):
-    # Independent standard JSON encoding of fixture inputs, not an adapter dump.
+    # 独立使用标准 JSON 编码测试输入，不使用适配器导出结果。
     return json.dumps(value, default=native_json, sort_keys=True, ensure_ascii=False,
         separators=(",", ":"), allow_nan=False).encode()
 
@@ -64,7 +64,7 @@ def snapshot(*, checkpoint_id="checkpoint-a", head=False, pending=True):
 
 
 class SnapshotReaderDouble:
-    """Only returns supplied API boundary values; cannot run business work."""
+    """只返回传入的 API 边界值，不能执行业务。"""
     def __init__(self, exact, head):
         self.exact, self.head, self.calls = exact, head, []
 
@@ -73,7 +73,7 @@ class SnapshotReaderDouble:
         return self.exact if "checkpoint_id" in config["configurable"] else self.head
 
     def astream(self, *args, **kwargs):
-        raise AssertionError("Helper calibration must never execute a graph")
+        raise AssertionError("辅助函数校准绝不能执行图")
 
 
 class PauseFixture(unittest.IsolatedAsyncioTestCase):
@@ -105,8 +105,8 @@ class PauseFixture(unittest.IsolatedAsyncioTestCase):
                 return canonical(self.binding)
             return actual_read(path, limit)
 
-        # Narrow mount-boundary substitutes only: all state/workspace/index,
-        # file hashes, atomic writes, fsync and flock below are real filesystem IO.
+        # 只替换挂载边界；下方状态、工作区、索引、
+        # 文件哈希、原子写入、fsync 和 flock 均使用真实文件系统。
         self.read_patch = patch.object(PAUSE, "_read_file", side_effect=trusted_binding_read)
         self.mount_patch = patch.object(PAUSE.os, "statvfs", return_value=SimpleNamespace(f_flag=os.ST_RDONLY))
         self.read_patch.start()
@@ -177,7 +177,7 @@ class PauseFixture(unittest.IsolatedAsyncioTestCase):
     async def test_advanced_head_is_refused_even_when_original_checkpoint_exists(self):
         request, _ = await self.close_a_and_bind_b()
         helper = self.acquire(request)
-        with self.assertRaisesRegex(ValueError, "current head"):
+        with self.assertRaisesRegex(ValueError, '当前最新检查点'):
             await helper.check_resume(SnapshotReaderDouble(snapshot(), snapshot(checkpoint_id="later-checkpoint", head=True)), helper.execution_config())
 
     async def test_same_id_with_changed_live_content_is_refused(self):
@@ -195,7 +195,7 @@ class PauseFixture(unittest.IsolatedAsyncioTestCase):
                 graph = SnapshotReaderDouble(snapshot(), snapshot(head=True))
                 config = helper.execution_config()
                 config["configurable"].update(extra)
-                with self.assertRaisesRegex(ValueError, "no checkpoint_id"):
+                with self.assertRaisesRegex(ValueError, '不得指定 checkpoint_id'):
                     await helper.check_resume(graph, config)
                 self.assertEqual(graph.calls, [])
         self.assertEqual(helper.execution_config(), {"configurable": {"thread_id": "main", "checkpoint_ns": ""}, "recursion_limit": 64})
@@ -204,28 +204,28 @@ class PauseFixture(unittest.IsolatedAsyncioTestCase):
         request, _ = await self.close_a_and_bind_b()
         for prompt in ("original task", "continue", "", None):
             with self.subTest(prompt=prompt):
-                with self.assertRaisesRegex(ValueError, "omit prompt"):
+                with self.assertRaisesRegex(ValueError, '不得包含 prompt'):
                     PAUSE.validate_lifecycle({**request, "prompt": prompt})
         self.assertEqual(PAUSE.validate_lifecycle(request)["mode"], "resume")
 
     async def test_changed_sqlite_or_companion_is_refused_before_graph_access(self):
         request, _ = await self.close_a_and_bind_b()
         (self.root / "state" / "checkpoints.sqlite").write_bytes(b"modified state")
-        with self.assertRaisesRegex(ValueError, "state/workspace changed"):
+        with self.assertRaisesRegex(ValueError, '状态或工作区在恢复前发生变化'):
             self.acquire(request)
         self.assert_lock_available()
 
     async def test_unexpected_wal_is_not_silently_ignored(self):
         request, _ = await self.close_a_and_bind_b()
         (self.root / "state" / "checkpoints.sqlite-wal").write_bytes(b"unprotected WAL contents")
-        with self.assertRaisesRegex(ValueError, "state/workspace changed"):
+        with self.assertRaisesRegex(ValueError, '状态或工作区在恢复前发生变化'):
             self.acquire(request)
         self.assert_lock_available()
 
     async def test_changed_workspace_is_refused(self):
         request, _ = await self.close_a_and_bind_b()
         (self.root / "workspace" / "already-written.txt").write_text("overwritten")
-        with self.assertRaisesRegex(ValueError, "state/workspace changed"):
+        with self.assertRaisesRegex(ValueError, '状态或工作区在恢复前发生变化'):
             self.acquire(request)
         self.assert_lock_available()
 
@@ -235,13 +235,13 @@ class PauseFixture(unittest.IsolatedAsyncioTestCase):
         value = json.loads(path.read_bytes())
         value["checkpoint_id"] = "forged-checkpoint"
         path.write_bytes(canonical(value))
-        with self.assertRaisesRegex(ValueError, "protected recovery binding"):
+        with self.assertRaisesRegex(ValueError, '受保护的恢复绑定'):
             self.acquire(request)
         self.assert_lock_available()
 
     async def test_real_kernel_lock_rejects_a_second_executor_and_releases_on_close(self):
         first = self.acquire()
-        with self.assertRaisesRegex(ValueError, "Another executor"):
+        with self.assertRaisesRegex(ValueError, '另一个执行器'):
             self.acquire()
         first.close()
         self.assert_lock_available()
@@ -268,7 +268,7 @@ finally:
 
     async def test_initialization_failure_after_lock_releases_it(self):
         (self.root / "state" / "unexpected.sqlite").write_bytes(b"existing state")
-        with self.assertRaisesRegex(ValueError, "empty native state"):
+        with self.assertRaisesRegex(ValueError, '空原生状态'):
             self.acquire()
         self.assert_lock_available()
 
@@ -276,14 +276,14 @@ finally:
         request, _ = await self.close_a_and_bind_b()
         self.binding["budget"]["remaining_seconds"] = 300
         request["timeout_seconds"] = 300
-        with self.assertRaisesRegex(ValueError, "remaining chain budget"):
+        with self.assertRaisesRegex(ValueError, '执行链剩余预算'):
             self.acquire(request)
 
     async def test_budget_cannot_erase_previously_recorded_active_use(self):
         request, _ = await self.close_a_and_bind_b()
         self.binding["budget"] = {"active_limit_seconds": 300, "used_active_seconds": 0, "remaining_seconds": 300}
         request["timeout_seconds"] = 300
-        with self.assertRaisesRegex(ValueError, "omits the previous active"):
+        with self.assertRaisesRegex(ValueError, '未计入之前的活跃执行'):
             self.acquire(request)
         self.assert_lock_available()
 
@@ -295,7 +295,7 @@ finally:
 
     async def test_request_cannot_claim_more_than_trusted_remaining_budget(self):
         self.binding["budget"]["remaining_seconds"] = 200
-        with self.assertRaisesRegex(ValueError, "remaining chain budget"):
+        with self.assertRaisesRegex(ValueError, '执行链剩余预算'):
             self.acquire()
 
     async def test_failed_native_or_tool_close_never_publishes_an_index(self):
@@ -303,7 +303,7 @@ finally:
         await self.prepare(helper)
         for saver_closed, tools_closed in ((False, True), (True, False), (False, False)):
             with self.subTest(saver_closed=saver_closed, tools_closed=tools_closed):
-                with self.assertRaisesRegex(ValueError, "successful native/tool close"):
+                with self.assertRaisesRegex(ValueError, '原生组件和工具成功关闭'):
                     helper.publish(saver_closed=saver_closed, tools_closed=tools_closed)
                 self.assertFalse((self.root / "state" / PAUSE.INDEX).exists())
         self.assertEqual(list((self.root / "state").glob(".pause-index.json.tmp.*")), [])
@@ -323,18 +323,18 @@ finally:
 
         def fail_directory_fsync(descriptor):
             if stat.S_ISDIR(os.fstat(descriptor).st_mode):
-                raise OSError("synthetic directory fsync failure")
+                raise OSError("模拟目录 fsync 失败")
             return actual_fsync(descriptor)
 
         with patch.object(PAUSE.os, "fsync", side_effect=fail_directory_fsync):
-            with self.assertRaisesRegex(OSError, "directory fsync"):
+            with self.assertRaisesRegex(OSError, "目录 fsync"):
                 helper.publish(saver_closed=True, tools_closed=True)
         self.assertFalse((self.root / "state" / PAUSE.INDEX).exists())
         self.assertEqual(list((self.root / "state").glob(".pause-index.json.tmp.*")), [])
 
     async def test_inflight_native_task_blocks_safe_pause(self):
         helper = self.acquire()
-        with self.assertRaisesRegex(ValueError, "zero active observed operations"):
+        with self.assertRaisesRegex(ValueError, '仍有观测到的活跃操作'):
             await helper.prepare_pause(SnapshotReaderDouble(snapshot(), snapshot(head=True)),
                 helper.execution_config(), SimpleNamespace(tasks={"task-a": {"name": "model"}}), {"pause_boundary_observed": True})
         self.assertIsNone(helper.pending)
@@ -343,7 +343,7 @@ finally:
         helper = self.acquire()
         for invalid in (snapshot(pending=False), snapshot(head=True)._replace(interrupts=("needs-input",))):
             with self.subTest(invalid=invalid):
-                with self.assertRaisesRegex(ValueError, "unfinished clean drain boundary"):
+                with self.assertRaisesRegex(ValueError, '未完成且已干净排空的边界'):
                     await self.prepare(helper, head=invalid)
                 self.assertIsNone(helper.pending)
         self.assertFalse((self.root / "state" / PAUSE.INDEX).exists())
@@ -351,10 +351,10 @@ finally:
     async def test_inflight_or_unknown_http_result_blocks_safe_pause(self):
         helper = self.acquire()
         helper.observe_http({"phase": "start", "call_id": "write-1", "tool": "write"})
-        with self.assertRaisesRegex(ValueError, "zero active observed operations"):
+        with self.assertRaisesRegex(ValueError, '仍有观测到的活跃操作'):
             await self.prepare(helper)
         helper.observe_http({"phase": "error", "call_id": "write-1", "tool": "write"})
-        with self.assertRaisesRegex(ValueError, "zero active observed operations"):
+        with self.assertRaisesRegex(ValueError, '仍有观测到的活跃操作'):
             await self.prepare(helper)
         self.assertIsNone(helper.pending)
 
@@ -363,23 +363,23 @@ finally:
         tools = [SimpleNamespace(name="lab_read", description="Read a fixture file", args_schema={"type": "object",
             "properties": {"path": {"type": "integer"}}, "required": ["path"]})]
         with patch.dict(os.environ, {"MODEL_NAME": "frozen-model", "MODEL_API_BASE_URL": "http://model-proxy:8082/v1"}):
-            with self.assertRaisesRegex(ValueError, "differs from trusted binding"):
+            with self.assertRaisesRegex(ValueError, '与可信绑定不一致'):
                 helper.bind_runtime(tools, PAUSE.TOOLS_SYSTEM_PROMPT, PAUSE.BUILTIN_TOOL_EXCLUSIONS)
 
     async def test_scope_or_source_change_is_refused_before_lock_acquisition(self):
         self.binding["scope"]["user_id"] = "bob"
-        with self.assertRaisesRegex(ValueError, "scope/thread/namespace"):
+        with self.assertRaisesRegex(ValueError, '生命周期作用域、线程或命名空间不匹配'):
             self.acquire()
         self.assertFalse((self.root / "state" / PAUSE.LOCK).exists())
         self.binding["scope"] = deepcopy(self.scope)
         self.binding["source_export_sha256"] = "3" * 64
-        with self.assertRaisesRegex(ValueError, "source/adapter mismatch"):
+        with self.assertRaisesRegex(ValueError, '生命周期源码或适配器不匹配'):
             self.acquire()
         self.assertFalse((self.root / "state" / PAUSE.LOCK).exists())
 
     async def test_read_write_binding_mount_is_refused(self):
         with patch.object(PAUSE.os, "statvfs", return_value=SimpleNamespace(f_flag=0)):
-            with self.assertRaisesRegex(ValueError, "read-only mount"):
+            with self.assertRaisesRegex(ValueError, '只读挂载'):
                 self.acquire()
         self.assertFalse((self.root / "state" / PAUSE.LOCK).exists())
 

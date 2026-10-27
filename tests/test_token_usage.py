@@ -1,4 +1,4 @@
-"""Presence, identity and provenance calibrations; no SQL or remote services."""
+"""完整性、身份及来源校准，不调用 SQL 或远程服务。"""
 
 from copy import deepcopy
 import hashlib

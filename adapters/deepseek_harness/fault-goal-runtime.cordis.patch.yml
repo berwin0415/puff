@@ -1,4 +1,4 @@
-# I23-only fault Goal variant. Same official modules and persistence policy for A and B.
+# 仅供 I23 使用的故障 Goal 变体；A 和 B 使用相同官方模块与持久化策略。
 - id: sessions
   config:
     root: !!js process.env.HARNESS_GOAL_SESSION_ROOT

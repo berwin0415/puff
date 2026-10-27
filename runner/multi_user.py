@@ -1,9 +1,7 @@
-"""I24 Docker-only preparation, real product clients and independent evidence.
+"""I24 仅在 Docker 内准备，使用真实产品客户端并独立留证。
 
-This is a DA two-Worker experiment, not a scheduler or an Agent implementation.
-The host creates containers; this module never imports the candidate SDK, calls
-a model, supplies a recovery prompt or computes the Agent's tool choices.
-"""
+这是 DA 双 Worker 实验，不是调度器或 Agent 实现。宿主机创建容器；
+此模块不导入候选 SDK、不调用模型、不提供恢复提示，也不计算 Agent 的工具选择。"""
 from __future__ import annotations
 
 import argparse
@@ -181,7 +179,7 @@ def prepare(args, global_paths, tasks):
         p.create(paths.fixture / "tool-binding.json", {"fixture_url": "http://fixtures:8080",
             "fixture_token": token, "scope": scope, "workspace": "/workspace", "events_path": "/evidence/tool-events.jsonl"})
         public = prepare_tools_inputs(paths.workspace, scope)
-        # Public, distinct markers are requirements, not precomputed answers.
+        # 公开且不同的标记属于需求，不是预先计算的答案。
         private_text(paths.workspace / "task-marker.txt", task.task_id + ":" + scope["variant"])
         prompt = "本任务可信作用域为 " + json.dumps(scope, ensure_ascii=False) + "。\n" + public["prompt"]
         request = {"run_id": scope["variant"], "session_id": scope["session_id"], "prompt": prompt,
@@ -329,7 +327,7 @@ class ProductClient:
 
 
 def observed_files(task):
-    # These are actual snapshots. A naturally changed snapshot stays changed.
+    # 这些是真实快照。自然变化的快照按变化后的值保留。
     return {"scope": task.scope, "native_and_workspace": p.inventory(task.paths.state, task.paths.workspace),
         "tool_audit_sha256": p.sha(p.regular(task.paths.run / "tool-events.jsonl"))}
 
@@ -393,9 +391,9 @@ def exercise(args, global_paths, tasks):
                 response = own(task).request(task, "resume")
                 p.require(response["status"] == 202, "product_resume_rejected")
             for task in selected:
-                # Waiting for another owner's task may outlast this HTTP
-                # server's idle timeout. Reconnect with the same identity;
-                # never replay the already accepted resume POST.
+                # 等待另一所有者的任务可能超过此 HTTP
+                # 服务的空闲超时。以同一身份重新连接；
+                # 绝不重放已接收的 resume POST。
                 own(task).close()
                 wait_closed(own(task), task, deadline)
                 for operation in ("state", "events", "artifacts"):
@@ -434,9 +432,9 @@ def exercise(args, global_paths, tasks):
             trigger.update({"sent_at": p.now(), "signal": "SIGUSR2" if args.kind == "main" else "SIGUSR1",
                 "container_id": p.read(global_paths.run / "trusted" / (args.kind + "-worker-a.json"))[task.task_id]["id"],
                 "signal_sent_monotonic": time.monotonic()})
-            # The native activity window can outlast the backend's socket idle
-            # timeout. Open a fresh same-owner connection before the one and
-            # only control POST; an uncertain POST is never replayed.
+            # 原生活动窗口可能超过后端 socket 空闲超时。
+            # 在唯一一次控制 POST 前，新建同所有者连接；
+            # 状态不确定的 POST 绝不重放。
             own(task).close()
             response = own(task).request(task, "pause" if args.kind == "main" else "cancel")
             trigger["signal_acknowledged_monotonic"] = time.monotonic()
@@ -444,8 +442,8 @@ def exercise(args, global_paths, tasks):
             p.create(task.paths.run / "trusted/control-trigger.json", trigger)
             p.require(response["status"] == 202, "product_control_dispatch_failed")
         for task in selected:
-            # Polling the previous owner may have left this owner's accepted
-            # control socket idle. Reconnect only for the following reads.
+            # 轮询前一所有者可能使当前所有者已接受的控制连接空闲。
+            # 仅为后续读取重新连接。
             own(task).close()
             closed = wait_closed(own(task), task, deadline)
             starts = [row for _, _, row in p.jsonl(global_paths.run / ("backend-" + args.kind) / "control.jsonl")
@@ -456,14 +454,14 @@ def exercise(args, global_paths, tasks):
                 "controller_elapsed_seconds": time.monotonic() - starts[0]["controller_monotonic"],
                 "observation_clock": "Docker_VM_monotonic/1"})
         if args.kind == "main":
-            # B's drain may have outlasted A's socket idle timeout.
+            # B 的 drain 可能超过 A 的 socket 空闲超时。
             clients["a"].close()
             foreign_probe(global_paths, clients["a"], target, "resume", output / "foreign-resume.json")
-            # Close the actual client socket, observe server-side EOF, reconnect
-            # and authenticate again. No proxy/model connection is touched.
+            # 关闭真实客户端 socket，观测服务端 EOF，再重新连接
+            # 并鉴权。不触碰任何代理或模型连接。
             for task in selected:
-                # Start the dedicated disconnect proof with a live same-owner
-                # socket even if the previous owner's proof took a long time.
+                # 即使前一所有者的证明耗时较长，专用断连证明也须
+                # 从同所有者的活跃 socket 开始。
                 own(task).close()
                 first = own(task).request(task, "state")
                 own(task).close()
@@ -480,8 +478,8 @@ def exercise(args, global_paths, tasks):
                 p.require(second["status"] == 200 and second["connection_id"] != first["connection_id"], "product_reconnect_not_observed")
                 p.create(output / ("reconnect-" + task.letter + ".json"), {"first": first, "peer_eof": eof, "second": second})
                 if task.letter == "a":
-                    # Use this exact newly authenticated A socket before
-                    # waiting for B's independent disconnect/EOF proof.
+                    # 先使用这个刚重新鉴权的 A socket，
+                    # 再等待 B 独立的断连/EOF 证明。
                     foreign_probe(global_paths, clients["a"], target, "state", output / "foreign-reconnect-state.json")
         p.create(output / "finished.json", {"elapsed_seconds": time.monotonic() - started, "phase": args.phase})
     finally:
@@ -625,12 +623,11 @@ def validate_owner_reads(global_paths, task, *, phase="main-resume", attempt="wo
 
 
 def validate_effective_overlap(tasks, record):
-    """Recompute overlap from original native intervals and trusted tool results.
+    """根据原始原生区间和可信工具结果重新计算重叠。
 
-    Both candidates and trusted tools ran in the same Docker VM clock domain;
-    these timestamps are never compared with the macOS host clock. Collector
-    prefix observations separately prove that the selected starts were live.
-    """
+    候选框架和可信工具均运行在同一 Docker VM 时钟域；
+    这些时间戳绝不与 macOS 宿主机时钟比较。采集器的前缀观测
+    单独证明选定的启动时刻确实处于运行中。"""
     if tasks and all(task_candidate(task) == dsh.CANDIDATE for task in tasks):
         return multi_user_dsh.validate_overlap(tasks, record)
     native_intervals, finishes = {}, {}
@@ -687,12 +684,10 @@ def validate_effective_overlap(tasks, record):
 
 
 def same_container_observation(first, second):
-    """Compare complete observations, ignoring only Docker Mounts array order.
+    """比较完整观测，仅忽略 Docker Mounts 数组顺序。
 
-    Sorting canonical mount values preserves every field and repeated item.
-    Canonical bytes also keep JSON booleans distinct from numeric values.
-    The original observations are retained without mutation.
-    """
+    对规范挂载值排序会保留每个字段及重复项。
+    规范字节同时区分 JSON 布尔值与数值。原始观测不作修改。"""
     if not isinstance(first, dict) or not isinstance(second, dict):
         return False
     normalized = []
@@ -708,14 +703,14 @@ def same_container_observation(first, second):
 
 
 def same_transition_record_subset(captured, record):
-    """Recheck each captured field; only container mount order is immaterial."""
+    """重新检查每个采集字段；只有容器挂载顺序无关。"""
     return all(key in record and (same_container_observation(value, record[key])
         if key in {"before_stop", "after_stop"} else p.canonical(value) == p.canonical(record[key]))
         for key, value in captured.items())
 
 
 def validate_sampling_transition(item, running, registry, sample):
-    """Recheck original Docker terminal data; a host label is insufficient."""
+    """重新检查原始 Docker 终态数据；宿主机标签不足以证明。"""
     identity = item.get("container_id")
     selected = [row for row in running if row["id"] == identity]
     p.require(len(selected) == 1, "sampling_transition_not_in_original_running_inventory")
@@ -759,9 +754,9 @@ def validate_sampling_transition(item, running, registry, sample):
         p.require(item.get("absence_observed") is False and "absence_observation" not in item,
             "sampling_transition_absence_claim_invalid")
     if "removing_observation" in item or "removing_observed_monotonic" in item:
-        # A removing/Dead snapshot is evidence of the deletion race only.
-        # The independently recorded exited snapshot remains the sole healthy
-        # terminal source, and every other field must match exactly.
+        # removing/Dead 快照仅能证明删除竞争。
+        # 独立记录的 exited 快照仍是唯一健康终态来源，
+        # 其他所有字段必须精确匹配。
         removing = item.get("removing_observation")
         p.require(isinstance(removing, dict) and isinstance(removing.get("state"), dict)
             and removing["state"].get("Status") == "removing" and removing["state"].get("Dead") is True,
@@ -815,7 +810,7 @@ def validate_sampling_transition(item, running, registry, sample):
 
 
 def validate_inventory_absence(item, registry):
-    """A partial docker inspect is valid only for already registered removals."""
+    """只有已登记的删除才允许不完整的 docker inspect。"""
     p.require(item.get("kind") == "registered_removal_between_list_and_inspect"
         and item.get("native_child_health_claimed") is False and item.get("inspect_returncode") == 1,
         "inventory_absence_claim_invalid")
@@ -1137,7 +1132,7 @@ def cancel_native(task, trigger, tools, actual_ledger, *, seed, global_paths=Non
     p.require(not any(row.get("stream_mode") == "tasks" and isinstance(row.get("data"), dict)
         and "input" in row["data"] and "result" not in row["data"] and p.instant(row["time"]) > confirmed
         for _, _, row in p.jsonl(root / "raw-events.jsonl")), "native_task_started_after_cancel_confirmation")
-    # Read the actual SQLite head, not just the candidate's checkpoint label.
+    # 读取真实 SQLite 头检查点，不能只看候选框架的检查点标签。
     snapshot = p.read(root / "state-snapshot.json")
     checkpoint = snapshot.get("config", {}).get("configurable", {}).get("checkpoint_id")
     p.require(observation.get("checkpoint_source") == {"path": "state-snapshot.json",
@@ -1230,12 +1225,11 @@ def validate_baseline_control(global_paths, task):
 
 
 def validate_baseline_native_binding(task, pins, result):
-    """Use the real entrypoint artifact and protected original controls.
+    """使用真实入口产物和受保护的原始控制数据。
 
-    The pinned entrypoint writes provenance to entrypoint.json, not result.json.
-    Return hashes of those exact bytes so a scope label cannot replace the
-    candidate's actual factory/model/runtime and the bench-owned request chain.
-    """
+    固定入口将来源写入 entrypoint.json，而非 result.json。
+    返回这些原始字节的哈希，避免作用域标签替代候选框架实际的
+    factory/model/runtime 以及由 bench 持有的请求链。"""
     if task_candidate(task) == dsh.CANDIDATE:
         return multi_user_dsh.baseline_binding(task, pins, result)
     paths, scope = task.paths, task.scope
@@ -1351,8 +1345,8 @@ def grade_baseline(args, global_paths, tasks):
     verdict = {"schema": "harness-lab-multi-user-baseline/1", "candidate": candidate_for(args),
         "baseline_only": True, "i24_capability_verified": False, "passed": all(row["passed"] for row in checks),
         "checks": checks, "task": details, "executed_tasks": ["task-a"],
-        "limitations": ["Single A main task only; no concurrency, cross-user denial, cancel, pause, resume or reuse claim.",
-            "Inactive B/cancel materials are prepared without SDK/model execution so the original fixed backend can be reused."]}
+        "limitations": ["仅执行 A 的单个主任务；不声称并发、跨用户拒绝、取消、暂停、恢复或复用能力。",
+            "不执行 SDK 或模型，仅准备未启用的 B/取消材料，以便复用原固定后端。"]}
     p.create(global_paths.run / "baseline-verdict.json", verdict)
     print(json.dumps({"passed": verdict["passed"], "baseline_only": True, "i24_capability_verified": False,
         "verdict": str(global_paths.run / "baseline-verdict.json")}))
@@ -1433,9 +1427,9 @@ def grade(args, global_paths, tasks):
         "passed": all(row["passed"] for row in checks), "checks": checks, "tasks": results,
         "browser_isolation": "not_tested", "worker_reuse_supported": False,
         "resume_mechanism": "replacement_container_original_native_checkpoint",
-        "limitations": ["Candidate-specific original native evidence is required; DSH immediate cancellation may remain incomplete.",
-            "HTTP control acknowledgements are dispatch attempts; native evidence is checked separately.",
-            "Worker wrapper journal and child share one UID/container; it is corroborating application evidence, not an OS security boundary."]}
+        "limitations": ["必须提供候选框架专属的原始原生证据；DSH 即时取消证据可能仍不完整。",
+            "HTTP 控制接收确认只表示尝试分派；原生证据单独检查。",
+            "Worker 包装层日志与子进程共享同一 UID 和容器；它只能提供应用层佐证，不能作为操作系统安全边界。"]}
     p.create(global_paths.run / "scope-verdict.json", result)
     print(json.dumps({"passed": result["passed"], "verdict": str(global_paths.run / "scope-verdict.json")}))
     return 0 if result["passed"] else 1

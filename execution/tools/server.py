@@ -1,7 +1,7 @@
-"""One trusted user/session tool endpoint, with no Agent or retry loop.
+"""一个可信用户与会话的工具接口，不包含 Agent 或重试循环。
 
-The simulated product backend writes the binding file. Requests cannot choose
-another fixture token, workspace, scope, write mode or injected fault.
+绑定文件由模拟产品后端写入。请求不能选择其他业务凭证、
+工作区、作用域、写入模式或注入故障。
 """
 
 from __future__ import annotations
@@ -34,44 +34,44 @@ def _schema(properties, required=()):
 
 _STRING = {"type": "string"}
 TOOLS = [
-    {"name": "list_items", "description": "Query one page of this user's catalogue; follow next_page until complete.", "input_schema": _schema({"page": {"type": "integer", "minimum": 1}, "page_size": {"type": "integer", "minimum": 1, "maximum": 100}})},
-    {"name": "write", "description": "Commit an authorized business write. Use a stable operation_id; if the reply is lost query its receipt before retrying.", "input_schema": _schema({"operation_id": _STRING, "item_id": _STRING, "quantity": {"type": "integer", "minimum": 1}}, ("operation_id", "item_id", "quantity"))},
-    {"name": "receipt", "description": "Query actual writes for an operation belonging to this user/session.", "input_schema": _schema({"operation_id": _STRING}, ("operation_id",))},
-    {"name": "ledger", "description": "Read this user's actual business requests and writes.", "input_schema": _schema({})},
-    {"name": "read_file", "description": "Read a UTF-8 file within this trusted task workspace.", "input_schema": _schema({"path": _STRING}, ("path",))},
-    {"name": "write_file", "description": "Write a UTF-8 file within this trusted task workspace.", "input_schema": _schema({"path": _STRING, "content": _STRING}, ("path", "content"))},
-    {"name": "calculate_totals", "description": "Sum quantities and prices using integer cents.", "input_schema": _schema({"items": {"type": "array", "items": _schema({"unit_price_cents": {"type": "integer", "minimum": 0}, "quantity": {"type": "integer", "minimum": 0}}, ("unit_price_cents", "quantity"))}}, ("items",))},
-    {"name": "sensitive_export", "description": "Request the simulated sensitive operation; execution policy always denies it directly without approval.", "input_schema": _schema({"operation_id": _STRING}, ("operation_id",))},
+    {"name": "list_items", "description": "查询当前用户的一页商品；沿 next_page 继续查询，直到全部读完。", "input_schema": _schema({"page": {"type": "integer", "minimum": 1}, "page_size": {"type": "integer", "minimum": 1, "maximum": 100}})},
+    {"name": "write", "description": "提交已授权的业务写入。使用固定的 operation_id；如回执丢失，重试前先查询实际回执。", "input_schema": _schema({"operation_id": _STRING, "item_id": _STRING, "quantity": {"type": "integer", "minimum": 1}}, ("operation_id", "item_id", "quantity"))},
+    {"name": "receipt", "description": "查询当前用户和会话中某项操作的实际写入。", "input_schema": _schema({"operation_id": _STRING}, ("operation_id",))},
+    {"name": "ledger", "description": "读取当前用户的实际业务请求和写入记录。", "input_schema": _schema({})},
+    {"name": "read_file", "description": "读取当前可信任务工作区内的 UTF-8 文件。", "input_schema": _schema({"path": _STRING}, ("path",))},
+    {"name": "write_file", "description": "写入当前可信任务工作区内的 UTF-8 文件。", "input_schema": _schema({"path": _STRING, "content": _STRING}, ("path", "content"))},
+    {"name": "calculate_totals", "description": "以整数分为金额单位，根据数量和单价计算总额。", "input_schema": _schema({"items": {"type": "array", "items": _schema({"unit_price_cents": {"type": "integer", "minimum": 0}, "quantity": {"type": "integer", "minimum": 0}}, ("unit_price_cents", "quantity"))}}, ("items",))},
+    {"name": "sensitive_export", "description": "请求执行模拟敏感操作；执行规则始终直接拒绝，不进入审批。", "input_schema": _schema({"operation_id": _STRING}, ("operation_id",))},
 ]
 _BY_NAME = {tool["name"]: tool for tool in TOOLS}
 
 
 def _arguments(name, value):
     if not isinstance(name, str) or name not in _BY_NAME:
-        raise ToolError("Unknown tool")
+        raise ToolError("未知工具")
     schema = _BY_NAME[name]["input_schema"]
     if not isinstance(value, dict) or set(value) - schema["properties"].keys() or set(schema["required"]) - value.keys():
-        raise ToolError("Invalid tool arguments; scope and credentials cannot be replaced")
+        raise ToolError("工具参数无效；不能替换作用域或凭证")
     for key, argument in value.items():
         definition = schema["properties"][key]
         kind = definition["type"]
         if kind == "string" and not isinstance(argument, str):
-            raise ToolError(f"{key} must be a string")
+            raise ToolError(f"{key}必须为字符串")
         if kind == "integer" and (type(argument) is not int or argument < definition.get("minimum", 0) or argument > definition.get("maximum", 2**31 - 1)):
-            raise ToolError(f"Invalid {key}")
+            raise ToolError(f"{key} 无效")
         if kind == "array" and not isinstance(argument, list):
-            raise ToolError(f"{key} must be an array")
+            raise ToolError(f"{key}必须为数组")
     return value
 
 
 def _trusted_file(path: Path, *, may_create: bool = False):
     if not path.is_absolute() or ".." in path.parts or any(component.lower() == "old" for component in path.parts):
-        raise ToolError("Trusted binding and event paths must be absolute and outside archives")
+        raise ToolError("可信绑定和事件路径必须使用归档之外的绝对路径")
     current = Path(path.anchor)
     for component in path.parts[1:]:
         current /= component
         if current.is_symlink():
-            raise ToolError("Trusted binding and event paths must not contain symbolic links")
+            raise ToolError("可信绑定和事件路径不能包含软链接")
     if may_create:
         path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -79,20 +79,20 @@ def _trusted_file(path: Path, *, may_create: bool = False):
 class BoundTools:
     def __init__(self, binding: dict, *, strict_outcome: bool = False):
         if not isinstance(binding, dict) or set(binding) != {"fixture_url", "fixture_token", "workspace", "scope", "events_path"}:
-            raise ToolError("Invalid trusted tool binding")
+            raise ToolError("可信工具绑定无效")
         scope = binding["scope"]
         if not isinstance(scope, dict) or set(scope) != _SCOPE_FIELDS or any(not isinstance(value, str) or not _ID.fullmatch(value) or value.lower() == "old" for value in scope.values()):
-            raise ToolError("Invalid trusted scope")
+            raise ToolError("可信作用域无效")
         self.scope = scope.copy()
         self.client = FixtureClient(binding["fixture_url"], binding["fixture_token"], strict_outcome=strict_outcome)
-        # Fail before listening if the trusted setup paired the wrong token/scope.
+        # 可信配置中的凭证与作用域不匹配时，在监听端口前失败。
         if self.client.list_items(page=1, page_size=1).get("scope") != self.scope:
-            raise ToolError("Fixture token does not belong to the configured trusted scope")
+            raise ToolError("模拟业务凭证不属于已配置的可信作用域")
         self.workspace = WorkspaceFiles(binding["workspace"])
         self.events_path = Path(binding["events_path"])
         _trusted_file(self.events_path, may_create=True)
         if self.events_path.is_relative_to(self.workspace.root):
-            raise ToolError("Tool audit evidence must be outside the Agent-writable workspace")
+            raise ToolError("工具审计证据必须位于 Agent 可写工作区之外")
         self.token_digest = hashlib.sha256(binding["fixture_token"].encode()).digest()
         self.event_lock = threading.Lock()
 
@@ -103,7 +103,7 @@ class BoundTools:
         return hmac.compare_digest(digest, self.token_digest)
 
     def event(self, event: dict):
-        # Never record the Authorization header or the trusted binding contents.
+        # 不记录 Authorization 请求头或可信绑定内容。
         record = {"time": datetime.now(timezone.utc).isoformat(), "scope": self.scope, **event}
         encoded = (json.dumps(record, separators=(",", ":")) + "\n").encode()
         with self.event_lock:
@@ -130,7 +130,7 @@ class BoundTools:
             return self.workspace.write_text(arguments["path"], arguments["content"])
         if name == "calculate_totals":
             return calculate_totals(arguments["items"])
-        raise ToolError("Unknown tool")
+        raise ToolError("未知工具")
 
 
 class ToolsHandler(BaseHTTPRequestHandler):
@@ -150,16 +150,16 @@ class ToolsHandler(BaseHTTPRequestHandler):
 
     def _authorize(self):
         if not self.server.tools.authenticated(self.headers.get("Authorization", "")):
-            self._reply(403, {"error": "Trusted scope token required"})
+            self._reply(403, {"error": "必须提供可信作用域凭证"})
             return False
         return True
 
     def _body(self):
         if self.headers.get("Transfer-Encoding"):
-            raise ToolError("Transfer-Encoding is not supported")
+            raise ToolError("不支持 Transfer-Encoding")
         length = int(self.headers.get("Content-Length", "0"))
         if not 0 < length <= 256 * 1024:
-            raise ToolError("Expected at most 256 KiB JSON input")
+            raise ToolError("JSON 输入不能超过256 KiB")
         return json.loads(self.rfile.read(length))
 
     def _finish_dispatch(self, call_id, *, known, status):
@@ -169,22 +169,22 @@ class ToolsHandler(BaseHTTPRequestHandler):
     def _experiment(self, path, *, post=False):
         gate = self.server.prewrite_gate
         if gate is None:
-            self._reply(404, {"error": "Unknown endpoint"})
+            self._reply(404, {"error": "未知接口"})
             return
         try:
             if post and path == "/experiment/prewrite":
                 if not self._authorize():
                     return
                 body = self._body()
-                # Reuse ordinary argument checks before recording the window.
-                # This endpoint never invokes BoundTools.call or FixtureClient.
+                # 记录故障窗口前，复用普通参数检查。
+                # 此接口不调用 BoundTools.call 或 FixtureClient。
                 if not isinstance(body, dict) or body.get("tool") != "write":
-                    raise GateError(400, "Prewrite report requires an ordinary write")
+                    raise GateError(400, "写入前报告必须对应普通写入")
                 _arguments("write", body.get("arguments"))
                 result = gate.report(self.headers.get(TOKEN_HEADER, ""), body)
             else:
                 if not gate.authenticated_admin(self.headers.get("Authorization", "")):
-                    self._reply(403, {"error": "Private experiment admin credential required"})
+                    self._reply(403, {"error": "必须提供实验私有管理员凭证"})
                     return
                 if not post and path == "/experiment/admin/prewrite":
                     result = gate.snapshot()
@@ -193,16 +193,16 @@ class ToolsHandler(BaseHTTPRequestHandler):
                 elif post and path == "/experiment/admin/prewrite/abandon":
                     result = gate.abandon(self._body())
                 else:
-                    self._reply(404, {"error": "Unknown endpoint"})
+                    self._reply(404, {"error": "未知接口"})
                     return
             self._reply(200, result)
         except GateError as error:
             self._reply(error.status, {"error": str(error)})
         except (ToolError, ValueError, UnicodeDecodeError):
-            self._reply(400, {"error": "Invalid experiment request"})
+            self._reply(400, {"error": "实验请求无效"})
         except (OSError, sqlite3.Error):
-            # No unavailable or uncertain gate operation admits an actual call.
-            self._reply(503, {"error": "Experiment control unavailable"})
+            # 栅栏不可用或结果未知时，不允许实际调用。
+            self._reply(503, {"error": "实验控制不可用"})
 
     def do_GET(self):
         path = urlsplit(self.path).path
@@ -214,7 +214,7 @@ class ToolsHandler(BaseHTTPRequestHandler):
             if path == "/tools":
                 self._reply(200, {"tools": TOOLS})
             else:
-                self._reply(404, {"error": "Unknown endpoint"})
+                self._reply(404, {"error": "未知接口"})
 
     def do_POST(self):
         path = urlsplit(self.path).path
@@ -224,7 +224,7 @@ class ToolsHandler(BaseHTTPRequestHandler):
         if not self._authorize():
             return
         if path != "/call":
-            self._reply(404, {"error": "Unknown endpoint"})
+            self._reply(404, {"error": "未知接口"})
             return
         call_id = uuid4().hex
         name = "invalid"
@@ -235,7 +235,7 @@ class ToolsHandler(BaseHTTPRequestHandler):
         try:
             body = self._body()
             if not isinstance(body, dict) or set(body) != {"name", "arguments"}:
-                raise ToolError("Request requires only name and arguments")
+                raise ToolError("请求必须且只能包含 name 和 arguments")
             name = body["name"]
             arguments = _arguments(name, body["arguments"])
             if self.server.prewrite_gate is not None:
@@ -261,39 +261,39 @@ class ToolsHandler(BaseHTTPRequestHandler):
             self._finish_dispatch(call_id, known=True, status=exc.status_code)
             self._reply(exc.status_code, payload)
         except FixtureTransportError:
-            payload = {"error": "Fixture response unavailable; query receipt before retrying", "side_effect_state": "unknown"}
+            payload = {"error": "模拟业务响应不可用；重试前先查询回执", "side_effect_state": "unknown"}
             self.server.tools.event({"call_id": call_id, "phase": "finish", "tool": name, "status": 502, **payload, **audit})
             self._finish_dispatch(call_id, known=False, status=502)
             self._reply(502, payload)
         except GateError as exc:
-            # Rejection happens before trusted tool start and before business I/O.
+            # 在可信工具开始与业务输入输出之前拒绝请求。
             self.server.tools.event({"call_id": call_id, "phase": "rejected", "tool": name,
                 "status": exc.status, "error": str(exc), "prewrite": prewrite,
                 "rejection_layer": "experiment_prewrite", "business_call_started": False})
             self._reply(exc.status, {"error": str(exc), "side_effect_state": "not_dispatched_by_this_request"})
         except (ToolError, ValueError, UnicodeDecodeError) as exc:
-            # Exception classes do not establish where failure occurred. Once
-            # admitted, a tool or audit serializer can raise after business I/O.
-            # Keep that dispatch unsettled; never admit B from a guessed 400.
+            # 异常类型不能证明失败位置。调用获准后，
+            # 工具或审计序列化器可能在业务输入输出之后抛错。
+            # 该调用继续保持未确认；不能凭推测的400状态允许 B 执行。
             unknown = dispatch_started
             status = 502 if unknown else 400
-            payload = ({"error": "Tool outcome could not be confirmed", "side_effect_state": "unknown"}
-                if unknown else {"error": str(exc) if isinstance(exc, ToolError) else "Invalid JSON request"})
+            payload = ({"error": "无法确认工具执行结果", "side_effect_state": "unknown"}
+                if unknown else {"error": str(exc) if isinstance(exc, ToolError) else "JSON 请求无效"})
             self.server.tools.event({"call_id": call_id, "phase": "finish" if started else "rejected", "tool": name if isinstance(name, str) and name in _BY_NAME else "invalid", "status": status, **payload, **audit})
             self._finish_dispatch(call_id, known=not unknown, status=status)
             self._reply(status, payload)
         except (OSError, sqlite3.Error):
-            # If audit persistence fails, do not make another tool request.
-            self._reply(503, {"error": "Tool storage unavailable", "side_effect_state": "unknown"})
+            # 审计持久化失败后，不再发起其他工具请求。
+            self._reply(503, {"error": "工具存储不可用", "side_effect_state": "unknown"})
         finally:
             if dispatch_started:
                 try:
-                    # Only still-admitted calls transition to unknown. A known
-                    # terminal is never overwritten by a disconnected client.
+                    # 只有仍处于 admitted 的调用才能转为 unknown；
+                    # 客户端断开不能覆盖已知终态。
                     self._finish_dispatch(call_id, known=False, status=None)
                 except (OSError, sqlite3.Error):
-                    # Its durable admitted row remains unsettled. Bench must
-                    # refuse B instead of inferring quiescence from A's death.
+                    # 持久化的 admitted 记录仍未确认，验收必须拒绝 B，
+                    # 不能从 A 退出推断业务已经静默。
                     pass
 
 
@@ -305,7 +305,7 @@ class ToolsHTTPServer(ThreadingHTTPServer):
         self.prewrite_gate = PrewriteGate(prewrite_binding, self.tools.scope, self.tools.workspace.root,
             forbidden_credential_sha256={self.tools.token_digest.hex()}) if prewrite_binding is not None else None
         if self.prewrite_gate and self.prewrite_gate.admin_digest == self.tools.token_digest.hex():
-            raise ValueError("Prewrite admin credential must differ from the candidate scope credential")
+            raise ValueError("写入前管理员凭证不能与候选作用域凭证相同")
         super().__init__(address, ToolsHandler)
 
     def server_close(self):
@@ -326,7 +326,7 @@ def main():
     try:
         binding = json.loads(binding_path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
-        raise SystemExit("Cannot load trusted tool binding file") from exc
+        raise SystemExit("无法加载可信工具绑定文件") from exc
     prewrite_binding = None
     if arguments.prewrite_binding_file is not None:
         prewrite_path = arguments.prewrite_binding_file.absolute()

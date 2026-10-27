@@ -1,1 +1,1 @@
-"""Deterministic local business services for the Docker experiments."""
+"""Docker 实验使用的可重复本地业务服务。"""

@@ -1,4 +1,4 @@
-"""Stdlib-only guards for the frozen DSH Goal binding; no runtime or repair."""
+"""仅用标准库校验冻结的 DSH Goal 绑定，不运行候选或修复状态。"""
 from __future__ import annotations
 
 import json
@@ -35,7 +35,7 @@ def digest(value):
 
 
 def inventory(state, workspace):
-    """Match Goal stateInventory, including empty directories and every file."""
+    """匹配 Goal 的 stateInventory，包括空目录和每个文件。"""
     files, directories, total = [], [], 0
     def walk(label, root, relative=""):
         nonlocal total
@@ -67,7 +67,7 @@ def bound_json(root, relative, expected):
 
 
 def expanded_events(events):
-    """Mirror the frozen JSONL provenance ranges before hashing live events."""
+    """先核对冻结的 JSONL 来源范围，再计算实时事件哈希。"""
     result = []
     for event in events:
         if "sourceEventSeqs" not in event:
@@ -91,7 +91,7 @@ def expanded_events(events):
 
 
 def verify_binding(task, request, binding, *, config_dir, environment, verify_files=True):
-    """Validate the trusted request; the native entrypoint repeats its guards."""
+    """校验可信请求；原生入口会再次执行这些检查。"""
     need(isinstance(request, dict) and isinstance(binding, dict), "binding_objects_required")
     mode, attempt = binding.get("mode"), binding.get("attempt_id")
     need((mode, attempt) in {("new", "worker-a"), ("resume", "worker-b")}, "mode_attempt_mismatch")
@@ -154,11 +154,11 @@ def verify_binding(task, request, binding, *, config_dir, environment, verify_fi
 
 
 def verify_resume_materials(task, request, binding):
-    """Recheck protected closed bytes, never infer a pause from an HTTP ACK."""
+    """重新核对受保护的已关闭材料，不能从 HTTP 确认推断已暂停。"""
     spec = task.attempts["worker-b"]
     need(binding.get("mode") == "resume" and binding.get("attempt_id") == "worker-b", "replacement_binding_required")
-    # Backend does not mount /budget/run.token. Token hashes and complete files
-    # are checked here; the dedicated Worker also checks the actual local token.
+    # 后端不挂载 /budget/run.token；这里检查凭证哈希和完整文件，
+    # 专用 Worker 还会核对实际本地凭证。
     verify_binding(task, request, binding, config_dir=spec.config_dir, environment=spec.environment, verify_files=False)
     resume = binding.get("resume", {})
     need(resume.get("pause_index_file") == "/config/lifecycle-pause.json", "pause_index_route_changed")

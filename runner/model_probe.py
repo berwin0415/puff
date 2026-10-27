@@ -1,8 +1,7 @@
-"""Container-only mock model upstream and independent candidate budget checks.
+"""仅在容器内运行的模拟模型上游，以及独立候选框架预算检查。
 
-The stub always returns 503. It records only a sequence, time and a fixed
-endpoint label; request bodies, headers and credentials are never retained.
-"""
+桩服务始终返回 503，只记录序号、时间和固定端点标签；
+不保留请求正文、请求头或凭证。"""
 from __future__ import annotations
 
 import argparse
@@ -28,7 +27,7 @@ class ProbeLedger:
         return sqlite3.connect(self.database, timeout=30)
 
     def record(self, endpoint: str):
-        # Never persist an arbitrary URL: it could contain a credential.
+        # 不持久化任意 URL，它可能包含凭证。
         label = endpoint if endpoint in ENDPOINTS else "unsupported"
         with self.connect() as db:
             db.execute("INSERT INTO requests(received_at,endpoint,status) VALUES(?,?,503)",
@@ -63,8 +62,8 @@ def create_server(database: Path, host="0.0.0.0", port=8090):
 
         def do_POST(self):
             ledger.record(self.path)
-            # Discard bounded request bytes so the real proxy completes its
-            # upload. Do not parse, log or retain any part of the body.
+            # 丢弃有大小限制的请求字节，让真实代理完成上传。
+            # 不解析、记录或保留正文的任何部分。
             try:
                 length = int(self.headers.get("Content-Length", "-1"))
             except ValueError:
@@ -80,7 +79,7 @@ def create_server(database: Path, host="0.0.0.0", port=8090):
                 except (OSError, TimeoutError):
                     pass
             self.reply(503, {"error": {"type": "probe_unavailable", "code": "probe_unavailable",
-                                       "message": "Synthetic upstream unavailable"}})
+                                       "message": "合成上游不可用"}})
 
     server = ThreadingHTTPServer((host, port), Handler)
     server.daemon_threads = True
@@ -105,7 +104,7 @@ def prepare(run_root: Path, state_root: Path):
     (run_root / "model-stub").mkdir(exist_ok=False)
     value = json.loads((run_root / "input.json").read_text())
     value.update({"model_call_cap": 2, "model_name": "probe-model", "all_model_traffic_mocked": True,
-                  "purpose": "real candidate internal retries and persistent budget enforcement"})
+                  "purpose": "候选框架真实内部重试及持久化预算约束"})
     save(run_root / "input.json", value)
 
 
@@ -114,23 +113,23 @@ def snapshot(budget: Path, upstream: Path, candidate_dir: Path):
     raw_file = candidate_dir / "raw-events.jsonl"
     raw = raw_file.read_text() if raw_file.exists() else ""
     text = json.dumps(result) + raw
-    # Pinned DSH llm-retry/src/index.ts appends type 'llm/retry'; SDK
-    # server.ts forwards it as method 'session.event', params.event.
+    # 固定 DSH llm-retry/src/index.ts 追加类型 llm/retry；SDK
+    # server.ts 以 session.event 方法和 params.event 转发。
     notifications = [json.loads(line) for line in raw.splitlines() if line.strip()]
     retry_count = sum(notification.get("method") == "session.event"
                       and notification.get("params", {}).get("event", {}).get("type") == "llm/retry"
                       for notification in notifications)
-    # These markers are emitted by the limiter, not the synthetic upstream.
-    limiter_seen = any(marker in text for marker in ("call_limit_exceeded", "Model request count limit reached"))
+    # 这些标记由限流器发出，不来自合成上游。
+    limiter_seen = any(marker in text for marker in ("call_limit_exceeded", "模型请求次数已达上限"))
     return {
         "budget": read_rows(budget, "SELECT cap FROM budget WHERE id=1"),
         "calls": read_rows(budget, "SELECT id,started_at,path,outcome,upstream_status FROM calls ORDER BY id"),
         "upstream": read_rows(upstream, "SELECT id,received_at,endpoint,status FROM requests ORDER BY id"),
         "candidate_status": result.get("status"), "candidate_stop_reason": result.get("stop_reason"),
         "candidate_observed_limiter": limiter_seen,
-        # The fixed Codex CLI drops non-success response bodies. Keep this
-        # weaker native observation separate; verification must also prove
-        # the isolated synthetic upstream could only have returned 503.
+        # 固定 Codex CLI 会丢弃非成功响应正文。单独保留这项
+        # 较弱的原生观测；验证还必须证明
+        # 隔离的合成上游只可能返回 503。
         "candidate_observed_rate_limit_status": any(
             row.get("type") == "error" and row.get("message") == "exceeded retry limit, last status: 429 Too Many Requests"
             for row in notifications),
@@ -180,7 +179,7 @@ def verify(run_root: Path):
     }
     result = {"passed": all(checks.values()), "checks": checks,
               "candidate": manifest.get("candidate"), "real_model_called": False,
-              "scope": "Candidate internal retry and persistent proxy request cap; no pause/resume conclusion"}
+              "scope": "候选框架内部重试及持久化代理请求上限；不对暂停/恢复作结论"}
     save(run_root / "budget-probe-verdict.json", result)
     print(json.dumps(result))
     return 0 if result["passed"] else 1

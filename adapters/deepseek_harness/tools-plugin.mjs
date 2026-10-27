@@ -1,4 +1,4 @@
-/** Project the trusted HTTP tools into the upstream DSH tool registry. */
+/** 将可信 HTTP 工具投影到上游 DSH 工具注册表。 */
 import { readFile } from 'node:fs/promises'
 
 export const name = 'harness-lab-http-tools'
@@ -8,28 +8,28 @@ export async function mountHttpTools(ctx, options = {}) {
   const businessExtension = options?.businessExtension
   const endpoint = new URL(process.env.HARNESS_TOOLS_URL)
   if (endpoint.protocol !== 'http:' || endpoint.hostname !== 'tools' || endpoint.port !== '8081' || endpoint.pathname !== '/' || endpoint.search || endpoint.username || endpoint.password) {
-    throw new Error('Expected the experiment tools service endpoint')
+    throw new Error('必须使用实验工具服务接口')
   }
   const token = (await readFile(process.env.HARNESS_TOOL_TOKEN_FILE, 'utf8')).trim()
-  if (!token || /\s/u.test(token)) throw new Error('Invalid trusted tools token file')
+  if (!token || /\s/u.test(token)) throw new Error('可信工具令牌文件无效')
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
   const response = await fetch(new URL('/tools', endpoint), { headers, signal: AbortSignal.timeout(10_000) })
-  if (!response.ok) throw new Error(`Cannot list trusted HTTP tools (${response.status})`)
+  if (!response.ok) throw new Error(`无法列出可信 HTTP 工具（${response.status}）`)
   const { tools } = await response.json()
-  if (!Array.isArray(tools) || tools.length === 0) throw new Error('Empty trusted tool definitions')
+  if (!Array.isArray(tools) || tools.length === 0) throw new Error('可信工具定义为空')
   if (businessExtension) {
     const expected = ['list_items', 'write', 'receipt', 'ledger', 'read_file', 'write_file', 'calculate_totals', 'sensitive_export']
-    if (tools.length !== expected.length || new Set(tools.map(tool => tool?.name)).size !== expected.length || expected.some(name => !tools.some(tool => tool?.name === name))) throw new Error('Extension requires the eight original trusted tools')
+    if (tools.length !== expected.length || new Set(tools.map(tool => tool?.name)).size !== expected.length || expected.some(name => !tools.some(tool => tool?.name === name))) throw new Error('扩展必须使用原始的八个可信工具')
   }
   const definitions = tools.map(tool => ({ ...tool, canonical_name: tool.name }))
   if (businessExtension) {
     const receipt = tools.find(tool => tool.name === 'receipt')
     definitions.push({ name: 'query_order_status', canonical_name: 'receipt',
-      description: 'Query actual receipts and write_count for one operation_id in the current scope. Read-only: no writes, retries, or remaining task steps.',
+      description: '查询当前作用域中某个 operation_id 的实际回执及 write_count。只读，不写入、重试或执行剩余任务步骤。',
       input_schema: structuredClone(receipt.input_schema) })
   }
   for (const tool of definitions) {
-    if (!tool || typeof tool.name !== 'string' || typeof tool.description !== 'string' || typeof tool.input_schema !== 'object') throw new Error('Invalid trusted tool definition')
+    if (!tool || typeof tool.name !== 'string' || typeof tool.description !== 'string' || typeof tool.input_schema !== 'object') throw new Error('可信工具定义无效')
     const carriesBusinessState = !!businessExtension && ['write', 'receipt'].includes(tool.canonical_name)
     ctx.tools.register({
       name: tool.name,
@@ -53,8 +53,8 @@ export async function mountHttpTools(ctx, options = {}) {
         let result
         let payload
         try {
-          // The optional alias makes exactly this one original receipt call.
-          // No application retry, automatic query, or substitute task action.
+          // 可选别名仅执行这一次原始回执调用。
+          // 应用层不重试、不自动查询，也不替代 Agent 执行任务操作。
           result = await fetch(new URL('/call', endpoint), {
             method: 'POST', headers,
             body: JSON.stringify({ name: tool.canonical_name, arguments: arguments_ }),
@@ -81,6 +81,6 @@ export async function mountHttpTools(ctx, options = {}) {
   }
 }
 
-// I08's SDK profile still mounts the same plugin in its original host layer.
-// I17 invokes this function through the unpublished Agent's scoped context.
+// I08 的 SDK profile 仍在原始宿主层挂载同一插件。
+// I17 通过尚未发布 Agent 的作用域上下文调用此函数。
 export async function apply(ctx) { await mountHttpTools(ctx) }

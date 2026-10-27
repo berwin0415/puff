@@ -2,5 +2,5 @@
   "generator_version": 1,
   "validation_seeds": [101, 202, 303],
   "final_seeds": [101, 202, 303, 404, 505],
-  "description": "Catalogue varies by seed and trusted user/session identity. No expected task answer is included."
+  "description": "商品目录随种子及可信用户、会话身份变化，不包含任务预期答案。"
 }

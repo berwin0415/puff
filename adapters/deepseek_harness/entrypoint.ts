@@ -1,4 +1,4 @@
-/** Thin container client of the official DSH SDK; it never chooses task steps. */
+/** 官方 DSH SDK 的轻量容器客户端，不选择任务步骤。 */
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
 import { verifySource } from './verify-source.mjs'
@@ -21,32 +21,32 @@ export type RunRequest = {
 }
 
 function trustedPath(value: unknown, directory: boolean): string {
-  if (typeof value !== 'string' || !isAbsolute(value) || value.split('/').some(part => part === '..' || part.toLowerCase() === 'old')) throw new Error('Invalid trusted run path')
+  if (typeof value !== 'string' || !isAbsolute(value) || value.split('/').some(part => part === '..' || part.toLowerCase() === 'old')) throw new Error('可信运行路径无效')
   const absolute = resolve(value)
   let current = '/'
   for (const part of absolute.split('/').filter(Boolean)) {
     current = resolve(current, part)
-    if (existsSync(current) && lstatSync(current).isSymbolicLink()) throw new Error('Trusted run paths must not follow symbolic links')
+    if (existsSync(current) && lstatSync(current).isSymbolicLink()) throw new Error('可信运行路径不得跟随符号链接')
   }
   if (directory) mkdirSync(absolute, { recursive: true })
-  if (realpathSync(absolute) !== absolute) throw new Error('Trusted run path changed during resolution')
+  if (realpathSync(absolute) !== absolute) throw new Error('可信运行路径在解析期间发生变化')
   return absolute
 }
 
 function requestFromFile(): RunRequest {
-  if (process.argv.length !== 4 || process.argv[2] !== '--request') throw new Error('Usage: entrypoint --request /config/request.json')
+  if (process.argv.length !== 4 || process.argv[2] !== '--request') throw new Error('用法：entrypoint --request /config/request.json')
   const value = JSON.parse(readFileSync(trustedPath(process.argv[3], false), 'utf8'))
   const keys = ['run_id', 'session_id', 'prompt', 'workspace', 'state_dir', 'output_dir', 'tools_url', 'tool_token_file', 'max_output_tokens', 'timeout_seconds', 'max_retries']
-  if (!value || typeof value !== 'object' || Array.isArray(value) || keys.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !keys.includes(key) && key !== 'candidate_options')) throw new Error('Invalid trusted run request fields')
+  if (!value || typeof value !== 'object' || Array.isArray(value) || keys.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !keys.includes(key) && key !== 'candidate_options')) throw new Error('可信运行请求字段无效')
   for (const name of ['run_id', 'session_id']) {
-    if (typeof value[name] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(value[name]) || value[name].toLowerCase() === 'old') throw new Error('Invalid run/session identifier')
+    if (typeof value[name] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(value[name]) || value[name].toLowerCase() === 'old') throw new Error('运行或会话标识无效')
   }
-  if (typeof value.prompt !== 'string' || value.prompt.length === 0 || value.prompt.length > 65536) throw new Error('Expected a bounded task prompt')
-  if (!Number.isSafeInteger(value.max_output_tokens) || value.max_output_tokens < 1 || value.max_output_tokens > 16384 || !Number.isSafeInteger(value.timeout_seconds) || value.timeout_seconds < 1 || value.timeout_seconds > 3600 || !Number.isSafeInteger(value.max_retries) || value.max_retries < 0 || value.max_retries > 2) throw new Error('Invalid run budget')
+  if (typeof value.prompt !== 'string' || value.prompt.length === 0 || value.prompt.length > 65536) throw new Error('必须提供长度受限的任务提示词')
+  if (!Number.isSafeInteger(value.max_output_tokens) || value.max_output_tokens < 1 || value.max_output_tokens > 16384 || !Number.isSafeInteger(value.timeout_seconds) || value.timeout_seconds < 1 || value.timeout_seconds > 3600 || !Number.isSafeInteger(value.max_retries) || value.max_retries < 0 || value.max_retries > 2) throw new Error('运行预算无效')
   for (const name of ['workspace', 'state_dir', 'output_dir']) value[name] = trustedPath(value[name], true)
   value.tool_token_file = trustedPath(value.tool_token_file, false)
-  if (value.workspace === value.state_dir || value.workspace === value.output_dir || value.state_dir === value.output_dir) throw new Error('State, workspace and evidence must be separate directories')
-  if (value.tools_url !== 'http://tools:8081') throw new Error('Expected the scoped experiment tools service')
+  if (value.workspace === value.state_dir || value.workspace === value.output_dir || value.state_dir === value.output_dir) throw new Error('状态、工作区和证据必须使用相互独立的目录')
+  if (value.tools_url !== 'http://tools:8081') throw new Error('必须使用限定作用域的实验工具服务')
   if (Object.hasOwn(value, 'candidate_options')) value.candidate_options = validateDetailedOptions(value.candidate_options)
   return value as RunRequest
 }
@@ -60,9 +60,9 @@ function loadModelRunToken(): void {
   if (process.env.MODEL_API_KEY) return
   const filename = trustedPath(process.env.MODEL_RUN_TOKEN_FILE, false)
   const stat = lstatSync(filename)
-  if (!stat.isFile() || stat.size > 8192) throw new Error('Expected a bounded local model run token file')
+  if (!stat.isFile() || stat.size > 8192) throw new Error('必须提供大小受限的本地模型运行令牌文件')
   const token = readFileSync(filename, 'utf8').trim()
-  if (!token || /\s/u.test(token)) throw new Error('Expected a non-empty local model run token')
+  if (!token || /\s/u.test(token)) throw new Error('本地模型运行令牌不能为空')
   process.env.MODEL_API_KEY = token
 }
 
@@ -70,7 +70,7 @@ async function main() {
   const provenance = verifySource()
   const request = requestFromFile()
   loadModelRunToken()
-  if (process.env.MODEL_API_BASE_URL !== 'http://model-proxy:8082/v1' || !process.env.MODEL_API_KEY || !process.env.MODEL_NAME) throw new Error('Candidate requires the counting proxy, its local run token and the selected model')
+  if (process.env.MODEL_API_BASE_URL !== 'http://model-proxy:8082/v1' || !process.env.MODEL_API_KEY || !process.env.MODEL_NAME) throw new Error('候选必须使用计量代理、本地运行令牌和选定模型')
   if (request.candidate_options) {
     const { runScopedRuntime } = await import('./scoped-runtime-entrypoint.ts')
     await runScopedRuntime(request, provenance)
@@ -106,7 +106,7 @@ async function main() {
   }, null, 2) + '\n')
   try {
     const deadline = new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => { timedOut = true; reject(new Error('Active task deadline reached')) }, request.timeout_seconds * 1000)
+      timer = setTimeout(() => { timedOut = true; reject(new Error('活跃任务已达到执行时限')) }, request.timeout_seconds * 1000)
     })
     const result = await Promise.race([
       harness.run(request.prompt, {

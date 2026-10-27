@@ -1,4 +1,4 @@
-"""Synthetic Docker-bench calibration, never candidate capability evidence."""
+"""Docker 验收程序中的合成校准，不能作为候选能力证据。"""
 from copy import deepcopy
 import hashlib
 import json
@@ -40,7 +40,7 @@ def build(tmp_path, defect=None, progressed=False):
     active_source = graph(1, task)
     host = {**identity, "candidate": "deepagents_langgraph", "signal": "SIGUSR1", "signal_exit_code": 0,
         "container_name": "harness-lab-detailed-deepagents-" + scope["variant"],
-        "requested_at": "2040-01-01T00:00:00+00:00",  # Deliberate host/VM clock offset.
+        "requested_at": "2040-01-01T00:00:00+00:00",  # 刻意构造宿主与虚拟机时钟偏移。
         "trigger": {"path": "candidate/raw-events.jsonl", "line": 1},
         "trigger_line_sha256": active_source["line_sha256"],
         "observed_through": {**active_source, "path": "candidate/raw-events.jsonl"}}
@@ -198,5 +198,5 @@ def test_host_trigger_does_not_signal_finished_or_invalid_native_tasks(tmp_path,
             return self.calls > 1
     class Lab:
         def call(self, *_args, **_kwargs):
-            raise AssertionError("Finished tasks cannot trigger a signal")
+            raise AssertionError("已完成任务不能触发信号")
     cancel_on_deepagents_activity(Lab(), "unused", item.paths.run, Stop(), item.scope["variant"], item.scope)

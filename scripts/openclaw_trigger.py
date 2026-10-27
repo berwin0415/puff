@@ -1,4 +1,4 @@
-"""Host-only observation and SIGUSR1 transport; never runs OpenClaw on host."""
+"""宿主仅观察并发送 SIGUSR1；不在宿主运行 OpenClaw。"""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -7,13 +7,12 @@ import json
 
 
 def cancel_on_openclaw_activity(call, name, run, stop, run_id, scope):
-    """Use Lab.call after a live official llm_input in a complete raw prefix.
+    """在完整原始记录前缀中观察到官方 llm_input 活跃事件后，调用 Lab.call。
 
-    Host and Docker VM clocks are independent. The retained prefix, not a
-    comparison between their wall clocks, proves the hook was live when read.
+    宿主与 Docker VM 的时钟相互独立。读取时钩子是否活跃由保留的前缀证明，不通过比较两者的墙上时钟判断。
     """
     if scope.get("variant") != run_id or name != "harness-lab-detailed-openclaw-" + run_id:
-        raise ValueError("OpenClaw cancellation requires the exact trusted run container")
+        raise ValueError('取消 OpenClaw 必须绑定本次可信运行的确切容器')
     raw = run / "candidate/raw-events.jsonl"
     entrypoint = run / "candidate/entrypoint.json"
     while not stop.wait(0.1):

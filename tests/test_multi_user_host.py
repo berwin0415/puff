@@ -1,7 +1,7 @@
-"""I24 no-model doubles; run only in the reviewed Docker bench.
+"""I24 无模型替身测试，仅在复核后的 Docker 验收镜像运行。
 
-These calibrate orchestration and evidence rejection, not native capability.
-No test starts Docker, a candidate SDK or a remote model.
+只校准编排与证据拒绝，不证明原生能力。
+不启动 Docker、候选 SDK 或远程模型。
 """
 from copy import deepcopy
 import json
@@ -249,11 +249,11 @@ def test_host_rejects_unexplained_or_unhealthy_sampling_transition(role, change)
 def test_unrequested_wrapper_exit_and_unregistered_removal_are_rejected():
     values = list(transition_fixture("worker"))
     values[4] = None
-    with pytest.raises(RuntimeError, match="not requested"):
+    with pytest.raises(RuntimeError, match='未针对该确切对象请求采样过渡'):
         host.explained_sampling_transition(*values)
     values = list(transition_fixture(absent=True))
     del values[5]["removal_requested_monotonic"]
-    with pytest.raises(RuntimeError, match="previously observed exact removal"):
+    with pytest.raises(RuntimeError, match='此前未观察到确切删除'):
         host.explained_sampling_transition(*values)
 
 
@@ -292,8 +292,8 @@ def mounted_transition_evidence():
     for observed in (values[0], values[2], values[3]):
         observed["mounts"] = deepcopy(mounts)
     item, registry = evidence(values)
-    # The real sampler and retirement registry contain independent inspect
-    # objects. Avoid a shared fixture object hiding a one-sided mutation.
+    # 实际采样器与退出登记持有独立 inspect 对象；
+    # 避免共享测试对象掩盖单侧修改。
     item = deepcopy(item)
     item["terminal_observation"] = deepcopy(item["terminal_observation"])
     return values, item, deepcopy(registry)
@@ -548,7 +548,7 @@ def test_registration_requires_actual_boolean_init_for_every_long_lived_role(rol
         lab.register_container(observed["id"])
         assert lab.registrations[observed["id"]]["init_enabled"] is True
     else:
-        with pytest.raises(RuntimeError, match="Exact created container registration"):
+        with pytest.raises(RuntimeError, match='创建容器的确切身份'):
             lab.register_container(observed["id"])
 
 
@@ -579,7 +579,7 @@ def test_sampler_keeps_original_commands_and_safe_before_after_for_unhealthy_ter
     assert failure.observations["command_observations"][before["id"]] == {
         kind: {"returncode": reply.returncode, "stdout": reply.stdout, "stderr": reply.stderr}
         for kind, reply in replies.items()}
-    assert "containers" not in failure.observations  # No fabricated metric sample.
+    assert "containers" not in failure.observations  # 不伪造指标样本。
 
 
 def test_sampler_retains_partial_timeout_output_without_exception_message_or_fake_returncode():

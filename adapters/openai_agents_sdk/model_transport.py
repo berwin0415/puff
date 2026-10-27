@@ -1,9 +1,8 @@
-"""Observe unmodified provider bytes through the client's public transport API.
+"""通过客户端公开传输 API 观测未经修改的模型服务原始字节。
 
-The SDK owns parsing, model calls, retries and the Agent loop. This observer only
-records the wire response and its real finish_reason; it never retries, resumes,
-rewrites live chunks or fabricates a terminal event. Detailed browser evidence
-redacts trusted secret forms only while writing saved bytes, across chunks.
+解析、模型调用、重试和 Agent 循环由 SDK 负责。观测器仅记录传输响应及
+真实 finish_reason，不重试、恢复、改写实时分块或伪造结束事件。
+详细浏览器证据仅在写入保存字节时，对跨分块的可信敏感信息进行脱敏。
 """
 
 import codecs
@@ -34,7 +33,7 @@ class ObservedStream(httpx2.AsyncByteStream):
             self.pending += self.decoder.decode(chunk)
             self.pending = self.pending.replace("\r\n", "\n")
             if len(self.pending) > 8 * 1024 * 1024:
-                raise ValueError("Unbounded provider SSE frame")
+                raise ValueError("模型服务 SSE 帧超过大小上限")
             while "\n\n" in self.pending:
                 frame, self.pending = self.pending.split("\n\n", 1)
                 data = "\n".join(line[5:].lstrip() for line in frame.split("\n") if line.startswith("data:"))
@@ -51,7 +50,7 @@ class ObservedStream(httpx2.AsyncByteStream):
                     if choice.get("index") == 0 and choice.get("finish_reason") is not None:
                         self.record["finish_reason"] = choice["finish_reason"]
         except (UnicodeError, ValueError, TypeError) as error:
-            # Observation never repairs or replaces the SDK's original stream.
+            # 观测器不修复或替换 SDK 的原始流。
             self.parse_failed = True
             self.record["observation_error"] = f"{type(error).__name__}: {error}"
 
@@ -84,13 +83,13 @@ class ObservedTransport(httpx2.AsyncBaseTransport):
 
     async def handle_async_request(self, request):
         if request.method != "POST" or request.url.scheme != "http" or request.url.host != "model-proxy" or request.url.port != 8082 or request.url.path != "/v1/chat/completions":
-            raise ValueError("Candidate attempted an endpoint outside the fixed model proxy")
+            raise ValueError("候选尝试访问固定模型代理以外的接口")
         payload = json.loads(request.content)
         if payload.get("model") != self.model or payload.get("stream") is not True:
-            raise ValueError("Candidate changed the selected model or streaming protocol")
+            raise ValueError("候选更改了选定模型或流式协议")
         record = {"attempt": len(self.records) + 1, "status": None, "sse": False, "bytes": 0, "finish_reason": None, "saw_done": False}
         if self.secrets:
-            record["stored_wire_projection"] = "secrets redacted across chunk boundaries; SDK bytes unchanged"
+            record["stored_wire_projection"] = "跨分块边界脱敏；SDK 接收的字节保持不变"
         self.records.append(record)
         response = await self.delegate.handle_async_request(request)
         record.update({"status": response.status_code, "sse": "text/event-stream" in response.headers.get("content-type", "")})

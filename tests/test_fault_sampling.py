@@ -1,4 +1,4 @@
-"""I23 sampling diagnostics calibration; all clocks and Docker calls are fake."""
+"""I23 采样诊断校准；时钟与 Docker 调用全部为替身。"""
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -93,7 +93,7 @@ def exercise(tmp_path, monkeypatch):
         lock = lab.sampling_lock = Lock()
 
         def call(_self, command, *, capture=False, check=True, timeout=None):
-            assert lock.held, 'Original Docker observations remain under the sampling lock'
+            assert lock.held, '原始 Docker 观测始终受采样锁保护'
             if command[:3] == ['docker', 'ps', '-aq']:
                 state.iteration += 1
                 stage = 'inventory_ps'
@@ -119,8 +119,8 @@ def exercise(tmp_path, monkeypatch):
                 raise subprocess.TimeoutExpired([SECRET], timeout=5, output=SECRET, stderr=SECRET)
             return SimpleNamespace(stdout=output, stderr=SECRET, returncode=0)
 
-        # FaultLab.call still runs, so production tracing surrounds the exact
-        # inherited transport boundary without a real subprocess or Docker.
+        # 仍执行 FaultLab.call，使真实追踪覆盖继承的精确传输边界，
+        # 但不创建真实子进程或调用 Docker。
         monkeypatch.setattr(host.PauseLab, 'call', call)
         original_open = Path.open
         writes = 0
@@ -169,7 +169,7 @@ def exercise(tmp_path, monkeypatch):
         def opened(path, mode='r', *args, **kwargs):
             timing = mode == 'a' and path.name == 'resource-sampling-timing.jsonl'
             if timing:
-                assert not lock.held, 'Diagnostic I/O must not lengthen the original lock scope'
+                assert not lock.held, '诊断 I/O 不得延长原锁的持有范围'
                 if timing_failure == 'open':
                     raise state.timing_write_error
             stream = original_open(path, mode, *args, **kwargs)
@@ -267,7 +267,7 @@ def test_timeout_retains_sample_error_real_gap_and_sanitized_diagnostic(exercise
     assert interval['finished_monotonic'] - interval['started_monotonic'] > 5
     assert interval['return_code'] is None and interval['error_type'] == 'TimeoutExpired'
     assert result.diagnostic[0]['sampling_error_type'] == 'TimeoutExpired'
-    assert result.samples[0]['error'] == 'Docker resource sampling failed'
+    assert result.samples[0]['error'] == 'Docker 资源采样失败'
     assert result.samples[0]['worker_ids'] is None
     assert SECRET not in (result.path / 'resource-sampling-timing.jsonl').read_text()
     with pytest.raises(ValueError, match='fault_resource_sample_error'):
@@ -310,11 +310,11 @@ def test_original_file_write_failure_is_rethrown_without_leaking_exception_text(
 def test_diagnostic_file_failure_does_not_kill_sampling_but_main_chain_rejects_it(exercise, failure):
     result = exercise(timing_failure=failure, report_thread=True)
     assert result.raised is None and len(result.samples) == 2
-    # Even valid original resource measurements cannot make the main chain
-    # accept an incomplete diagnostic/transport lifecycle.
+    # 即使原始资源测量有效，诊断或传输生命周期不完整时，
+    # 主实验链仍不能通过。
     assert result.grade()['passed'] is True
     outcome = {}
-    with pytest.raises(RuntimeError, match='I23 sampler reported incomplete evidence'):
+    with pytest.raises(RuntimeError, match='I23 采样器报告证据不完整'):
         result.lab.finish_sampling(SimpleNamespace(join=lambda **kwargs: None, is_alive=lambda: False), outcome)
     assert outcome['sampling_failures'] == [{'stage': 'timing_write', 'error_type': 'RuntimeError'}] * 2
     assert SECRET not in json.dumps(outcome)
@@ -334,7 +334,7 @@ def test_thread_reports_original_sample_write_failure_and_join_forces_main_failu
     assert result.lab.sampling_failures == [{'stage': 'sampler_thread', 'error_type': 'OSError'}]
     assert result.diagnostic[0]['sample_write']['error_type'] == 'OSError'
     outcome = {}
-    with pytest.raises(RuntimeError, match='I23 sampler reported incomplete evidence'):
+    with pytest.raises(RuntimeError, match='I23 采样器报告证据不完整'):
         result.lab.finish_sampling(SimpleNamespace(join=lambda **kwargs: None, is_alive=lambda: False), outcome)
     assert outcome['sampling_failures'] == result.lab.sampling_failures
     assert SECRET not in json.dumps(outcome)
@@ -351,7 +351,7 @@ def test_unexpected_thread_termination_is_explicitly_reported_without_exception_
     lab.sample = fail
     lab.sample_with_reporting(None, [], None)
     outcome = {}
-    with pytest.raises(RuntimeError, match='I23 sampler reported incomplete evidence'):
+    with pytest.raises(RuntimeError, match='I23 采样器报告证据不完整'):
         lab.finish_sampling(SimpleNamespace(join=lambda **kwargs: None, is_alive=lambda: False), outcome)
     assert outcome['sampling_failures'] == [{'stage': 'sampler_thread', 'error_type': error_type}]
     assert SECRET not in json.dumps(outcome)
@@ -360,7 +360,7 @@ def test_unexpected_thread_termination_is_explicitly_reported_without_exception_
 def test_unclosed_sampler_still_forces_main_chain_failure():
     lab = object.__new__(host.FaultLab)
     outcome = {}
-    with pytest.raises(RuntimeError, match='I23 sampler did not close its evidence'):
+    with pytest.raises(RuntimeError, match='I23 采样器未闭合其证据'):
         lab.finish_sampling(SimpleNamespace(join=lambda **kwargs: None, is_alive=lambda: True), outcome)
     assert outcome['sampling_failures'] == []
 

@@ -1,5 +1,5 @@
-# Keep the official sdk-minimal agent loop and session persistence. Replace
-# code-task tools with the same scoped business/file tools used by all routes.
+# 保留官方 sdk-minimal 的 Agent 循环和会话持久化；将代码任务工具
+# 替换为各路线共用的限定作用域业务及文件工具。
 - id: persistent-bash
   disabled: true
 - id: persistent-pwsh
@@ -25,7 +25,7 @@
   config:
     includeHarnessIdentity: false
     includeRuntimeContext: false
-    persona: You are a general-purpose assistant. Complete the user's goal using the supplied tools. Ordinary authorized business operations run automatically. The simulated sensitive_export operation is denied directly by execution policy, without approval. A lost write response is uncertain; query its receipt before deciding to retry.
+    persona: 你是通用助手。使用提供的工具完成用户目标。普通授权业务操作自动执行。模拟的 sensitive_export 操作由执行策略直接拒绝，不进入审批。写入响应丢失时结果不确定；先查询回执，再决定是否重试。
 - id: sessions
   config:
     root: !!js dshHomePath('sessions')

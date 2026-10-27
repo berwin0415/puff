@@ -1,4 +1,4 @@
-"""Expose the trusted HTTP tool schemas without selecting any task steps."""
+"""暴露可信 HTTP 工具结构，不选择任何任务步骤。"""
 
 import json
 from typing import Any
@@ -37,20 +37,20 @@ class HttpTools:
 
     def forward(self, canonical_name, exposed_name):
         async def request(arguments, call_id):
-            # One original request: no retry or automatic receipt query.
+            # 仅发出一次原始请求，不重试，也不自动查询回执。
             self.event({"call_id": call_id, "tool": canonical_name, "exposed_tool": exposed_name, "phase": "start", "arguments": arguments})
             try:
                 result = await self.client.post("/call", json={"name": canonical_name, "arguments": arguments})
             except httpx.HTTPError as error:
                 source = self.event({"call_id": call_id, "tool": canonical_name, "exposed_tool": exposed_name, "phase": "error",
                     "arguments": arguments, "error_type": type(error).__name__, "error": str(error)})
-                return None, None, source, "HTTP tool transport failure; side-effect state is unknown"
+                return None, None, source, "HTTP 工具传输失败；副作用状态未知"
             try:
                 body = result.json()
             except ValueError:
                 source = self.event({"call_id": call_id, "tool": canonical_name, "exposed_tool": exposed_name, "phase": "error",
                     "arguments": arguments, "status": result.status_code, "error": "invalid_json_response"})
-                return result.status_code, None, source, f"HTTP tool returned invalid JSON, status={result.status_code}"
+                return result.status_code, None, source, f"HTTP 工具返回了无效 JSON，状态码={result.status_code}"
             source = self.event({"call_id": call_id, "tool": canonical_name, "exposed_tool": exposed_name, "phase": "finish",
                 "status": result.status_code, "arguments": arguments, "result": body})
             return result.status_code, body, source, None
@@ -62,7 +62,7 @@ class HttpTools:
                     raise ToolException(error)
                 text = json.dumps(body, ensure_ascii=False)
                 if status >= 400:
-                    raise ToolException(f"HTTP tool status={status}: {text}")
+                    raise ToolException(f"HTTP 工具状态码={status}: {text}")
                 return text
             return execute
 
@@ -71,12 +71,12 @@ class HttpTools:
         from langgraph.types import Command
 
         async def execute(runtime: ToolRuntime, **arguments: Any):
-            # The public ToolNode injects runtime outside the model JSON schema.
-            # Never mutate runtime.state: only Command updates are checkpointed.
+            # 公开 ToolNode 在模型 JSON 结构之外注入 runtime。
+            # 不得直接修改 runtime.state：只有 Command 更新会进入检查点。
             read_business_state(runtime.state, self.scope)
             call_id = runtime.tool_call_id
             if not isinstance(call_id, str) or not call_id:
-                raise ValueError("Expected an actual native tool call ID")
+                raise ValueError("必须提供真实的原生工具调用 ID")
             denial = quantity_denial(arguments, self.extension["quantity_limit"]) if canonical_name == "write" else None
             if denial:
                 self.quantity_denied = True
@@ -105,15 +105,15 @@ class HttpTools:
         response.raise_for_status()
         payload = response.json()
         if not isinstance(payload, dict) or not isinstance(payload.get("tools"), list):
-            raise ValueError("Invalid trusted tools listing")
+            raise ValueError("可信工具清单无效")
         tools, schemas = [], {}
         for entry in payload["tools"]:
             name = entry.get("name")
             if not isinstance(name, str) or not name or not name.replace("_", "").isalnum() or name in self.names.values():
-                raise ValueError("Invalid or duplicate trusted tool name")
+                raise ValueError("可信工具名称无效或重复")
             description, schema = entry.get("description"), entry.get("input_schema")
             if not isinstance(description, str) or not isinstance(schema, dict) or schema.get("type") != "object":
-                raise ValueError("Invalid trusted tool schema")
+                raise ValueError("可信工具结构无效")
             display_name = "lab_" + name
             self.names[display_name] = name
             schemas[name] = schema
@@ -125,13 +125,13 @@ class HttpTools:
                 handle_tool_error=True,
             ))
         if not tools:
-            raise ValueError("Trusted tool listing is empty")
+            raise ValueError("可信工具清单为空")
         if self.extension:
             if "receipt" not in schemas:
-                raise ValueError("The business query requires the actual receipt tool schema")
+                raise ValueError("业务查询必须使用实际回执工具结构")
             self.names["query_order_status"] = "receipt"
             tools.append(StructuredTool(name="query_order_status",
-                description="Query actual receipts and write_count for one operation_id in the current user/session. This tool only reads; it performs no writes or remaining task steps.",
+                description="查询当前用户和会话中某个 operation_id 的实际回执及 write_count。此工具只读，不执行写入或剩余任务步骤。",
                 args_schema=schemas["receipt"], coroutine=self.forward("receipt", "query_order_status"), handle_tool_error=True))
         return tools
 

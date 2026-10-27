@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Docker-only offline I25 sampling audit; never rewrites an old verdict.
+"""仅在 Docker 内执行的 I25 离线采样审计；不改写旧判定。
 
-Inspect every recorded phase, including startup/control/closing. Missing legacy
-sequence, completion or boundary evidence stays unknown, never a zero-second gap.
-Output contains only fixed reason codes, safe phase names, counts and timings;
-raw sample bodies, environment values and exception text are never serialized.
+检查所有已记录阶段，包括启动、控制和关闭。旧材料缺少序号、完成或边界证据时保持未知，不记为零秒缺口。输出仅含固定原因码、安全阶段名、数量与耗时；不序列化原始样本正文、环境值或异常文本。
 """
 from __future__ import annotations
 
@@ -34,7 +31,7 @@ TIMES = ("host_before_observer_monotonic", "host_started_monotonic",
 
 
 class AuditError(ValueError):
-    """A fixed, non-sensitive failure code."""
+    """固定且不含敏感信息的失败码。"""
 
 
 def _docker_marker_exists():
@@ -59,7 +56,7 @@ def finite(value):
 
 
 def canonical_path(value):
-    """Reject archive/noncanonical spelling before resolve can hide it."""
+    """在 resolve 隐去原始写法前，拒绝归档路径及非规范写法。"""
     text = os.fspath(value)
     path = Path(text)
     if (not path.is_absolute() or any(part.lower() in {"old", ".."} for part in path.parts)
@@ -89,7 +86,7 @@ def decode(data):
 
 
 def regular(path):
-    """Bounded immutable-file snapshot; do not follow links or print paths."""
+    """读取有大小限制的不可变文件快照；不跟随链接，也不打印路径。"""
     path = Path(path)
     if any(item.is_symlink() for item in (path, *path.parents)):
         raise AuditError("linked_source_refused")
@@ -125,7 +122,7 @@ def load_samples(data):
 
 
 def analyze(samples, *, log, controls, status=None, host_status=None):
-    """Pure audit of already loaded snapshots; no evidence is repaired/filtered."""
+    """仅审计已加载快照；不修补或筛掉证据。"""
     checks = {"complete_json_lines": log["complete_json_lines"], "at_least_two_samples": len(samples) >= 2,
         "no_sample_errors": all("error" not in row and "_audit_invalid_line" not in row for row in samples),
         "valid_phase_names": all(safe_phase(row.get("phase")) != "invalid-phase" for row in samples),
@@ -227,11 +224,11 @@ def analyze(samples, *, log, controls, status=None, host_status=None):
         "max_observed_start_gap_seconds": max(intervals) if intervals else None,
         "max_observed_sample_span_seconds": max(spans) if spans else None, "whole_flow_edges": edges,
         "timing_failures": failures[:100], "timing_failure_count": len(failures),
-        "limits": ["No raw body, environment or exception text is emitted.",
-            "A newline and stable read do not prove an unrecorded tail was written.",
-            "Control sequences may legitimately skip; they do not substitute for sample sequences.",
-            "Unsampled control phases have no inferred duration; unknown boundaries are not zero.",
-            "No resource peak, cost, savings, business outcome or I25 completion is inferred."]}
+        "limits": ['不输出原始正文、环境值或异常文本。',
+            '换行符和稳定读取不能证明未记录的尾部已经写入。',
+            '控制序号允许合法跳号，不能替代采样序号。',
+            '不推算未采样控制阶段的耗时；边界未知不等于零。',
+            '不据此推断资源峰值、费用、节省比例、业务结果或 I25 完成状态。']}
 
 
 def audit_trial(root):

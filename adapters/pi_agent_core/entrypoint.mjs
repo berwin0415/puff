@@ -1,4 +1,4 @@
-/** Thin host of the official Pi Agent Core loop and OpenAI chat adapter. */
+/** 为官方 Pi Agent Core 循环和 OpenAI 聊天适配器提供轻量运行入口。 */
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
 import { verifySource } from './verify-source.mjs'
@@ -8,52 +8,52 @@ const redact = value => secrets.reduce((text, token) => text.replaceAll(token, '
 const encode = (value, pretty = false) => redact(JSON.stringify(value, (_key, item) => item instanceof Set ? [...item] : item, pretty ? 2 : undefined)) + '\n'
 
 function trustedPath(value, directory = false) {
-  if (typeof value !== 'string' || !isAbsolute(value) || value.split('/').some(part => part === '..' || part.toLowerCase() === 'old')) throw new Error('Invalid trusted run path')
+  if (typeof value !== 'string' || !isAbsolute(value) || value.split('/').some(part => part === '..' || part.toLowerCase() === 'old')) throw new Error('可信运行路径无效')
   const path = resolve(value)
   let current = '/'
   for (const part of path.split('/').filter(Boolean)) {
     current = resolve(current, part)
-    if (existsSync(current) && lstatSync(current).isSymbolicLink()) throw new Error('Trusted paths must not contain symbolic links')
+    if (existsSync(current) && lstatSync(current).isSymbolicLink()) throw new Error('可信路径不能包含符号链接')
   }
   if (directory) mkdirSync(path, { recursive: true })
-  if (realpathSync(path) !== path) throw new Error('Trusted run path resolution changed')
+  if (realpathSync(path) !== path) throw new Error('可信运行路径的解析结果发生变化')
   return path
 }
 
 function tokenFile(filename) {
   const path = trustedPath(filename)
-  if (!lstatSync(path).isFile() || lstatSync(path).size > 8192) throw new Error('Expected a bounded local token file')
+  if (!lstatSync(path).isFile() || lstatSync(path).size > 8192) throw new Error('本地令牌文件必须为普通文件，且大小不能超过限制')
   const token = readFileSync(path, 'utf8').trim()
-  if (!token || /\s/u.test(token)) throw new Error('Expected a nonempty local token')
+  if (!token || /\s/u.test(token)) throw new Error('本地令牌不能为空或包含空白字符')
   secrets.push(token)
   return token
 }
 
 function readRequest() {
-  if (process.argv.length !== 4 || process.argv[2] !== '--request') throw new Error('Usage: entrypoint --request /config/request.json')
+  if (process.argv.length !== 4 || process.argv[2] !== '--request') throw new Error('用法：entrypoint --request /config/request.json')
   const request = JSON.parse(readFileSync(trustedPath(process.argv[3]), 'utf8'))
   const keys = ['run_id', 'session_id', 'prompt', 'workspace', 'state_dir', 'output_dir', 'tools_url', 'tool_token_file', 'max_output_tokens', 'timeout_seconds', 'max_retries']
-  if (!request || typeof request !== 'object' || Array.isArray(request) || Object.keys(request).length !== keys.length || keys.some(key => !Object.hasOwn(request, key))) throw new Error('Invalid trusted run request fields')
-  for (const key of ['run_id', 'session_id']) if (typeof request[key] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(request[key]) || request[key].toLowerCase() === 'old') throw new Error('Invalid run/session identifier')
-  if (typeof request.prompt !== 'string' || !request.prompt || request.prompt.length > 65536) throw new Error('Expected a bounded task prompt')
-  for (const [key, minimum, maximum] of [['max_output_tokens', 1, 16384], ['timeout_seconds', 1, 3600], ['max_retries', 0, 2]]) if (!Number.isSafeInteger(request[key]) || request[key] < minimum || request[key] > maximum) throw new Error('Invalid run budget')
+  if (!request || typeof request !== 'object' || Array.isArray(request) || Object.keys(request).length !== keys.length || keys.some(key => !Object.hasOwn(request, key))) throw new Error('可信运行请求的字段无效')
+  for (const key of ['run_id', 'session_id']) if (typeof request[key] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(request[key]) || request[key].toLowerCase() === 'old') throw new Error('运行或会话标识无效')
+  if (typeof request.prompt !== 'string' || !request.prompt || request.prompt.length > 65536) throw new Error('任务提示词不能为空，且长度不能超过限制')
+  for (const [key, minimum, maximum] of [['max_output_tokens', 1, 16384], ['timeout_seconds', 1, 3600], ['max_retries', 0, 2]]) if (!Number.isSafeInteger(request[key]) || request[key] < minimum || request[key] > maximum) throw new Error('运行预算无效')
   for (const key of ['workspace', 'state_dir', 'output_dir']) request[key] = trustedPath(request[key], true)
   const paths = [request.workspace, request.state_dir, request.output_dir]
-  if (paths.some((a, index) => paths.slice(index + 1).some(b => a === b || a.startsWith(b + '/') || b.startsWith(a + '/')))) throw new Error('Workspace, state and evidence must use separate directory trees')
+  if (paths.some((a, index) => paths.slice(index + 1).some(b => a === b || a.startsWith(b + '/') || b.startsWith(a + '/')))) throw new Error('工作区、状态和证据必须分别使用独立的目录树')
   request.tool_token_file = trustedPath(request.tool_token_file)
-  if (request.tools_url !== 'http://tools:8081') throw new Error('Expected the scoped experiment tools service')
+  if (request.tools_url !== 'http://tools:8081') throw new Error('必须使用限定作用域的实验工具服务')
   return request
 }
 
 async function loadTools(request, token, deadlineSignal) {
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
   const response = await fetch(new URL('/tools', request.tools_url), { headers, signal: AbortSignal.any([deadlineSignal, AbortSignal.timeout(10_000)]) })
-  if (!response.ok) throw new Error(`Cannot list trusted HTTP tools (${response.status})`)
+  if (!response.ok) throw new Error(`无法列出可信 HTTP 工具 (${response.status})`)
   const payload = await response.json()
-  if (!payload || !Array.isArray(payload.tools) || payload.tools.length === 0) throw new Error('Empty trusted tool definitions')
+  if (!payload || !Array.isArray(payload.tools) || payload.tools.length === 0) throw new Error('可信工具定义为空')
   const seen = new Set()
   return payload.tools.map(tool => {
-    if (!tool || typeof tool.name !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/u.test(tool.name) || seen.has(tool.name) || typeof tool.description !== 'string' || !tool.input_schema || tool.input_schema.type !== 'object') throw new Error('Invalid or duplicate trusted tool definition')
+    if (!tool || typeof tool.name !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/u.test(tool.name) || seen.has(tool.name) || typeof tool.description !== 'string' || !tool.input_schema || tool.input_schema.type !== 'object') throw new Error('可信工具定义无效或重复')
     seen.add(tool.name)
     return {
       name: tool.name,
@@ -61,7 +61,7 @@ async function loadTools(request, token, deadlineSignal) {
       description: tool.description,
       parameters: tool.input_schema,
       async execute(_toolCallId, arguments_, signal) {
-        // No automatic HTTP tool retry; committed writes can lose their receipt.
+        // 不自动重试 HTTP 工具；写入已提交时仍可能丢失回执。
         const response = await fetch(new URL('/call', request.tools_url), {
           method: 'POST', headers,
           body: JSON.stringify({ name: tool.name, arguments: arguments_ }),
@@ -75,7 +75,7 @@ async function loadTools(request, token, deadlineSignal) {
 }
 
 function saveState(request, agent) {
-  // This is an application-owned observation, not a durable native checkpoint.
+  // 这是应用自行记录的状态观察，不能作为持久化的原生检查点。
   const value = { persistence: 'application_written_observation_only', session_id: request.session_id, ...agent.state }
   const path = resolve(request.state_dir, 'observed-state.json')
   writeFileSync(path + '.tmp', encode(value, true))
@@ -86,7 +86,7 @@ function saveState(request, agent) {
 async function main() {
   const provenance = verifySource()
   const request = readRequest()
-  if (process.env.MODEL_API_BASE_URL !== 'http://model-proxy:8082/v1' || !process.env.MODEL_NAME) throw new Error('Candidate requires the counting proxy and selected model')
+  if (process.env.MODEL_API_BASE_URL !== 'http://model-proxy:8082/v1' || !process.env.MODEL_NAME) throw new Error('候选必须使用计数代理和指定模型')
   const modelToken = process.env.MODEL_API_KEY || tokenFile(process.env.MODEL_RUN_TOKEN_FILE)
   if (process.env.MODEL_API_KEY) secrets.push(modelToken)
   const toolToken = tokenFile(request.tool_token_file)
@@ -98,34 +98,34 @@ async function main() {
   writeFileSync(raw, '')
   const transportLog = resolve(request.output_dir, 'transport-events.jsonl')
   writeFileSync(transportLog, '')
-  const interrupt = () => { deadline.abort(new Error('Process cancellation requested')); agent?.abort() }
+  const interrupt = () => { deadline.abort(new Error('收到取消进程的请求')); agent?.abort() }
   process.on('SIGTERM', interrupt); process.on('SIGINT', interrupt)
-  const timer = setTimeout(() => { timedOut = true; deadline.abort(new Error('Active task deadline reached')); agent?.abort() }, request.timeout_seconds * 1000)
+  const timer = setTimeout(() => { timedOut = true; deadline.abort(new Error('已达到任务执行时限')); agent?.abort() }, request.timeout_seconds * 1000)
   let summary
   try {
-    if (existsSync(resolve(request.state_dir, 'observed-state.json'))) throw new Error('This screening entry starts fresh sessions only; observed messages are not an implemented resume protocol')
+    if (existsSync(resolve(request.state_dir, 'observed-state.json'))) throw new Error('此初筛入口仅启动新会话，记录的消息尚不能用于恢复会话')
     const tools = await loadTools(request, toolToken, deadline.signal)
     const model = {
       id: process.env.MODEL_NAME, name: process.env.MODEL_NAME,
       api: 'openai-completions', provider: 'harness-lab', baseUrl: process.env.MODEL_API_BASE_URL,
       reasoning: false, input: ['text'],
-      // These are local screening ceilings, not a discovered model capability.
+      // 这些值是本地初筛上限，不能视为已探明的模型能力。
       contextWindow: 65536, maxTokens: request.max_output_tokens,
-      // Required Pi schema fields only. Authoritative cost comes from the proxy;
-      // native zero cost rates are explicitly marked as placeholders below.
+      // 此处仅填写 Pi 必需的字段。实际费用以代理统计为准；
+      // 下方明确将原生零费率标为占位值。
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false, supportsUsageInStreaming: true, maxTokensField: 'max_tokens', supportsStrictMode: false },
     }
     const observeFetch = async (input, init) => {
       const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
-      if (url.origin !== 'http://model-proxy:8082' || url.pathname !== '/v1/chat/completions' || url.search || url.username || url.password) throw new Error('Model transport attempted an unexpected endpoint')
+      if (url.origin !== 'http://model-proxy:8082' || url.pathname !== '/v1/chat/completions' || url.search || url.username || url.password) throw new Error('模型传输试图访问非预期接口')
       deadline.signal.throwIfAborted()
       transportAttempts++
       appendFileSync(transportLog, encode({ type: 'provider_http_attempt', attempt: transportAttempts, method: init?.method ?? (input instanceof Request ? input.method : 'GET'), path: url.pathname, time: new Date().toISOString() }))
       return fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([deadline.signal, init.signal]) : deadline.signal })
     }
     agent = new Agent({
-      initialState: { model, systemPrompt: 'Use the provided tools to carry out the user task. Tool input and output come from the shared experiment service.', tools, thinkingLevel: 'off' },
+      initialState: { model, systemPrompt: '使用所提供的工具完成用户任务。工具输入和输出来自共享实验服务。', tools, thinkingLevel: 'off' },
       sessionId: request.session_id,
       getApiKey: () => modelToken,
       streamFn: (activeModel, context, options) => streamSimple(activeModel, context, {

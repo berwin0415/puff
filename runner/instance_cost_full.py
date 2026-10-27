@@ -1,11 +1,8 @@
-"""I25 DA cost-flow preparation/observation/grading, only inside pinned Docker.
+"""I25 DA 成本流程的准备、观测和判定，仅在固定 Docker 中执行。
 
-This is trusted host orchestration, not a product authentication experiment.
-The measured observer occupies the reserved 256 MiB / .25 CPU backend slot;
-it is not a simulated product backend and cannot establish I24 isolation.
-No failed business task is replayed. The fault phase deliberately leaves A's
-original store and budget untouched for independent recovery investigation.
-"""
+这是可信宿主机编排，不是产品鉴权实验。被测观察进程占用
+预留的 256 MiB / 0.25 CPU 后端额度；它不是模拟产品后端，不能证明 I24 隔离。
+不重放失败业务任务。故障阶段特意保留 A 的原始存储和预算，供独立恢复研究。"""
 from __future__ import annotations
 
 import argparse
@@ -33,7 +30,7 @@ PROBE_NONCE = re.compile(r"[0-9a-f]{32}\Z")
 
 
 class ObservationError(ValueError):
-    """Fixed reason with source coordinates, never event contents."""
+    """使用带来源坐标的固定原因，不包含事件内容。"""
 
     def __init__(self, code, source, line=None):
         super().__init__(code)
@@ -53,11 +50,11 @@ def observer_error_record(error, *, phase, stage, task=None):
         code = "observer_source_type_invalid"
     else:
         reason = error.args[0] if error.args and isinstance(error.args[0], str) else None
-        code = {"Linked cost-flow evidence": "observer_linked_source",
-            "Torn final evidence line": "observer_torn_final_source",
-            "Linked instance-cost evidence is forbidden": "observer_linked_control",
-            "Instance-cost evidence must be a bounded regular file": "observer_control_not_bounded_regular",
-            "Linked instance-cost material is forbidden": "observer_linked_output"}.get(reason, "observer_value_error")
+        code = {"成本流程证据不得使用链接": "observer_linked_source",
+            "证据末行被截断": "observer_torn_final_source",
+            "实例成本证据不得使用链接": "observer_linked_control",
+            "实例成本证据必须是有大小限制的普通文件": "observer_control_not_bounded_regular",
+            "实例成本材料不得使用链接": "observer_linked_output"}.get(reason, "observer_value_error")
     record = {"time": now(), "phase": phase, "stage": stage, "error_type": type(error).__name__, "reason_code": code}
     if task is not None:
         record["task_id"] = task["task_id"]
@@ -87,11 +84,11 @@ def rows(path, *, partial=False):
     if not path.exists():
         return []
     if any(item.is_symlink() for item in (path, *path.parents)):
-        raise ValueError("Linked cost-flow evidence")
+        raise ValueError("成本流程证据不得使用链接")
     data = path.read_bytes()
     if data and not data.endswith(b"\n"):
         if not partial:
-            raise ValueError("Torn final evidence line")
+            raise ValueError("证据末行被截断")
         data = data[:data.rfind(b"\n") + 1]
     decoded = []
     for number, line in enumerate(data.splitlines(), 1):
@@ -109,7 +106,7 @@ def text(path, value):
 
 
 def observer_control(path):
-    """Read one bounded, immutable host control snapshot from one descriptor."""
+    """通过同一描述符读取一份有大小限制且不可变的宿主机控制快照。"""
     path = Path(path)
     matched = CONTROL_NAME.fullmatch(path.name)
     if (matched is None or path.parent.name != "controls" or path.parent.parent.name != "observer" or any(
@@ -138,7 +135,7 @@ def observer_control(path):
 
 
 def publish_reply(path, value):
-    """Publish the whole nonce reply before the host can observe its name."""
+    """在宿主机能看到文件名之前，先发布完整 nonce 响应。"""
     path = Path(path)
     temporary = path.with_name(path.name + ".pending")
     exclusive(temporary, value)
@@ -150,28 +147,28 @@ def publish_reply(path, value):
 def make_flow_plan(*, services_image, seed, baseline_only=False, **kwargs):
     from runner.instance_cost import IMAGE
     if not IMAGE.fullmatch(services_image) or seed not in {101, 202, 303}:
-        raise ValueError("Pinned services image and frozen formal seed required")
+        raise ValueError("必须固定服务镜像，并冻结正式种子")
     plan = make_plan(**kwargs)
     rotated = rotation_users(plan)
     if baseline_only and rotated:
-        raise ValueError("Inactive-user rotation is a separate full-flow variant, not a baseline")
+        raise ValueError("非活跃用户轮换属于独立完整流程变体，不能作为基线")
     plan.update(flow_schema=SCHEMA, services_image_id=services_image, seed=seed,
         baseline_only=baseline_only, business_tasks_bound=8 + len(rotated),
         business_tasks_planned_to_execute=1 if baseline_only else 6 + len(rotated),
-        implemented_subset="two actual tasks, 60-second recycle, fresh-task wake and independent single-Worker fault impact",
-        orchestration_trust="trusted host; no product identity/control/isolation claim",
-        observer_policy="actual observer replaces the reserved backend slot; product-backend overhead remains unmeasured",
-        subset_service_policy="shared Fixture/observer; owner-specific tools/proxy only during a wave; identical policy for both strategies",
-        full_network_policy="hl-ic-<trial>-user-001/-002; isolated owner tools/model-proxy aliases; no browser",
+        implemented_subset="两个真实任务、60 秒回收、新任务唤醒，以及独立单 Worker 故障影响",
+        orchestration_trust="使用可信宿主机；不声称产品身份、控制或隔离能力",
+        observer_policy="真实观察进程替代预留后端额度；产品后端开销仍未测量",
+        subset_service_policy="共享 Fixture/观察进程；仅在波次内运行所有者专属工具和代理；两策略采用相同规则",
+        full_network_policy="hl-ic-<trial>-user-001/-002；所有者工具和模型代理别名隔离；不使用浏览器",
         allocation_role_alias={"observer": "backend"},
         formal_i25_eligible=False, i25_complete=False,
-        remaining_work=["resident entry I24 integration and actual product-backend overhead",
-            "three-seed paired measurements after same-entry/same-quota baseline",
-            "fault A native recovery and I23 uncertain-write adjudication",
-            "DeepSeek Harness cost-flow entry and measurements"])
+        remaining_work=["常驻入口 I24 集成，以及真实产品后端开销",
+            "完成同入口、同配额基线后，进行三种子配对测量",
+            "故障 A 的原生恢复，以及 I23 不确定写入裁定",
+            "DeepSeek Harness 成本流程入口及测量"])
     if rotated:
-        plan.update(implemented_subset=plan["implemented_subset"] + "; fresh-task cold wake of fixed previously inactive users 003/004",
-            full_network_policy="hl-ic-<trial>-user-001/-002/-003/-004; one owner per tools/proxy/Worker, at most two active; no browser",
+        plan.update(implemented_subset=plan["implemented_subset"] + "；以新任务冷唤醒固定的原非活跃用户 003/004",
+            full_network_policy="hl-ic-<trial>-user-001/-002/-003/-004；每套工具、代理和 Worker 对应一个所有者，最多两个活跃用户；不使用浏览器",
             sampling_variant="registered-lifecycle")
     return plan
 
@@ -191,7 +188,7 @@ def admin(root, method, route, **kwargs):
 
 
 def prepare(root):
-    """No candidate imports; only requirements and actual Fixture bindings."""
+    """不导入候选框架；仅使用需求和实际 Fixture 绑定。"""
     from runner.grading import prepare_tools_inputs, same_scope
     root = Path(root)
     plan = read(root / "protected/plan.json")
@@ -203,7 +200,7 @@ def prepare(root):
         home = root / "users" / owner
         binding = read(home / "config/resident.json")
         binding["limits"].update(max_output_tokens=4096, max_retries=2)
-        # Histories and business sessions remain in one immutable experiment.
+        # 历史和业务会话保留在同一不可变实验中。
         binding["history"]["scope"]["experiment_id"] = "instance-cost"
         user["scope"] = binding["history"]["scope"]
         for kind in KINDS:
@@ -219,7 +216,7 @@ def prepare(root):
                 "users": [{"user_id": owner, "session_id": scope["session_id"]}], "write_mode": "idempotent"})
             actual = [row for row in setup["scopes"] if same_scope(row, scope)]
             if len(actual) != 1:
-                raise ValueError("Fixture did not create the exact frozen scope")
+                raise ValueError("Fixture 未创建精确冻结作用域")
             tool_token, model_token = actual[0]["token"], secrets.token_urlsafe(32)
             text(home / "config" / (kind + "-tools.token"), tool_token)
             text(home / "config" / (kind + "-model.token"), model_token)
@@ -239,7 +236,7 @@ def prepare(root):
             tasks.append({"task_id": task_id, "owner": owner, "kind": kind, "scope": scope,
                 "model_token_sha256": sha(model_token.encode()), "tool_token_sha256": sha(tool_token.encode()),
                 "prompt_sha256": sha((home / "config" / (kind + ".prompt.txt")).read_bytes())})
-        # Preparation only, before any candidate starts. Preserve old material.
+        # 仅在候选框架启动前准备，保留旧材料。
         os.rename(home / "config/resident.json", home / "config/pre-flow-resident.json")
         exclusive(home / "config/resident.json", binding)
         user["binding_sha256"] = sha((home / "config/resident.json").read_bytes())
@@ -249,7 +246,7 @@ def prepare(root):
 
 
 def native_activity(root, task):
-    """Read actual public task events and trusted tools in the Docker VM clock."""
+    """在 Docker VM 时钟域读取真实公共任务事件和可信工具。"""
     home = Path(root) / "users" / task["owner"]
     raw_path = home / "evidence" / task["kind"] / "raw-events.jsonl"
     tool_path = home / "trusted" / task["kind"] / "tool-events.jsonl"
@@ -290,7 +287,7 @@ def native_activity(root, task):
 
 
 def observe(root):
-    """Measured observer process; no candidate SDK, model, control or answers."""
+    """被测观察进程；不包含候选 SDK、模型、控制或答案。"""
     root = Path(root)
     tasks = read(root / "protected/tasks.json")
     target = root / "protected/observer"
@@ -299,8 +296,8 @@ def observe(root):
     while not (target / "stop.json").exists():
         phase, selected_task, stage = control, None, "read_control"
         try:
-            # Apply only the next immutable sequence; an absent predecessor is
-            # never skipped. The host's existing probe deadline remains binding.
+            # 只应用下一个不可变序号，绝不跳过缺失前序。
+            # 宿主机现有探针截止时间仍然有效。
             next_path = target / "controls" / f"control-{sequence + 1:012d}.json"
             new_control = next_path.exists()
             if new_control:
@@ -331,8 +328,8 @@ def observe(root):
                 publish_reply(target / "replies" / (nonce + ".json"), record)
             stage = "append_live"
             append(target / "live.jsonl", record)
-            # A trigger is evidence of an actually observed window, never a
-            # guarantee the tasks remain live when the host receives it.
+            # 触发器证明真实观测到的窗口，不能保证
+            # 宿主机收到它时任务仍在运行。
             trigger = target / "kill-ready.json"
             if (phase.get("kind") == "fault" and not trigger.exists() and len(observed) == 2
                     and all(item["live"] and item["successful_tool_times"] for item in observed)):
@@ -362,7 +359,7 @@ def budget(root, task):
 
 
 def collect(root):
-    """After Workers exit; snapshot the actual Fixture and original budgets."""
+    """Worker 退出后，为实际 Fixture 和原始预算保存快照。"""
     root = Path(root)
     tasks = read(root / "protected/tasks.json")
     results = {}
@@ -378,19 +375,17 @@ def collect(root):
     for category in ("state", "workspace", "budgets"):
         files = [path for user in (root / "users").iterdir() for path in (user / category).rglob("*") if path.is_file()]
         if any(path.is_symlink() for path in files):
-            raise ValueError("Linked cost-flow persistent data")
+            raise ValueError("成本流程持久化数据不得使用链接")
         disk[category] = {"files": len(files), "logical_bytes": sum(path.stat().st_size for path in files),
             "kind": "measured_file_lengths_not_host_storage_provider_billing"}
     exclusive(root / "protected/persistent-disk.json", disk)
 
 
 def effective_overlap(root, tasks, samples, observer):
-    """Require paired native intervals, both actual tool progress and 2 samples.
+    """要求配对的原生区间、双方实际工具进展及 2 个采样点。
 
-    Sample bracketing uses two observer entries from the same Docker clock.
-    macOS monotonic timestamps are used only to prove those observations bracket
-    the resource operation; they are not compared with a container UTC time.
-    """
+    使用同一 Docker 时钟中的两条观察记录夹住采样操作。
+    macOS 单调时间仅用于证明这些观测夹住资源操作，不能与容器 UTC 时间比较。"""
     from runner.pause_recovery import instant
     activity = [native_activity(root, task) for task in tasks]
     intersections = [(max(instant(a), instant(c)), min(instant(b), instant(d)))
@@ -420,8 +415,8 @@ def effective_overlap(root, tasks, samples, observer):
             bracketed.append(sample["host_started_monotonic"])
     return {"passed": progress and len(set(bracketed)) >= 2, "actual_native_intersections": len(intersections),
         "both_tasks_effective_tool_progress": progress, "samples_inside_native_overlap": len(set(bracketed)),
-        "sample_window": "intersection of actual native execution lifetimes; effective tool progress separately requires native model/tool interval intersections",
-        "source_observer_rows": len(observer), "clock_policy": "Docker UTC interval brackets; no host/container UTC comparison"}
+        "sample_window": "计算真实原生执行生命周期交集；有效工具进展还须单独验证原生模型/工具区间交集",
+        "source_observer_rows": len(observer), "clock_policy": "使用 Docker UTC 区间夹住采样，不比较宿主机与容器 UTC"}
 
 
 def grade_task(root, plan, task, observations):
@@ -435,7 +430,7 @@ def grade_task(root, plan, task, observations):
     source = projection.get("source", {})
     name = source.get("path")
     if not isinstance(name, str) or Path(name).name != name or not name.startswith("native-state-"):
-        raise ValueError("Task native completion lacks original projection")
+        raise ValueError("任务原生完成缺少原始投影")
     path = home / "evidence" / task["kind"] / name
     native = read(path)
     normal = (source.get("public_api") == "CompiledStateGraph.aget_state" and source.get("sha256") == sha(path.read_bytes())
@@ -457,7 +452,7 @@ def grade_task(root, plan, task, observations):
 
 
 def verify_business_read(root, plan, item, task_timings):
-    """Compare actual completed business checkpoint bytes, not a new sentinel."""
+    """比较实际完成业务的检查点字节，不使用新的哨兵标记替代。"""
     if item.get("read_succeeded") is not True:
         return False
     original, restored = item["original"], item["restored"]
@@ -489,7 +484,7 @@ def verify_business_read(root, plan, item, task_timings):
 
 
 def verify_rotation_materials(root, plan, tasks, users):
-    """Independently bind the new wave to separate frozen owner/task material."""
+    """将新波次独立绑定到单独冻结的所有者/任务材料。"""
     root = Path(root)
     expected = {(user["owner"], kind) for user in users for kind in KINDS
         if user["owner"] in owners_for_kind(plan, kind)}
@@ -542,7 +537,7 @@ def verify_rotation_materials(root, plan, tasks, users):
 
 
 def verify_rotation_history(root, user, records, timing, prepared):
-    """Same original checkpoint before/after a new task in a new cold Worker."""
+    """在新冷启动 Worker 执行新任务前后，检查同一原始检查点。"""
     selected = [item for item in records if item.get("owner") == user["owner"]]
     if len(selected) != 2 or {item.get("stage") for item in selected} != {"before-task", "after-task"}:
         return False
@@ -566,7 +561,7 @@ def verify_rotation_history(root, user, records, timing, prepared):
 
 
 def rotation_sampling_check(samples, status):
-    """All new-variant phases, including startup/control/closing, with 5s edges."""
+    """覆盖新变体的全部阶段，包括启动、控制和关闭，边缘采样间隔为 5 秒。"""
     try:
         if (status.get("completed") is not True or type(status.get("samples_written")) is not int
                 or status["samples_written"] != len(samples) or len(samples) < 2
@@ -593,7 +588,7 @@ def rotation_sampling_check(samples, status):
 
 
 def rotation_checks(root, plan, tasks, users, host, samples):
-    """Additional opt-in checks; legacy two-user verdicts are unchanged."""
+    """额外的显式启用检查；旧双用户判定保持原样。"""
     owners = rotation_users(plan)
     checks = {name: False for name in ("inactive_wave_frozen_independent_materials",
         "inactive_wave_follows_original_pair_without_prior_business", "inactive_original_histories_survived_cold_wake",
@@ -649,14 +644,14 @@ def rotation_checks(root, plan, tasks, users, host, samples):
             and {item["owner"] for item in reads} == set(owners)
             and all(verify_business_read(root, plan, item, host["task_timings"]) for item in reads))
     except (OSError, ValueError, KeyError, TypeError, StopIteration):
-        # An incomplete new-wave proof is a failed check, never a reason to
-        # replay a failed business task or replace evidence with a new history.
+        # 新波次证据不完整即检查失败，不能因此
+        # 重放失败业务任务或用新历史替换证据。
         pass
     return checks
 
 
 def timing_metrics(root, task, record):
-    """All derived latencies use the same actual Docker UTC clock domain."""
+    """所有派生延迟均使用同一真实 Docker UTC 时钟域。"""
     from runner.pause_recovery import instant
     activity = native_activity(root, task)
     request, ready = record["docker_request_observation"], record["docker_ready_observation"]
@@ -668,16 +663,15 @@ def timing_metrics(root, task, record):
         "trusted_request_to_first_effective_action_seconds": first - start,
         "worker_ready_to_first_effective_action_seconds": first - available,
         "queue_latency_seconds": None, "queue_policy": "no_product_scheduler_in_this_entry",
-        "clock_domain": "same_Docker_VM_UTC; request/ready are protected observer markers",
+        "clock_domain": "same_Docker_VM_UTC；request/ready 为受保护观察进程标记",
         "not_product_end_to_end_latency": True}
 
 
 def progress_after_worker_exit(fault, activity):
-    """Use the actual Docker exit, not later inspection/probe arrival time.
+    """使用真实 Docker 退出时间，不用后续检查或探针到达时间。
 
-    Native task events and Docker State.FinishedAt use the same Docker VM UTC
-    clock. Missing/invalid exit evidence is unverified; no time is fabricated.
-    """
+    原生任务事件和 Docker State.FinishedAt 使用同一 Docker VM UTC 时钟。
+    缺失或无效的退出证据记为未验证，不虚构时间。"""
     from runner.pause_recovery import instant
     try:
         observed = fault["after_kill"]
@@ -828,8 +822,8 @@ def grade(root):
             checks["fault_target_bound_to_original_real_tasks"] = (fault_bindings.get("user-001") == fault.get("victim_id")
                 and fault_bindings.get("user-002") == fault.get("unaffected_id")
                 and not (root / "users/user-001/evidence/fault/result.json").exists())
-        # The observer trigger proves actual live activities, independent of a
-        # Future merely being queued on the host.
+        # 观察进程触发器证明真实活动，不依赖
+        # 宿主机上 Future 仅仅已入队。
         try:
             trigger = read(root / "protected/observer/kill-ready.json")
             checks["fault_had_two_real_active_tasks"] = (len(trigger["tasks"]) == 2
@@ -865,7 +859,7 @@ def grade(root):
         "fault_worker_failures_observed": 1 if host.get("fault", {}).get("injected") else 0,
         "unavailable_task_results_after_fault": 1 if checks.get("fault_target_bound_to_original_real_tasks") else None,
         "i25_complete": False, "i24_isolation_verified_by_this_entry": False, "product_backend_measured": False,
-        "savings_percent": None, "native_fault_recovery": "not_attempted; original state and model budget retained",
+        "savings_percent": None, "native_fault_recovery": "not_attempted；保留原始状态及模型预算",
         "remaining_work": plan["remaining_work"], "calibration_or_execution_implied_by_source": False}
     if rotated:
         result.update(flow_variant=plan["flow_variant"], inactive_user_rotation=plan["inactive_user_rotation"])

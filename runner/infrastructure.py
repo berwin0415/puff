@@ -1,4 +1,4 @@
-"""Prepare and grade the shared browser infrastructure inside Docker only."""
+"""仅在 Docker 内准备并判定共享浏览器基础设施。"""
 from __future__ import annotations
 
 import argparse
@@ -77,7 +77,7 @@ def mcp_check(client, evidence):
             payload = response.json()
         records.append({'request': body, 'response': payload})
         if 'error' in payload:
-            raise RuntimeError(f'MCP {method} returned an error')
+            raise RuntimeError(f'MCP {method} 返回错误')
         return payload['result']
 
     rpc('initialize', {'protocolVersion': '2025-11-25', 'capabilities': {},
@@ -125,7 +125,7 @@ def verify(run_id, day):
         'client_validation_blocks_write': primitive['invalid_quantity_rejected'] is True,
     })
     verdict = {'run_id': run_id, 'passed': all(checks.values()), 'assertions': checks,
-               'scope': 'infrastructure only; no candidate or model executed'}
+               'scope': '仅验证基础设施，未执行候选框架或模型'}
     save(evidence / 'verdict.json', verdict)
     print(json.dumps(verdict))
     return 0 if verdict['passed'] else 1

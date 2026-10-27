@@ -1,4 +1,4 @@
-"""Synthetic evidence rejection only; no Docker, candidate, service or model."""
+"""仅校准合成证据的拒绝，不运行 Docker、候选、服务或模型。"""
 from copy import deepcopy
 from datetime import datetime
 import hashlib

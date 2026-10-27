@@ -1,8 +1,7 @@
-"""No-candidate boundary calibration; every child is a fake retained object.
+"""不运行候选的边界校准；所有子进程均为保留对象替身。
 
-These tests do not prove native pause/cancel, two real tasks, resource savings,
-process/container reuse, Docker isolation or production authentication. Their
-HTTP subtests exercise actual local requests against the same request handler.
+不能证明原生暂停、取消、双真实任务、资源节省、进程或容器复用、
+Docker 隔离或生产鉴权。HTTP 子测试通过实际本地请求访问同一处理器。
 """
 from copy import deepcopy
 import base64
@@ -99,11 +98,11 @@ def lab(tmp_path):
 def test_foreign_user_is_rejected_before_any_state_io_or_control(lab, operation, monkeypatch):
     b = lab["start"]("task-b")
     original_files = {path: path.read_bytes() for path in lab["root"].rglob("*") if path.is_file()}
-    forbidden = lambda *a, **k: pytest.fail("foreign request reached supervisor operation")
+    forbidden = lambda *a, **k: pytest.fail("他人请求到达 supervisor 操作")
     for name in ["state", "events", "artifacts", "cancel"]:
         monkeypatch.setattr(lab["supervisor"], name, forbidden)
-    # Foreign scope still rejects before invalid body, cursor, wrong method or
-    # the legitimate task's running/paused/inapplicable-control state.
+    # 外部作用域应先于无效请求体、游标、错误方法以及
+    # 合法任务运行、暂停或控制不适用状态而被拒绝。
     status, payload = lab["request"]("task-b", operation, method="POST", body={"owner": "user-b", "pid": b.process.pid, "path": "/other", "secret": "do-not-audit"}, query={"after": ["bad"]})
     assert (status, payload) == (403, {"error": {"code": "scope_denied"}})
     assert b.process.signals == []
@@ -122,7 +121,7 @@ def test_both_owners_can_query_actual_process_stream_and_file(lab, owner, task):
     status, events = lab["request"](task, "events", owner=owner)
     assert status == 200 and len(events["records"]) == 1
     assert events["records"][0]["record"]["params"]["event"]["data"]["offline_sentinel"] == task
-    assert "scope" not in events["records"][0]["record"]  # Native envelope stays unchanged.
+    assert "scope" not in events["records"][0]["record"]  # 原生响应封装保持不变。
     status, files = lab["request"](task, "artifacts", owner=owner)
     data = base64.b64decode(files["items"][0]["content_base64"])
     assert status == 200 and data == ("actual-offline-file-" + task).encode()
@@ -145,8 +144,8 @@ def test_popen_style_silent_exit_during_send_is_never_logged_as_delivery(lab):
     a = lab["start"]("task-a")
 
     def exited_during_send(value):
-        # Actual POSIX Popen.send_signal may discover an exited child in its
-        # internal poll and return without issuing os.kill or raising an error.
+        # POSIX Popen.send_signal 可能在内部轮询中发现子进程已退出，
+        # 直接返回，不执行 os.kill，也不抛出错误。
         a.process.returncode = 0
         return None
 

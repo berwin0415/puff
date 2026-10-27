@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze official npm release materials without executing any candidate code."""
+"""冻结官方 npm 发布材料，不执行候选代码。"""
 
 import argparse
 import base64
@@ -32,7 +32,7 @@ def digest(data: bytes) -> str:
 def fetch(url: str) -> bytes:
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.netloc != "registry.npmjs.org":
-        raise ValueError("Package materials must come from the official npm registry")
+        raise ValueError('包材料必须来自官方 npm registry')
     with urlopen(url, timeout=60) as response:
         return response.read()
 
@@ -45,7 +45,7 @@ def inventory(root: Path, entries) -> list[dict]:
     result = []
     for path in sorted(entries):
         if not path.is_file() or path.is_symlink():
-            raise ValueError("Registry export contains an unexpected file kind")
+            raise ValueError('registry 导出包含非预期文件类型')
         data = path.read_bytes()
         result.append({"path": path.relative_to(root).as_posix(), "type": "file", "size": len(data), "sha256": digest(data), "mode": path.stat().st_mode & 0o777})
     return result
@@ -55,10 +55,10 @@ def prepare_packages(context: Path):
     registry, packages = context / "registry", context / "packages"
     for path in (registry, packages):
         if path.is_symlink():
-            raise ValueError("Registry staging must not follow links")
+            raise ValueError('准备 registry 材料时不能跟随链接')
         if path.exists():
             if not (context / "REGISTRY_MANIFEST.json").is_file():
-                raise ValueError("Refusing to replace unrecognized registry material")
+                raise ValueError('拒绝替换无法识别的 registry 材料')
             shutil.rmtree(path)
         path.mkdir()
     records = []
@@ -67,7 +67,7 @@ def prepare_packages(context: Path):
         metadata_bytes = fetch(metadata_url)
         metadata = json.loads(metadata_bytes)
         if metadata.get("name") != name or metadata.get("version") != version or metadata.get("dist", {}).get("integrity") != integrity:
-            raise ValueError("Registry metadata does not match frozen release")
+            raise ValueError('registry 元数据与固定发布版本不匹配')
         attestation_url = metadata["dist"]["attestations"]["url"]
         attestation_bytes = fetch(attestation_url)
         attestations = json.loads(attestation_bytes)
@@ -75,22 +75,22 @@ def prepare_packages(context: Path):
         tarball = fetch(tarball_url)
         sha512 = hashlib.sha512(tarball).digest()
         if "sha512-" + base64.b64encode(sha512).decode() != integrity or hashlib.sha1(tarball).hexdigest() != metadata["dist"]["shasum"]:
-            raise ValueError("Published tarball integrity mismatch")
+            raise ValueError('发布 tar 包完整性不匹配')
         provenance = []
         for attestation in attestations["attestations"]:
             statement = json.loads(base64.b64decode(attestation["bundle"]["dsseEnvelope"]["payload"], validate=True))
             if not any(subject.get("digest", {}).get("sha512") == sha512.hex() for subject in statement.get("subject", [])):
-                raise ValueError("Attestation subject does not match exact tarball")
+                raise ValueError('证明对象与确切 tar 包不匹配')
             if statement.get("predicateType") == "https://slsa.dev/provenance/v1":
                 definition = statement["predicate"]["buildDefinition"]
                 workflow = definition["externalParameters"]["workflow"]
                 if workflow.get("repository") != "https://github.com/openai/codex" or workflow.get("ref") != "refs/tags/rust-v0.163.0":
-                    raise ValueError("Wrong official release workflow")
+                    raise ValueError('官方发布工作流不匹配')
                 if not any(item.get("uri", "").startswith("git+https://github.com/openai/codex@") and item.get("digest", {}).get("gitCommit") == COMMIT for item in definition["resolvedDependencies"]):
-                    raise ValueError("Published release provenance uses a different source commit")
+                    raise ValueError('发布来源证明使用了不同的源码提交')
                 provenance.append(statement)
         if not provenance:
-            raise ValueError("Missing source-linked SLSA provenance")
+            raise ValueError('缺少关联源码的 SLSA 来源证明')
         (registry / f"{label}.metadata.json").write_bytes(metadata_bytes)
         (registry / f"{label}.attestations.json").write_bytes(attestation_bytes)
         (registry / f"{label}.tgz").write_bytes(tarball)
@@ -101,28 +101,28 @@ def prepare_packages(context: Path):
             for member in archive.getmembers():
                 relative = PurePosixPath(member.name)
                 if relative.is_absolute() or not relative.parts or relative.parts[0] != "package" or any(part in (".", "..") or part.lower() == "old" for part in relative.parts):
-                    raise ValueError("Unsafe package tar path")
+                    raise ValueError('包内 tar 路径不安全')
                 if member.isdir():
                     continue
                 if not member.isfile() or member.name in seen or len(relative.parts) < 2:
-                    raise ValueError("Unexpected package member kind or duplicate")
+                    raise ValueError('包成员类型不符合预期或存在重复')
                 seen.add(member.name)
                 destination = target.joinpath(*relative.parts[1:])
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 content = archive.extractfile(member).read()
                 if len(content) != member.size:
-                    raise ValueError("Truncated package member")
+                    raise ValueError('包成员内容被截断')
                 destination.write_bytes(content)
                 destination.chmod(0o755 if member.mode & 0o111 else 0o644)
         package = json.loads((target / "package.json").read_bytes())
         if package.get("name") != name or package.get("version") != version or package.get("dependencies", {}) != metadata.get("dependencies", {}):
-            raise ValueError("Exported package metadata mismatch")
+            raise ValueError('导出的包元数据不匹配')
         if label == "sdk" and package.get("dependencies") != {"@openai/codex": "0.163.0"}:
-            raise ValueError("Unexpected SDK runtime dependency closure")
+            raise ValueError('SDK 运行时依赖集合不符合预期')
         if label == "cli" and (package.get("dependencies") or package.get("optionalDependencies", {}).get("@openai/codex-linux-arm64") != "npm:@openai/codex@0.163.0-linux-arm64"):
-            raise ValueError("Unexpected CLI platform dependency closure")
+            raise ValueError('CLI 平台依赖集合不符合预期')
         if label == "linux-arm64" and (package.get("dependencies") or package.get("optionalDependencies") or package.get("os") != ["linux"] or package.get("cpu") != ["arm64"]):
-            raise ValueError("Unexpected platform runtime dependency closure")
+            raise ValueError('平台运行时依赖集合不符合预期')
         records.append({"id": label, "name": name, "version": version, "install_name": install_name, "integrity": integrity, "tarball_sha256": digest(tarball), "metadata_url": metadata_url, "tarball_url": tarball_url, "attestation_url": attestation_url, "source_commit": COMMIT, "provenance_check": "HTTPS_registry_material_and_subject_and_workflow_and_commit;_Sigstore_signature_chain_not_independently_verified"})
     files = inventory(context, list(registry.rglob("*.*")) + [path for path in packages.rglob("*") if path.is_file()])
     manifest = {"schema": "harness-lab-npm-release-manifest/1", "candidate": "codex_sdk", "created_at": datetime.now(timezone.utc).isoformat(), "source_commit": COMMIT, "target": "linux-arm64", "packages": records, "files": files, "export_sha256": digest(json.dumps(files, sort_keys=True).encode())}
@@ -132,25 +132,25 @@ def prepare_packages(context: Path):
 def stage(context: Path, repository: Path, *, fetch_packages=False) -> dict:
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage archived materials")
+        raise ValueError('不能准备归档中的材料')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     pins = source.get("sources", [])
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "codex_sdk" or source.get("export_sha256") != EXPORT_HASH or len(pins) != 1:
-        raise ValueError("Wrong official source context")
+        raise ValueError('官方源码上下文不匹配')
     pin = pins[0]
     if pin.get("commit") != COMMIT or pin.get("sha256") != ARCHIVE_HASH or pin.get("observed_archive_sha256") != ARCHIVE_HASH or pin.get("dirty") is not None:
-        raise ValueError("Wrong or unverified source archive")
+        raise ValueError('源码归档不匹配或未经核验')
     if fetch_packages:
         prepare_packages(context)
     release_bytes = (context / "REGISTRY_MANIFEST.json").read_bytes()
     release = json.loads(release_bytes)
     if release.get("schema") != "harness-lab-npm-release-manifest/1" or release.get("source_commit") != COMMIT or len(release.get("packages", [])) != 3:
-        raise ValueError("Prepare the frozen three-package closure with --fetch-packages")
+        raise ValueError('请先使用 --fetch-packages 准备固定的三个包及完整依赖集合')
     destination = context / "harness-lab"
     if destination.exists():
         if destination.is_symlink() or not (context / "LAB_ADAPTER_MANIFEST.json").is_file():
-            raise ValueError("Refusing to replace unstaged adapter")
+            raise ValueError('拒绝替换未经准备登记的适配器')
         shutil.rmtree(destination)
     destination.mkdir()
     for name in ADAPTER_FILES:

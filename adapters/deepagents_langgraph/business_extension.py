@@ -1,8 +1,7 @@
-"""Business observations in a public LangGraph state channel, without a runner.
+"""通过公开 LangGraph 状态通道保存业务观测，不另建运行器。
 
-The reducer merges completed observations so concurrent tool calls cannot replace
-one another's state. Only actual tool responses can confirm a receipt. Nothing
-here performs a receipt query, advances a task or replays a user prompt.
+归并器合并已完成的观测，避免并发工具调用互相覆盖状态。
+只有实际工具响应才能确认回执。此处不查询回执、推进任务或重放用户提示词。
 """
 
 from copy import deepcopy
@@ -17,7 +16,7 @@ def new_business_state(scope):
 def quantity_denial(arguments, quantity_limit):
     quantity = arguments.get("quantity")
     if type(quantity) is int and quantity > quantity_limit:
-        return {"error": "Business write quantity exceeds the execution rule", "reason": "quantity_limit_exceeded",
+        return {"error": "业务写入数量超过执行规则的限制", "reason": "quantity_limit_exceeded",
             "approval_required": False, "quantity": quantity, "quantity_limit": quantity_limit,
             "operation_id": arguments.get("operation_id"), "http_forwarded": False}
     return None
@@ -54,18 +53,18 @@ def observation_delta(scope, call_id, tool, arguments, status, payload, source):
 
 
 def merge_business_state(left, right):
-    """Public state-channel reducer; complete tool observations are immutable."""
+    """公开状态通道归并器；完整工具观测不可变。"""
     if not left:
         left = new_business_state(right["scope"])
     if not right:
         return deepcopy(left)
     if left.get("schema_version") != 1 or right.get("schema_version") != 1 or left.get("scope") != right.get("scope"):
-        raise ValueError("Business state scope/schema mismatch")
+        raise ValueError("业务状态的作用域或结构不匹配")
     state = new_business_state(left["scope"])
     observations = {**deepcopy(left["observations"]), **deepcopy(right["observations"])}
     for call_id in left["observations"].keys() & right["observations"].keys():
         if left["observations"][call_id] != right["observations"][call_id]:
-            raise ValueError("A native tool call has conflicting business observations")
+            raise ValueError("同一次原生工具调用出现相互冲突的业务观测")
     state["observations"] = observations
     for call_id, observed in sorted(observations.items(), key=lambda item: (item[1]["observed_at_ns"], item[0])):
         operation = observed["operation_id"]
@@ -86,15 +85,15 @@ def read_business_state(values, expected_scope):
     if (not isinstance(state, dict) or state.get("schema_version") != 1 or state.get("scope") != expected_scope
             or not isinstance(state.get("operations"), dict) or not isinstance(state.get("observations"), dict)
             or type(state.get("receipt_confirmed")) is not bool):
-        raise ValueError("Native graph state lacks the trusted business channel")
+        raise ValueError("原生图状态缺少可信业务通道")
     rebuilt = merge_business_state(new_business_state(expected_scope), state)
     if rebuilt != state:
-        raise ValueError("Native business state projection is inconsistent with observations")
+        raise ValueError("原生业务状态投影与观测记录不一致")
     return deepcopy(state)
 
 
 def state_schema():
-    """Build the documented custom DeepAgentState only inside the candidate."""
+    """仅在候选内部构建文档所述的自定义 DeepAgentState。"""
     from typing import Annotated
     from deepagents import DeepAgentState
 

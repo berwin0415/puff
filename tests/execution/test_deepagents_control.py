@@ -1,7 +1,7 @@
-"""Docker-bench calibration of signal glue; no candidate SDK or model runs.
+"""在 Docker 验收程序中校准信号接线，不运行候选 SDK 或模型。
 
-The public-control double checks evidence wiring only. Real GraphDrained and
-checkpoint behavior must still be verified with the candidate container.
+公开控制替身只核对证据接线；真实 GraphDrained 与 checkpoint
+行为仍需在候选容器中验证。
 """
 from importlib.util import module_from_spec, spec_from_file_location
 import hashlib

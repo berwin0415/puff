@@ -1,4 +1,4 @@
-"""Unrun fake-child/unit-file calibration; no Docker, SDK, model or native proof."""
+"""假子进程与单元文件校准初稿，不运行 Docker、SDK、模型或原生能力证明。"""
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -23,9 +23,9 @@ class Child:
 
 @pytest.fixture
 def fixed_worker(tmp_path, monkeypatch):
-    # Test-only object assembly permits temporary paths and a fake Popen.
-    # Production construction separately enforces /config,/state,/workspace,
-    # /evidence, immutable mounts and the original DA argv.
+    # 仅测试对象组装允许临时路径和假 Popen。
+    # 正式构造仍独立校验 /config、/state、/workspace、
+    # /evidence、不可变挂载和原始 Deep Agents 命令参数。
     root = tmp_path
     for name in ("state", "workspace", "config", "evidence", "private"):
         (root / name).mkdir()
@@ -126,8 +126,8 @@ def test_credential_is_checked_before_body_fields_or_child_start(fixed_worker):
 def closed_materials(fixed_worker):
     worker = fixed_worker["worker"]
     task = worker.task
-    # Deliberately not a valid SQLite DB: this calibrates integrity checks only.
-    # The real I22 child independently opens SQLite and reads the graph state.
+    # 刻意使用无效 SQLite 数据库，只校准完整性检查。
+    # 真实 I22 子进程会独立打开 SQLite 并读取图状态。
     (task.state_dir / "checkpoints.sqlite").write_bytes(b"offline-calibration-bytes")
     (task.workspace / "result.txt").write_text("offline-write-sentinel")
     snapshot = {"config": {"configurable": {"thread_id": "main", "checkpoint_id": "checkpoint-one"}},

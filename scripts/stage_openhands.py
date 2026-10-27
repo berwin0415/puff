@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage only experiment-owned files beside the already verified SDK export."""
+"""仅在已核验的 SDK 导出旁准备实验文件。"""
 
 import argparse
 import hashlib
@@ -25,20 +25,20 @@ def digest(data):
 def stage(context, repository):
     context = context.resolve()
     if any(part.lower() == "old" for part in context.parts):
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     records = source.get("sources", [])
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "openhands" or len(records) != len(PINS) or {entry.get("id") for entry in records} != set(PINS):
-        raise ValueError("Expected the current verified OpenHands export")
+        raise ValueError('需要当前已核验的 OpenHands 导出')
     for entry in records:
         commit, archive_hash = PINS[entry["id"]]
         if entry.get("kind") != "archive" or entry.get("commit") != commit or entry.get("sha256") != archive_hash or entry.get("observed_archive_sha256") != archive_hash or entry.get("dirty") is not None:
-            raise ValueError("Wrong or unverified source archive")
+            raise ValueError('源码归档不匹配或未经核验')
     destination = context / "harness-lab"
     if destination.exists():
         if destination.is_symlink() or not (context / "LAB_ADAPTER_MANIFEST.json").is_file():
-            raise ValueError("Refusing to replace unstaged adapter materials")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []

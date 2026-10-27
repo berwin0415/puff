@@ -1,8 +1,7 @@
-"""Observe a trusted signal calling the public streaming-result cancellation API.
+"""观测可信信号对公开流式结果取消 API 的调用。
 
-This stdlib bridge never cancels an asyncio task or blocks a tool. Official
-hooks establish live activity; the SDK owns cancellation and stream settlement.
-It does not invent the DSH idle/aborted event vocabulary for this SDK.
+此标准库桥接器不取消 asyncio 任务，也不阻塞工具。官方钩子用于确认
+真实活跃状态，取消与流收尾由 SDK 负责。不为此 SDK 伪造 DSH 的 idle/aborted 事件。
 """
 from datetime import datetime, timezone
 
@@ -33,7 +32,7 @@ class NativeCancelControl:
         self.active.pop((kind, key), None)
 
     def tool_started(self, source, tool_name, call_id):
-        # Observation only: no guard, delay, retry, suppression or replacement.
+        # 仅做观测：不拦截、延迟、重试、抑制或替换。
         self.tool_starts.append({"tool": tool_name, "call_id": call_id, "source": source})
         self.activity_start("tool", source, call_id or tool_name)
 
@@ -68,8 +67,8 @@ class NativeCancelControl:
         try:
             self.request_source = self.evidence.append("control-events.jsonl", {
                 **base, "time": self.now(), "phase": "requested", "api_executed": False, "cancel_confirmed": False})
-            # This is the public SDK API, called in the run's own event loop.
-            # Continue consuming its existing stream afterwards as documented.
+            # 这是公开 SDK API，在本次运行自身的事件循环中调用。
+            # 随后按文档要求继续消费现有流。
             result.cancel(mode="immediate")
             self.api_executed = True
             self.api_source = self.evidence.append("control-events.jsonl", {
@@ -82,7 +81,7 @@ class NativeCancelControl:
                 "error_type": type(error).__name__, "error": str(error), "request_source": self.request_source})
 
     def stream_closed(self, agent_end_events):
-        """Called only after the original async-for has ended without an error."""
+        """仅在原始 async-for 无错误结束后调用。"""
         result = self.get_result()
         error = result.run_loop_exception
         terminal = {"is_complete": result.is_complete, "current_turn": result.current_turn,
@@ -104,8 +103,8 @@ class NativeCancelControl:
                 "native_terminal": terminal, "source": source, "activity_source": self.request_record["source"],
                 "request_source": self.request_source, "api_source": self.api_source,
                 "tool_start_observations": self.tool_starts,
-                "confirmation_basis": "public cancel returned; original stream exhausted; no native final output or error",
-                "in_flight_effects": "Already dispatched HTTP effects cannot be recalled; independent audit is required"})
+                "confirmation_basis": "公开取消接口已返回，原始流已消费完毕；无原生最终输出或错误",
+                "in_flight_effects": "已发出的 HTTP 操作无法撤回；必须独立核查其影响"})
         self.active.clear()
         return {"confirmed": confirmed, "native_terminal": terminal, "source": source,
                 "control_source": confirmation}

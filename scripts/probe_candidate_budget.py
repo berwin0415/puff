@@ -1,7 +1,6 @@
-"""Host Docker orchestration for a real candidate retry probe with a mock API.
+"""通过宿主编排 Docker，使用模拟 API 探测真实候选重试。
 
-Use a fresh --run-id. Rebuild the bench image after adding runner/model_probe.py.
-All preparation, mock HTTP handling, SQLite inspection and verdicts run in Docker.
+请使用新的 --run-id。添加 runner/model_probe.py 后需重建 bench 镜像。所有准备、模拟 HTTP 处理、SQLite 检查和判定均在 Docker 内执行。
 """
 from __future__ import annotations
 
@@ -25,17 +24,17 @@ def run_probe(run_id: str, seed=101, candidate='deepseek_harness'):
     lab = Lab()
     candidate_service = CANDIDATES[candidate][0]
     if any(row["state"]["Running"] for row in lab.containers()):
-        raise RuntimeError("Finish the active harness-lab experiment first")
+        raise RuntimeError('请先结束正在运行的 harness-lab 实验')
     lab.config.initialize_layout()
     day = datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
     paths = lab.config.paths_for("screening", run_id, candidate, "alice", "main", run_id, case="tools", date=day)
     if any(path.exists() for path in (paths.run, paths.fixture, paths.state, paths.budget, paths.workspace)):
-        raise RuntimeError("Run ID already exists; choose a new budget probe ID")
+        raise RuntimeError('运行 ID 已存在；请为预算探针选择新 ID')
     project = "harness-lab-budget-" + hashlib.sha256(run_id.encode()).hexdigest()[:12]
     paths.fixture.mkdir(parents=True, exist_ok=False)
     override = paths.fixture / "budget-probe.compose.yaml"
-    # --env-file /dev/null prevents Compose's automatic root .env loading;
-    # !reset removes the proxy's explicit env_file before it is resolved.
+    # --env-file /dev/null 阻止 Compose 自动加载根目录 .env；
+    # !reset 在解析前移除代理显式配置的 env_file。
     override.write_text("""services:
   model-proxy:
     env_file: !reset []
@@ -100,7 +99,7 @@ networks:
         if (proxy.get("env_file") or proxy["environment"].get("MODEL_API_BASE_URL") != "http://model-stub:8090/v1"
                 or proxy["environment"].get("MODEL_API_KEY") != "fake-probe-upstream-key"
                 or resolved["networks"]["lab"].get("internal") is not True):
-            raise RuntimeError("Mock-only Compose configuration was not applied")
+            raise RuntimeError('未应用仅使用模拟服务的 Compose 配置')
         expected_image = lab.call(["docker", "image", "inspect", resolved["services"][candidate_service]["image"],
                                    "--format", "{{.Id}}"], capture=True, timeout=10).stdout.strip()
         manifest.update({"expected_candidate_service": candidate_service, "expected_candidate_image_id": expected_image})
@@ -130,7 +129,7 @@ networks:
             record["command_exit"] = command_exit
             manifest["rounds"].append(record)
             if record["compose_service"] != candidate_service or record["image_id"] != expected_image:
-                raise RuntimeError("Unexpected candidate service or image; refusing candidate verdict")
+                raise RuntimeError('候选服务或镜像不符合预期；拒绝生成候选判定')
             log = lab.call(["docker", "logs", names[index]], capture=True, check=False, timeout=10)
             (paths.run / label / "candidate.log").write_text(log.stdout + log.stderr)
             bench("-m", "runner.model_probe", "snapshot", "--budget", container_run.budget / "calls.sqlite",
@@ -146,9 +145,9 @@ networks:
                 lab.compose("up", "-d", "--no-build", "model-proxy")
                 lab.wait_health("model-proxy", 8082)
     except Exception as exc:
-        manifest["errors"].append(type(exc).__name__ + ": budget probe command failed; inspect retained evidence")
+        manifest["errors"].append(type(exc).__name__ + '：预算探针命令失败；请检查保留的证据')
     finally:
-        # Stop the candidate and every model exit before evidence I/O or checks.
+        # 在证据 I/O 或检查前，停止候选与全部模型出口。
         lab.halt(names=names, services=("model-proxy", "model-stub"))
         try:
             if paths.run.exists():
@@ -164,11 +163,11 @@ networks:
                                     check=False, timeout=30).returncode
                 else:
                     save(paths.run / "budget-probe-verdict.json", {"passed": False, "real_model_called": False,
-                                                                 "errors": manifest["errors"] or ["Incomplete rounds"]})
+                                                                 "errors": manifest["errors"] or ['轮次未完整结束']})
         finally:
             lab.cleanup(("model-proxy", "model-stub", "tools", "fixtures"), names=names)
-            # This project and its internal network belong only to this probe;
-            # bind-mounted evidence and state survive down without --volumes.
+            # 本项目及内部网络仅属于本探针；
+            # 不使用 --volumes 时，down 后仍保留绑定挂载的证据和状态。
             lab.compose("down", "--remove-orphans", capture=True, check=False, timeout=20)
     print(json.dumps({"run_id": run_id, "passed": outcome == 0, "real_model_called": False, "evidence": str(paths.run)}))
     return outcome

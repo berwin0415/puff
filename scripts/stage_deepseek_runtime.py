@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Stage a NEW I24 overlay from frozen I22 bytes; never overwrite materials.
+"""从冻结的 I22 文件准备新的 I24 覆盖层；不覆盖已有材料。
 
-Source export must already exist. This does not start Docker, import a candidate,
-run tests or access credentials. The later image verifier checks the full tree.
+源码导出必须已存在。此脚本不启动 Docker、导入候选、运行测试或访问凭证。后续镜像核验器会检查完整目录树。
 """
 from __future__ import annotations
 
@@ -36,7 +35,7 @@ def source_manifest(context):
     if (value.get("schema") != "harness-lab-source-manifest/1" or value.get("candidate") != "deepseek_harness"
             or len(sources) != 1 or sources[0].get("id") != "main" or sources[0].get("commit") != COMMIT
             or sources[0].get("observed_commit") != COMMIT or sources[0].get("dirty") is not False):
-        raise ValueError("Frozen clean DSH source export required")
+        raise ValueError('需要冻结且干净的 DSH 源码导出')
     return raw, value
 
 
@@ -44,49 +43,49 @@ def stage(context, base_context, repository=ROOT):
     repository = Path(repository).resolve()
     raw_context, raw_base = Path(context).absolute(), Path(base_context).absolute()
     if any(path.is_symlink() for root in (raw_context, raw_base) for path in (root, *root.parents)):
-        raise ValueError("Linked staging paths are forbidden")
+        raise ValueError('准备路径禁止使用链接')
     context, base = raw_context.resolve(), raw_base.resolve()
     allowed = repository / "external/build-context"
     if (not context.is_relative_to(allowed) or context == allowed or context == base
             or context.is_relative_to(base) or base.is_relative_to(context)
             or "old" in context.parts or "old" in base.parts
             or context.name in {"deepseek_harness", "deepseek_harness-pause", "deepseek_harness-fault"}):
-        raise ValueError("Separate current I24 context required")
+        raise ValueError('需要独立的当前 I24 上下文')
     if any((context / name).exists() or (context / name).is_symlink() for name in
            ("harness-lab", "Dockerfile", ".dockerignore", "LAB_ADAPTER_MANIFEST.json", "LAB_RUNTIME_MANIFEST.json")):
-        raise ValueError("Runtime staging cannot overwrite existing materials")
+        raise ValueError('准备运行时不能覆盖现有材料')
     raw_source, source = source_manifest(context)
     base_source_raw, base_source = source_manifest(base)
     if source.get("export_sha256") != base_source.get("export_sha256") or source.get("files") != base_source.get("files"):
-        raise ValueError("I24 source tree must match the frozen I22 export")
+        raise ValueError('I24 源码树必须与冻结的 I22 导出一致')
     base_manifest_raw = (base / "LAB_ADAPTER_MANIFEST.json").read_bytes()
     manifest = json.loads(base_manifest_raw)
     if (manifest.get("schema") != "harness-lab-adapter-manifest/1" or manifest.get("candidate") != "deepseek_harness"
             or manifest.get("source_manifest_sha256") != sha(base_source_raw)):
-        raise ValueError("Frozen I22 adapter/source binding required")
+        raise ValueError('需要冻结的 I22 适配器与源码绑定')
     entries, payloads = {}, {}
     for entry in manifest.get("files", []):
         relative = Path(entry["path"])
         if (relative.is_absolute() or ".." in relative.parts or "old" in relative.parts
                 or not relative.is_relative_to("harness-lab") or entry.get("type") != "file"
                 or entry["path"] in entries):
-            raise ValueError("Bound regular I22 adapter files required")
+            raise ValueError('需要已绑定且为普通文件的 I22 适配材料')
         origin = base / relative
         if any(path.is_symlink() for path in (origin, *origin.parents)):
-            raise ValueError("Linked frozen adapter source")
+            raise ValueError('冻结的适配源码含链接')
         data = origin.read_bytes()
         if sha(data) != entry.get("sha256") or len(data) != entry.get("size"):
-            raise ValueError("Frozen I22 adapter bytes changed")
+            raise ValueError('冻结的 I22 适配材料内容已变化')
         entries[entry["path"]], payloads[entry["path"]] = dict(entry), data
     if (set(entries) != {"harness-lab/" + name for name in GOAL_FILES}
             or sha(json.dumps(manifest["files"], sort_keys=True).encode()) != manifest.get("export_sha256")):
-        raise ValueError("Verified I22 Goal adapter inventory required")
+        raise ValueError('需要已核验的 I22 Goal 适配器清单')
     sources = []
     for name in OVERLAYS:
         data = (repository / name).read_bytes()
         relative = "harness-lab/" + name
         if relative in entries:
-            raise ValueError("I24 overlay cannot replace a frozen I22 adapter file")
+            raise ValueError('I24 覆盖层不能替换冻结的 I22 适配文件')
         payloads[relative] = data
         entries[relative] = {"path": relative, "type": "file", "size": len(data), "sha256": sha(data)}
         sources.append({"repository_path": name, "image_material_path": relative, "sha256": sha(data), "size": len(data)})
@@ -95,8 +94,8 @@ def stage(context, base_context, repository=ROOT):
     manifest = {**manifest, "source_manifest_sha256": sha(raw_source), "runtime_variant": "multi-user",
         "base_adapter_export_sha256": manifest["export_sha256"], "files": sorted(entries.values(), key=lambda item: item["path"])}
     manifest["export_sha256"] = sha(json.dumps(manifest["files"], sort_keys=True).encode())
-    # All reads/validation precede writes. A partially failed context remains
-    # visible and cannot be silently retried or written over.
+    # 先完成全部读取和核验，再写入。部分失败的上下文仍然可见，
+    # 不能静默重试或覆盖。
     (context / "harness-lab").mkdir()
     for name, data in payloads.items():
         destination = context / name

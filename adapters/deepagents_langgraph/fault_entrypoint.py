@@ -1,7 +1,7 @@
-"""Separate I23 tools runtime; natural SQLite crash recovery, no pause hooks.
+"""独立 I23 工具运行时；采用 SQLite 自然故障恢复，不使用暂停钩子。
 
-A and B use this identical image/graph. Only B's input changes to None. No
-model/tool call, state repair or synthetic checkpoint occurs before native run.
+A 和 B 使用完全相同的镜像和图，仅 B 的输入改为 None。
+原生运行前不调用模型或工具，不修复状态，也不合成检查点。
 """
 from __future__ import annotations
 
@@ -25,28 +25,28 @@ def request_from_file():
     from pause_recovery import _json, _read_file
     request = _json(_read_file(trusted_path(args.request), 65536))
     if not isinstance(request, dict):
-        raise ValueError("I23 request must be a JSON object")
+        raise ValueError("I23 请求必须是 JSON 对象")
     control = validate_request(request)
     fields = {"run_id", "session_id", "workspace", "state_dir", "output_dir", "tools_url", "tool_token_file",
         "max_output_tokens", "timeout_seconds", "max_retries", "candidate_options", "fault_recovery"}
     if control["mode"] == "new":
         fields.add("prompt")
     if set(request) != fields:
-        raise ValueError("Unexpected I23 run fields; resume input must remain None")
+        raise ValueError("I23 运行字段不符合预期；恢复输入必须保持 None")
     from detailed_support import IDENTIFIER
     if any(not isinstance(request[key], str) or not IDENTIFIER.fullmatch(request[key]) for key in ("run_id", "session_id")):
-        raise ValueError("Invalid I23 original identity")
+        raise ValueError("I23 原始身份无效")
     if control["mode"] == "new" and (not isinstance(request["prompt"], str) or not 0 < len(request["prompt"]) <= 65536):
-        raise ValueError("Invalid original I23 objective")
+        raise ValueError("I23 原始目标无效")
     for key, expected in {"workspace": "/workspace", "state_dir": "/state", "output_dir": "/evidence",
             "tool_token_file": "/config/scope.token", "tools_url": "http://tools:8081"}.items():
         if request[key] != expected:
-            raise ValueError("I23 fixed mount/service identity changed")
+            raise ValueError("I23 固定挂载或服务标识发生变化")
         if key != "tools_url":
             trusted_path(expected, directory=key in {"workspace", "state_dir", "output_dir"})
     for key, maximum in (("max_output_tokens", 16384), ("timeout_seconds", 300), ("max_retries", 2)):
         if type(request[key]) is not int or not (0 if key == "max_retries" else 1) <= request[key] <= maximum:
-            raise ValueError("I23 invalid request budget")
+            raise ValueError("I23 请求预算无效")
     return request
 
 
@@ -57,7 +57,7 @@ async def main():
     scope = read_scope("/config/scope.json", request["session_id"])
     if (os.environ.get("MODEL_API_BASE_URL") != "http://model-proxy:8082/v1" or not os.environ.get("MODEL_NAME")
             or os.environ.get("MODEL_RUN_TOKEN_FILE") != "/budget/run.token" or os.environ.get("MODEL_API_KEY")):
-        raise ValueError("I23 requires the original counted model token")
+        raise ValueError("I23 必须使用原始计量模型令牌")
     token, tool_token = read_token("/budget/run.token"), read_token("/config/scope.token")
     lifecycle = CrashRecovery(request, scope, provenance, token, started)
     output = Path(request["output_dir"])
@@ -83,7 +83,7 @@ async def main():
             return evidence.append("http-events.jsonl", {"time": evidence.now(), "scope": scope, **event})
         tools = HttpTools(request["tools_url"], tool_token, request["timeout_seconds"],
             on_event=observe_http, evidence=evidence, scope=scope)
-        # Fetching tool definitions has no model or business write side effect.
+        # 获取工具定义不会触发模型调用或业务写入副作用。
         async with asyncio.timeout(lifecycle.remaining()):
             provided = await tools.load()
         definitions = [{"name": tool.name.removeprefix("lab_"), "description": tool.description,
@@ -93,7 +93,7 @@ async def main():
             "started_at": datetime.now(timezone.utc).isoformat(), "provenance": provenance, "variant": "fault-recovery",
             "factory": "deepagents.create_deep_agent", "runtime_sha256": runtime_hash,
             "fault_recovery": request["fault_recovery"], "durability": "sync", "pause_hooks_installed": False,
-            "source_of_execution_state": "original /state/checkpoints.sqlite including natural WAL and pending writes"})
+            "source_of_execution_state": "原始 /state/checkpoints.sqlite，包括自然产生的 WAL 和待写入记录"})
         async with AsyncSqliteSaver.from_conn_string(str(Path(request["state_dir"]) / "checkpoints.sqlite")) as saver:
             graph = create_deep_agent(model=model, tools=provided, system_prompt=TOOLS_SYSTEM_PROMPT,
                 checkpointer=saver, interrupt_on=None)
@@ -105,7 +105,7 @@ async def main():
             else:
                 previous = await graph.aget_state(config)
                 if previous.values:
-                    raise ValueError("New I23 task must not reuse native progress")
+                    raise ValueError("新 I23 任务不得复用原生进度")
                 initial = {"messages": [{"role": "user", "content": request["prompt"]}]}
             async with asyncio.timeout(lifecycle.remaining()):
                 async for mode, event in graph.astream(initial, config=config,

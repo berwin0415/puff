@@ -13,9 +13,9 @@ dependencies = [
     "langchain-core==1.6.11",
     "langchain-openai==1.7.2",
     "httpx==0.28.1",
-    # I19 browser variant uses the official MCP SDK's public client APIs.
+    # I19 浏览器变体使用官方 MCP SDK 的公开客户端 API。
     "mcp==1.28.1",
-    # Locked build tools are installed before building the six local packages.
+    # 构建六个本地包之前，先安装锁定的构建工具。
     "setuptools==83.0.0",
     "wheel==0.46.3",
     "hatchling==1.28.0",
@@ -26,8 +26,8 @@ package = false
 environments = ["sys_platform == 'linux' and platform_machine == 'aarch64'"]
 
 [tool.uv.sources]
-# Match upstream's transitive path declarations during resolution; Docker's
-# --no-editable builds immutable installed wheels from these exact paths.
+# 解析时匹配上游的传递路径声明；Docker 的
+# --no-editable 从这些精确路径构建不可变的已安装 wheel。
 deepagents = { path = "../sources/deepagents/libs/deepagents", editable = true }
 langgraph = { path = "../sources/langgraph/libs/langgraph", editable = true }
 langgraph-checkpoint = { path = "../sources/langgraph/libs/checkpoint", editable = true }
@@ -35,9 +35,9 @@ langgraph-checkpoint-sqlite = { path = "../sources/langgraph/libs/checkpoint-sql
 langgraph-prebuilt = { path = "../sources/langgraph/libs/prebuilt", editable = true }
 langgraph-sdk = { path = "../sources/langgraph/libs/sdk-py", editable = true }
 
-# This is the exact pinned SDK source metadata. It lets uv resolve its dynamic
-# version without executing an upstream build backend on the host. The image
-# builds the package and the verifier checks the resulting installed version.
+# 这是精确固定的 SDK 源码元数据，供 uv 解析其动态版本，
+# 无需在宿主机执行上游构建后端。镜像负责构建软件包，
+# 校验器检查最终安装版本。
 [[tool.uv.dependency-metadata]]
 name = "langgraph-sdk"
 version = "0.4.8"

@@ -1,4 +1,4 @@
-"""One fixed DSH Goal attempt per container; no SDK imports in the HTTP wrapper."""
+"""每个容器只运行固定的 DSH Goal 尝试；HTTP 包装层不导入 SDK。"""
 from __future__ import annotations
 
 import argparse
@@ -16,7 +16,7 @@ from runner.shared_supervisor import (BoundaryError, OwnedAttempt, TaskSuperviso
 
 
 class DSHAttemptWorker(SingleAttemptWorker):
-    """Reuse private HTTP/retained-process controls, never the DA verifier."""
+    """复用私有 HTTP 与子进程控制，不复用 Deep Agents 校验器。"""
     def __init__(self, policy, policy_sha256, journal, *, popen_factory=subprocess.Popen,
                  identity_reader=linux_process_identity):
         _fields(policy, {"schema", "worker_id", "mode", "task", "control_token_file", "private_root"})
@@ -79,8 +79,8 @@ class DSHAttemptWorker(SingleAttemptWorker):
 
     def signal_control(self, action, request_id):
         result = super().signal_control(action, request_id)
-        # This describes the requested public API, never a native capability
-        # or completion claim. The fixed I17 runtime has a known terminal gap.
+        # 这里只描述请求的公开接口，不代表原生能力或完成结论；
+        # 固定 I17 运行时仍有已知终态证据缺口。
         return {**result, "semantics": d.SEMANTICS[action], "immediate_cancel": False,
             "immediate_cancel_requested": action == "cancel",
             "native_request_id_transport": "POSIX_signal_without_HTTP_request_id"}

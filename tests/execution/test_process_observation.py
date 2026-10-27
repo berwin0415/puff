@@ -1,7 +1,7 @@
-"""Adversarial process-evidence calibration; no Docker/candidate/model is invoked.
+"""进程证据的对抗性校准，不调用 Docker、候选或模型。
 
-Run these tests in the rebuilt bench image. Synthetic records exercise the same
-host manifest projection retained by screening and detailed orchestration.
+在重建的验收镜像中运行。合成记录使用与初筛及详细编排
+留存清单相同的宿主进程投影。
 """
 from copy import deepcopy
 from dataclasses import asdict, replace
@@ -28,7 +28,7 @@ def evidence():
               "state": state, "memory_limit": expected.memory_limit, "cpu_nano": expected.cpu_nano}
     identity = {key: getattr(expected, key) for key in ("run_id", "candidate", "case")}
     host = {**identity, "candidate_exit_code": 0}
-    # A service may be active; another may have been killed during normal cleanup.
+    # 某个服务可能仍活跃，另一个可能已在正常清理时终止。
     manifest = {**host, "containers": [worker,
         {"id": "c" * 64, "name": "/harness-lab-fixtures-1", "image_id": "sha256:" + "d" * 64,
          "image_tag": "harness-lab-services:local", "state": {"Running": True}},
@@ -47,7 +47,7 @@ def test_healthy_unique_worker_does_not_require_services_to_be_exited(evidence):
     assert result["passed"]
     assert all(check["passed"] is True for check in result["checks"])
     assert evidence == original
-    assert "no task" in result["claim"]
+    assert '不对任务' in result["claim"]
 
 
 def test_declared_native_cancel_exit_one_is_not_treated_as_task_success(evidence):
@@ -223,7 +223,7 @@ def test_container_cli_writes_separate_audit_once_and_summarizes_only_identity_s
     paths = stored(tmp_path, evidence)
     output = tmp_path / "process-audit.json"
     args = ["--run-dir", str(tmp_path), "--output", str(output)]
-    assert process.main(args) == 1  # Unknown identity is not healthy strict acceptance.
+    assert process.main(args) == 1  # 身份未知不能算作严格健康验收通过。
     summary = json.loads(capsys.readouterr().out)
     assert summary["run_id"] == evidence[2].run_id and summary["status"] == "unknown"
     assert "observed_worker" not in summary and "sources" not in summary

@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Stage experiment-owned files beside verified DeepAgents/LangGraph sources.
+"""在已核验的 DeepAgents/LangGraph 源码旁准备实验文件。
 
-The host only prepares materials; this script never imports candidate packages.
---prepare-lock stages pyproject.toml only so uv can resolve a new independent
-Linux lock without running candidate SDK code. Run again normally after copying
-the resulting lock to adapters/deepagents_langgraph/uv.lock.
+宿主仅准备材料；本脚本不导入候选包。--prepare-lock 只准备 pyproject.toml，供 uv 解析新的独立 Linux 锁文件，不运行候选 SDK。将生成的锁文件复制到 adapters/deepagents_langgraph/uv.lock 后，再正常运行本脚本。
 """
 
 import argparse
@@ -27,28 +24,28 @@ def digest(data: bytes) -> str:
 def stage(context: Path, repository: Path, *, prepare_lock=False) -> dict:
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "deepagents_langgraph":
-        raise ValueError("Expected the current DeepAgents/LangGraph context")
+        raise ValueError('需要当前 DeepAgents/LangGraph 上下文')
     records = {entry["id"]: entry for entry in source.get("sources", [])}
     if set(records) != set(COMMITS) or len(source["sources"]) != len(COMMITS):
-        raise ValueError("Wrong source inventory")
+        raise ValueError('源码清单不匹配')
     for name, commit in COMMITS.items():
         record = records[name]
         if record.get("commit") != commit:
-            raise ValueError("Wrong source revision")
+            raise ValueError('源码版本不匹配')
         if name == "deepagents":
             if record.get("kind") != "archive" or record.get("sha256") != ARCHIVE_HASH or record.get("observed_archive_sha256") != ARCHIVE_HASH or record.get("dirty") is not None:
-                raise ValueError("Unverified DeepAgents source archive")
+                raise ValueError('DeepAgents 源码归档未经核验')
         elif record.get("kind") != "git" or record.get("observed_commit") != commit or record.get("dirty") is not False:
-            raise ValueError("Unverified LangGraph source checkout")
+            raise ValueError('LangGraph 源码检出未经核验')
     destination = context / "harness-lab"
     marker = context / "LAB_LOCK_PREPARATION.json"
     if destination.exists():
         if destination.is_symlink() or not ((context / "LAB_ADAPTER_MANIFEST.json").is_file() or marker.is_file()):
-            raise ValueError("Refusing to replace unstaged adapter material")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []
@@ -58,7 +55,7 @@ def stage(context: Path, repository: Path, *, prepare_lock=False) -> dict:
         inventory.append({"path": "harness-lab/" + name, "type": "file", "size": len(data), "sha256": digest(data)})
     if prepare_lock:
         marker.write_text(json.dumps({"candidate": "deepagents_langgraph", "purpose": "lock_material_preparation_only", "source_manifest_sha256": digest(source_bytes)}, indent=2) + "\n")
-        # An incomplete context must not retain a stale usable Docker build.
+        # 不完整上下文不能保留可用的旧 Docker 构建材料。
         (context / "Dockerfile").unlink(missing_ok=True)
         (context / "LAB_ADAPTER_MANIFEST.json").unlink(missing_ok=True)
         return {"candidate": "deepagents_langgraph", "context": str(context), "status": "lock_material_only_not_buildable"}

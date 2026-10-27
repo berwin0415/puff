@@ -1,1 +1,1 @@
-"""HTTP test business and durable operation ledger."""
+"""HTTP 测试业务与持久操作账本。"""

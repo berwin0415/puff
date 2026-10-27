@@ -1,4 +1,4 @@
-"""UNEXECUTED I23 source-calibration cases, not candidate recovery results."""
+"""I23 源码校准初始用例，不是候选恢复结果。"""
 from argparse import Namespace
 from copy import deepcopy
 import json
@@ -162,12 +162,12 @@ def test_native_failure_keeps_an_explicit_resource_check_and_valid_processes_are
     monkeypatch.setattr(f, 'model_snapshot', lambda _: {'count': 1, 'cap': 20, 'in_flight': []})
     monkeypatch.setattr(f.io, 'jsonl', lambda _: [])
     def native(*args):
-        raise ValueError('native task did not complete')
+        raise ValueError('原生任务未完成')
     monkeypatch.setattr(f, 'terminal_completion', native)
     processes, resource_calls = {'worker-a': {'controlled_failure': {'kind': 'controlled_failure'}}}, []
     def process(*args):
         if not valid_process:
-            raise ValueError('incomplete process identity')
+            raise ValueError('进程身份不完整')
         return processes
     monkeypatch.setattr(f, 'process_evidence', process)
     def resources(actual_paths, scope, pins, actual_processes):

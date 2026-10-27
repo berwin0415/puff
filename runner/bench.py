@@ -1,4 +1,4 @@
-"""Short-lived infrastructure checks, executed inside the bench image."""
+"""在 bench 镜像内执行短生命周期基础设施检查。"""
 
 from __future__ import annotations
 
@@ -18,16 +18,16 @@ from zoneinfo import ZoneInfo
 
 def identifier(value: str) -> str:
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}", value):
-        raise ValueError("Invalid infrastructure run identifier")
+        raise ValueError("无效基础设施运行标识")
     return value
 
 
 def environment() -> dict:
     if sys.platform != "linux" or not Path("/.dockerenv").exists():
-        raise RuntimeError("Infrastructure acceptance must run in Docker")
+        raise RuntimeError("基础设施验收必须在 Docker 内运行")
     for forbidden in (Path("/app/old"), Path("/app/.env"), Path("/data/old")):
         if forbidden.exists():
-            raise RuntimeError(f"Unexpected archive or credential path: {forbidden}")
+            raise RuntimeError(f"发现非预期归档或凭证路径：{forbidden}")
     sources = {}
     for folder in ("runner", "tests", "configs", "fixtures", "execution", "scripts", "compose"):
         for file in sorted(Path("/app", folder).rglob("*")):

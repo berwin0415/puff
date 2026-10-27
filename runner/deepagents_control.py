@@ -1,4 +1,4 @@
-"""Bench-only verification of native LangGraph cooperative drain evidence."""
+"""仅在 bench 中验证原生 LangGraph 协作 drain 证据。"""
 from datetime import datetime
 import hashlib
 import json
@@ -11,12 +11,12 @@ from runner.grading import audited_calls, scoped_ledger, verdict
 def timestamp(value):
     value = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if value.tzinfo is None:
-        raise ValueError("Drain evidence needs timezone-aware timestamps")
+        raise ValueError("drain 证据时间戳必须包含时区")
     return value
 
 
 def grade_drained_cancel(paths, scope, ledger, native):
-    # Import at call time so runner.detailed can dispatch here without a cycle.
+    # 调用时才导入，避免 runner.detailed 分派到此处时循环导入。
     from runner.detailed import read_jsonl, source_reference, save
 
     directory = paths.run / "candidate"
@@ -32,10 +32,10 @@ def grade_drained_cancel(paths, scope, ledger, native):
     def reference(source, filename):
         normalized, row = source_reference(directory, source)
         if normalized["path"] != "candidate/" + filename:
-            raise ValueError("Drain source points to a different evidence file")
+            raise ValueError("drain 来源指向不同的证据文件")
         line = (directory / filename).read_bytes().splitlines(keepends=True)[normalized["line"] - 1]
         if not isinstance(source, dict) or source.get("line_sha256") != hashlib.sha256(line).hexdigest():
-            raise ValueError("Drain source line hash differs")
+            raise ValueError("drain 来源行哈希不一致")
         return normalized, row
 
     def activity_through(limit, before=None):
@@ -44,7 +44,7 @@ def grade_drained_cancel(paths, scope, ledger, native):
             if number > limit or before is not None and timestamp(row["time"]) > before:
                 continue
             if not owned(row):
-                raise ValueError("Foreign native graph evidence")
+                raise ValueError("发现其他任务的原生图证据")
             event = row.get("data")
             if row.get("type") == "native_graph_drained":
                 active.clear()
@@ -63,15 +63,15 @@ def grade_drained_cancel(paths, scope, ledger, native):
         result_path = directory / "result.json"
         snapshot_path = directory / "state-snapshot.json"
         if result_path.is_symlink() or snapshot_path.is_symlink():
-            raise ValueError("Drain terminal/snapshot cannot follow links")
+            raise ValueError("drain 终态/快照不能跟随链接")
         original = json.loads(result_path.read_bytes())
         snapshot_bytes = snapshot_path.read_bytes()
         snapshot = json.loads(snapshot_bytes)
         if not all(isinstance(row, dict) for row in (host, original, snapshot)):
-            raise ValueError("Drain terminal evidence must be objects")
+            raise ValueError("drain 终态证据必须为对象")
     except (OSError, ValueError):
         host, original, snapshot, snapshot_bytes = {}, {}, {}, b""
-        errors.append("Missing or invalid drain host/terminal/checkpoint evidence")
+        errors.append("drain 宿主机、终态或检查点证据缺失或无效")
 
     for closed_line, closed in controls:
         if closed.get("phase") != "native_drained_observed":
@@ -85,7 +85,7 @@ def grade_drained_cancel(paths, scope, ledger, native):
             drained_ref, drained = reference(closed.get("source"), "raw-events.jsonl")
             source = original.get("control_observation", {})
             if source != closed:
-                raise ValueError("Original native result did not retain its exact drain observation")
+                raise ValueError("原始原生结果未保留精确 drain 观测")
             trigger = host.get("trigger", {})
             host_ref, host_row = reference({"path": str(trigger.get("path", "")).removeprefix("candidate/"),
                 "line": trigger.get("line"), "line_sha256": host.get("trigger_line_sha256")}, "raw-events.jsonl")
@@ -93,11 +93,11 @@ def grade_drained_cancel(paths, scope, ledger, native):
             host_through_ref, _ = reference({**through, "path": str(through.get("path", "")).removeprefix("candidate/")}, "raw-events.jsonl")
             host_active, _ = activity_through(host_through_ref["line"])
             requested = timestamp(request["time"])
-            timestamp(host["requested_at"])  # The host clock can differ from the Docker VM.
+            timestamp(host["requested_at"])  # 宿主机时钟可能与 Docker VM 不同。
             admitted, latest = activity_through(native_api_ref["line"] - 1, requested)
             reported = request.get("active_tasks")
             if not isinstance(reported, list):
-                raise ValueError("Drain request has no native active-task observations")
+                raise ValueError("drain 请求没有原生活跃任务观测")
             reported_tasks = {}
             for task in reported:
                 task_ref, task_row = reference(task.get("source"), "raw-events.jsonl")
@@ -105,7 +105,7 @@ def grade_drained_cancel(paths, scope, ledger, native):
                 if (task_row.get("stream_mode") != "tasks" or "input" not in event or "result" in event
                         or event.get("id") != task.get("id") or event.get("name") != task.get("name")
                         or task["id"] in reported_tasks):
-                    raise ValueError("Reported activity is not a unique actual native task start")
+                    raise ValueError("报告的活动不是唯一真实原生任务启动")
                 reported_tasks[task["id"]] = {"line": task_ref["line"], "name": task["name"]}
             checkpoint_id = snapshot.get("config", {}).get("configurable", {}).get("checkpoint_id")
             checkpoint_source = closed.get("checkpoint_source", {})
@@ -163,15 +163,15 @@ def grade_drained_cancel(paths, scope, ledger, native):
                     and original.get("task_continuation_verified") is False and original.get("immediate_cancel") is False),
             }
             if not all(chain.values()):
-                raise ValueError("Native drain failed: " + ", ".join(key for key, passed in chain.items() if not passed))
+                raise ValueError("原生 drain 失败：" + ", ".join(key for key, passed in chain.items() if not passed))
             database = Path(paths.state) / "checkpoints.sqlite"
             if database.is_symlink() or not database.is_file():
-                raise ValueError("Missing original native checkpoint database")
+                raise ValueError("缺少原始原生检查点数据库")
             with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True) as db:
                 current = db.execute("SELECT checkpoint_id FROM checkpoints WHERE thread_id=? AND checkpoint_ns='' ORDER BY checkpoint_id DESC LIMIT 1",
                                      (scope["session_id"],)).fetchone()
             if current != (checkpoint_id,):
-                raise ValueError("Reported checkpoint is not the actual current native thread checkpoint")
+                raise ValueError("报告检查点不是当前原生线程的真实检查点")
             terminal_retained = (owned(original) and original.get("status") == native.get("status") == "drained"
                 and original.get("native_status") == native.get("native_status") == "drained"
                 and original.get("stop_reason") == native.get("stop_reason") == "native_cooperative_drain"
@@ -182,7 +182,7 @@ def grade_drained_cancel(paths, scope, ledger, native):
                 and original.get("native_terminal", {}).get("error_message") is None)
             confirmations.append(closed)
         except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError, sqlite3.Error) as error:
-            errors.append(str(error) if isinstance(error, ValueError) else "Invalid native drain source chain")
+            errors.append(str(error) if isinstance(error, ValueError) else "无效原生 drain 来源链")
 
     tools, tool_errors = read_jsonl(paths.run / "tool-events.jsonl")
     errors.extend(tool_errors)
@@ -197,17 +197,17 @@ def grade_drained_cancel(paths, scope, ledger, native):
             if any(row.get("stream_mode") == "tasks" and isinstance(row.get("data"), dict)
                    and "input" in row["data"] and "result" not in row["data"]
                    and timestamp(row["time"]) > acknowledged for _, row in raw):
-                errors.append("Native graph started a new task after drain confirmation")
+                errors.append("原生图在 drain 确认后启动了新任务")
     except (ValueError, KeyError, TypeError, AttributeError):
-        errors.append("Invalid native drain/audit timestamp")
+        errors.append("原生 drain 或审计时间戳无效")
     save(paths.run / "cancel-outcome.json", {"candidate": "deepagents_langgraph", "native_result_unchanged": True,
         "confirmations": confirmations, "errors": errors, "new_write_calls_after_ack": after,
-        "semantics": "native cooperative drain at superstep boundary; in-flight effects may finish before confirmation",
+        "semantics": "在超步边界进行原生协作 drain；在途副作用可能在确认前完成",
         "task_continuation_verified": False})
     return verdict([
         ("native_running_cancel_confirmed", bool(confirmations) and not errors,
-         "Live native tasks, public RunControl, actual GraphDrained and original checkpoint agree"),
-        ("native_cancel_terminal_retained", terminal_retained, "Native drained is retained; natural completion and timeout cannot pass"),
-        ("no_new_writes_after_cancel_ack", bool(confirmations) and not after and audit_ok, "Independent paired audit covers business and file writes"),
-        ("ledger_scope_and_counts", scoped_ledger(ledger, scope), "Independent scoped ledger retains in-flight effects")],
+         "运行中原生任务、公共 RunControl、实际 GraphDrained 和原始检查点相符"),
+        ("native_cancel_terminal_retained", terminal_retained, "保留原生 drained；自然完成或超时不能算通过"),
+        ("no_new_writes_after_cancel_ack", bool(confirmations) and not after and audit_ok, "独立配对审计覆盖业务和文件写入"),
+        ("ledger_scope_and_counts", scoped_ledger(ledger, scope), "独立作用域账本保留在途副作用")],
         actual_writes=ledger.get("write_count"), write_requests=ledger.get("request_count"))

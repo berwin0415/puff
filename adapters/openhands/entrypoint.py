@@ -1,4 +1,4 @@
-"""Thin container entry to the pinned OpenHands LLM/Agent/Conversation loop."""
+"""连接固定版本 OpenHands LLM/Agent/Conversation 循环的轻量容器入口。"""
 
 import argparse
 import asyncio
@@ -19,27 +19,27 @@ SECRETS = []
 
 def trusted_path(value, *, directory=False):
     if not isinstance(value, str) or not value.startswith("/") or any(part == ".." or part.lower() == "old" for part in value.split("/")):
-        raise ValueError("Invalid trusted run path")
+        raise ValueError("可信运行路径无效")
     path = Path(value)
     current = Path("/")
     for part in path.parts[1:]:
         current /= part
         if current.is_symlink():
-            raise ValueError("Trusted run paths must not follow symbolic links")
+            raise ValueError("可信运行路径不得跟随符号链接")
     if directory:
         path.mkdir(parents=True, exist_ok=True)
     if path.resolve(strict=True) != path:
-        raise ValueError("Trusted run path changed during resolution")
+        raise ValueError("可信运行路径在解析期间发生变化")
     return path
 
 
 def read_token(value):
     path = trusted_path(value)
     if not path.is_file() or path.stat().st_size > 8192:
-        raise ValueError("Expected a bounded local token file")
+        raise ValueError("必须提供大小受限的本地令牌文件")
     token = path.read_text().strip()
     if not token or re.search(r"\s", token):
-        raise ValueError("Expected a nonempty local token")
+        raise ValueError("本地令牌不能为空")
     SECRETS.append(token)
     return token
 
@@ -60,21 +60,21 @@ def request_from_file():
     request = json.loads(trusted_path(parser.parse_args().request).read_bytes())
     keys = {"run_id", "session_id", "prompt", "workspace", "state_dir", "output_dir", "tools_url", "tool_token_file", "max_output_tokens", "timeout_seconds", "max_retries"}
     if not isinstance(request, dict) or set(request) != keys:
-        raise ValueError("Invalid trusted run request fields")
+        raise ValueError("可信运行请求字段无效")
     for name in ("run_id", "session_id"):
         if not isinstance(request[name], str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", request[name]) or request[name].lower() == "old":
-            raise ValueError("Invalid run/session identifier")
+            raise ValueError("运行或会话标识无效")
     if not isinstance(request["prompt"], str) or not 0 < len(request["prompt"]) <= 65536:
-        raise ValueError("Expected a bounded task prompt")
+        raise ValueError("必须提供长度受限的任务提示词")
     for name, minimum, maximum in (("max_output_tokens", 1, 16384), ("timeout_seconds", 1, 3600), ("max_retries", 0, 2)):
         if type(request[name]) is not int or not minimum <= request[name] <= maximum:
-            raise ValueError("Invalid run budget")
+            raise ValueError("运行预算无效")
     paths = [trusted_path(request[name], directory=True) for name in ("workspace", "state_dir", "output_dir")]
     if any(a.is_relative_to(b) or b.is_relative_to(a) for index, a in enumerate(paths) for b in paths[index + 1:]):
-        raise ValueError("State, workspace and evidence must use separate directory trees")
+        raise ValueError("状态、工作区和证据必须使用相互独立的目录树")
     trusted_path(request["tool_token_file"])
     if request["tools_url"] != "http://tools:8081":
-        raise ValueError("Expected the scoped experiment tools service")
+        raise ValueError("必须使用限定作用域的实验工具服务")
     return request
 
 
@@ -82,10 +82,10 @@ async def main():
     provenance = verify_source()
     request = request_from_file()
     if os.environ.get("MODEL_API_BASE_URL") != "http://model-proxy:8082/v1" or not os.environ.get("MODEL_NAME"):
-        raise ValueError("Candidate requires the counting proxy and selected model")
+        raise ValueError("候选必须使用计量代理和选定模型")
     model_name = os.environ["MODEL_NAME"]
     if not model_name or model_name.strip() != model_name or any(char.isspace() for char in model_name):
-        raise ValueError("Expected the exact selected model identifier")
+        raise ValueError("模型标识必须与选定模型完全一致")
     token = os.environ.get("MODEL_API_KEY")
     if token:
         SECRETS.append(token)
@@ -94,7 +94,7 @@ async def main():
     tool_token = read_token(request["tool_token_file"])
     state = Path(request["state_dir"])
     if any(state.iterdir()):
-        raise ValueError("This entry starts fresh conversations only; resume has not been verified")
+        raise ValueError("此入口仅创建新对话；恢复能力尚未验证")
     os.environ["OH_PERSISTENCE_DIR"] = str(state / "sdk-home")
     os.environ["LOG_DIR"] = str(Path(request["output_dir"]) / "sdk-logs")
     os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
@@ -179,10 +179,10 @@ async def main():
         )
         agent = Agent(
             llm=llm, tools=specifications, include_default_tools=["FinishTool"], condenser=None,
-            system_prompt=("You are a general-purpose assistant. Use the supplied tools to complete the user's goal. "
-                           "Ordinary authorized business operations run automatically. The simulated sensitive_export "
-                           "operation is denied directly by execution policy, without approval. A lost write response "
-                           "is uncertain; query its receipt before deciding to retry. Use finish when the task is complete."),
+            system_prompt=("你是通用助手。使用提供的工具完成用户目标。普通授权业务操作自动执行。"
+                           "模拟的 sensitive_export 操作由执行策略直接拒绝，不进入审批。"
+                           "写入响应丢失时结果不确定；先查询回执，再决定是否重试。"
+                           "任务完成后调用 finish。"),
         )
         conversation_id = uuid5(NAMESPACE_URL, "harness-lab/openhands/" + request["session_id"])
         conversation = Conversation(
@@ -204,16 +204,16 @@ async def main():
             "tool_schemas": tools.schemas, "builtin_tools": ["finish"],
             "tool_executor": "real_http_no_retries", "confirmation_policy": "NeverConfirm",
             "controls": {"pause": "not_implemented_by_this_entry", "resume": "not_yet_verified", "cancel": "active_timeout_cancellation_only"},
-            "cost_authority": "independent_model_proxy; SDK price estimates are not verified",
+            "cost_authority": "independent_model_proxy；SDK 费用估算尚未验证",
         }, pretty=True))
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise TimeoutError("Active task deadline reached during setup")
+            raise TimeoutError("初始化时已达到活跃任务执行时限")
         timeout_context = asyncio.timeout(remaining)
         async with timeout_context:
             await conversation.arun()
         if timeout_context.expired():
-            raise TimeoutError("Active task deadline reached")
+            raise TimeoutError("活跃任务已达到执行时限")
         native_status = conversation.state.execution_status
         completed = (
             native_status == ConversationExecutionStatus.FINISHED and not pending and not recording_errors

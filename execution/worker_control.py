@@ -1,8 +1,8 @@
-"""One Docker Worker, one immutable Deep Agents I22 attempt, one retained child.
+"""一个 Docker Worker 对应不可变的 Deep Agents I22 尝试，并保留同一子进程对象。
 
-The private control service never creates containers or supplies Agent steps.
-Replacement Workers receive a newly mounted, trusted, prompt-free I22 request.
-Signal acknowledgements deliberately make no native completion claim.
+私有控制服务不创建容器，也不提供 Agent 执行步骤。
+替换 Worker 接收新挂载的可信 I22 请求，不包含续跑提示。
+信号确认不表示原生任务已经完成。
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def read_secret(path):
 
 
 def inventory(root, *, state=False):
-    """Actual stable files, including SQLite/WAL; never a synthesized checkpoint."""
+    """读取实际稳定文件，包括 SQLite 与 WAL，不合成 checkpoint。"""
     result, total = {}, 0
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root).as_posix()
@@ -69,10 +69,10 @@ def inventory(root, *, state=False):
 
 
 def verify_resume_materials(task, request, binding):
-    """Check the protected I22 binding against actual closed native materials.
+    """将受保护的 I22 绑定与实际已关闭的原生材料核对。
 
-    The original entrypoint still performs graph.aget_state and passes None to
-    graph.astream. This guard neither repairs native files nor issues a prompt.
+    原入口仍使用 graph.aget_state，并以 None 调用 graph.astream。
+    此检查不修复原生文件，也不发送提示。
     """
     recovery = binding.get("recovery")
     if not isinstance(recovery, dict) or recovery.get("attempt_id") != "worker-a":
@@ -116,7 +116,7 @@ def verify_resume_materials(task, request, binding):
 
 
 class SingleAttemptWorker(TaskSupervisor):
-    """The only launch command is the pinned original DA entrypoint."""
+    """唯一启动命令是固定版本的原始 Deep Agents 入口。"""
     def __init__(self, policy, policy_sha256, journal, *, popen_factory=subprocess.Popen,
                  identity_reader=linux_process_identity):
         _fields(policy, {"schema", "worker_id", "mode", "task", "control_token_file", "private_root"})
@@ -145,7 +145,7 @@ class SingleAttemptWorker(TaskSupervisor):
                 or self.spec.environment.get("MODEL_RUN_TOKEN_FILE") != "/config/model-run.token"
                 or not self.spec.environment.get("MODEL_NAME")):
             raise BoundaryError("fixed_DA_I22_worker_required", 400)
-        # Never inherit the backend's credential or the remote provider key.
+        # 不能继承后端凭证或远程模型服务密钥。
         self.control_token = read_secret(policy["control_token_file"])
         self.pending_control = None
 
@@ -201,7 +201,7 @@ class SingleAttemptWorker(TaskSupervisor):
                 raise BoundaryError("attempt_evidence_not_empty")
             env = {"PATH": os.defpath, "LANG": "C.UTF-8", "PYTHONUNBUFFERED": "1",
                    "PYTHONDONTWRITEBYTECODE": "1", **self.spec.environment}
-            # Candidate evidence must remain empty until the I22 entry opens it.
+            # 在 I22 入口打开之前，候选证据目录必须保持为空。
             try:
                 out_fd = os.open(self.private_root / "candidate.stdout", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
                 with os.fdopen(out_fd, "wb") as out:
@@ -291,7 +291,7 @@ class WorkerHandler(BaseHTTPRequestHandler):
         status, value = 500, {"error": {"code": "worker_error"}}
         try:
             worker = self.server.worker
-            # Authenticate before reading any attacker-controlled body.
+            # 读取任何外部可控请求体之前先鉴权。
             header = self.headers.get("Authorization")
             if not isinstance(header, str) or not hmac.compare_digest(header, "Bearer " + worker.control_token):
                 raise BoundaryError("unauthenticated", 401)
@@ -335,7 +335,7 @@ def main():
         with WorkerHTTPServer(("0.0.0.0", args.port), worker) as server:
             server.serve_forever()
     finally:
-        # Never translate forced service/container teardown to native success.
+        # 不能把强制关闭服务或容器解释为原生成功。
         if worker is not None and any(owned.process.poll() is None for owned in worker.owned.values()):
             worker._record("service_exit_with_live_child", worker.task, native_pause_confirmed=False,
                            native_cancel_confirmed=False)

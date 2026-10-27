@@ -1,7 +1,7 @@
-"""Synthetic plan/projection calibration only; no Docker or Agent executes.
+"""仅校准合成计划与投影，不运行 Docker 或 Agent。
 
-Run these checks in the rebuilt frozen bench. They cannot establish an I25
-measurement, a native history, successful concurrent tasks or resource savings.
+在重新构建的固定验收镜像中运行。这不能证明 I25 资源测量、
+原生历史、真实并发业务或资源节省。
 """
 from copy import deepcopy
 import json
@@ -66,7 +66,7 @@ def test_rotation_freezes_previously_inactive_pair_without_lowering_resident_all
 
 @pytest.mark.parametrize("users,enabled", ((2, True), (5, 1), (10, "yes")))
 def test_rotation_requires_an_explicit_boolean_and_sufficient_users(users, enabled):
-    with pytest.raises(ValueError, match="explicit five- or ten-user"):
+    with pytest.raises(ValueError, match='明确选择五用户或十用户'):
         make_plan(trial_id="rotation-calibration", pair_id="same-input", strategy="on-demand", users=users,
             candidate_image="sha256:" + "1" * 64, bench_image="sha256:" + "2" * 64,
             model_name="not-called", rotate_inactive_users=enabled)

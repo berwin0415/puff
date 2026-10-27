@@ -1,4 +1,4 @@
-"""Start the real fixture CLI in a child process inside the test container."""
+"""在测试容器中以子进程启动真实模拟业务 CLI。"""
 
 import json
 from pathlib import Path
@@ -26,10 +26,10 @@ class FixtureProcess:
             selector.register(self.process.stdout, selectors.EVENT_READ)
             if not selector.select(10):
                 self.stop()
-                raise RuntimeError("Fixture CLI did not become ready")
+                raise RuntimeError("Fixture CLI 未就绪")
             line = self.process.stdout.readline()
             if not line:
-                raise RuntimeError("Fixture CLI failed: " + self.process.stderr.read())
+                raise RuntimeError("Fixture CLI 失败：" + self.process.stderr.read())
             self.startup_line = line
             information = json.loads(line)
             self.base_url = f"http://127.0.0.1:{information['port']}"

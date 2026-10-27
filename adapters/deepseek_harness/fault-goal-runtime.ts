@@ -1,4 +1,4 @@
-/** I23: official agents.resume repair, then rearm the original durable Goal. */
+/** I23：由官方 agents.resume 修复，再重新激活原始持久化 Goal。 */
 import { mkdtempSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { canonicalJson, sha256, stateInventory } from './fault-goal-binding.mjs'
@@ -55,27 +55,27 @@ export class FaultGoalRuntime {
     if (this.request.fault_recovery.mode === 'crash-resume') {
       const recovery = this.trusted.recovery!
       const bytes = readFileSync(resolve(this.request.state_dir, recovery.physical_path))
-      if (bytes.length !== recovery.physical_bytes || sha256(bytes) !== recovery.physical_sha256) throw new Error('Crash source bytes changed before native parse')
-      // Both functions are public/pure native source APIs. They calculate an
-      // expected view only: never feed these events to prepare/import/append.
-      // Actual durable repair is performed solely by agents.resume below.
+      if (bytes.length !== recovery.physical_bytes || sha256(bytes) !== recovery.physical_sha256) throw new Error('原生解析前故障源字节发生变化')
+      // 两个函数都是公开的原生源码纯函数 API，仅计算
+      // 预期视图；不得将这些事件传入 prepare/import/append。
+      // 实际持久化修复仅由下方的 agents.resume 执行。
       const { scanLog } = await import('../sources/main/packages/session/session-persistence-jsonl/src/format.ts')
       const { interruptedTurnClosers } = await import('../sources/main/packages/core/session/src/index.ts')
       const scanned = scanLog(bytes)
       if (String(scanned.meta.id) !== this.request.session_id || scanned.meta.cwd !== this.request.workspace
         || scanned.committedBytes !== recovery.committed_bytes || scanned.events.length !== recovery.next_seq
-        || objectHash(scanned.events) !== recovery.events_sha256) throw new Error('Native parser disagrees with independently audited original durable prefix')
+        || objectHash(scanned.events) !== recovery.events_sha256) throw new Error('原生解析器与独立核查的原始持久化前缀不一致')
       this.restoredHeader = scanned.meta
       this.repairEvents = interruptedTurnClosers(scanned.events)
       this.repairedEvents = [...scanned.events, ...this.repairEvents]
       if (this.repairedEvents.length !== recovery.expected_repaired_next_seq
-        || objectHash(this.repairedEvents) !== recovery.expected_repaired_events_sha256) throw new Error('Native interrupted-turn repair differs from pinned source semantics')
+        || objectHash(this.repairedEvents) !== recovery.expected_repaired_events_sha256) throw new Error('原生中断轮次修复与固定源码语义不一致')
       this.io!.save('native-crash-prepare.json', { scope: this.trusted.binding.scope,
         chain_id: this.request.run_id, original_physical_sha256: recovery.physical_sha256,
         committed_bytes: scanned.committedBytes, torn_tail_bytes: bytes.length - scanned.committedBytes,
         original_events_sha256: objectHash(scanned.events), original_next_seq: scanned.events.length,
         expected_repaired_events_sha256: objectHash(this.repairedEvents), repair_events: this.repairEvents,
-        source: 'public_pure_scanLog_and_interruptedTurnClosers_only; no_state_mutation_or_flush',
+        source: '仅使用公开纯函数 scanLog 和 interruptedTurnClosers；不修改状态或刷盘',
         execution_source: 'original_state_mount_via_agents.resume_not_this_expected_view',
         pause_index_used: false, new_prompt_submitted: false })
     }
@@ -95,15 +95,15 @@ export class FaultGoalRuntime {
         && goal.phase === 'active' && goal.activation === 'armed'
         && message.source.revision === goal.revision && message.source.round === goal.roundsStarted + 1
         && message.source.round > 0 && message.source.round <= goal.maxGoalRounds) {
-        // The official driver queues the next round before user/message
-        // admits it and advances roundsStarted. tools/execute below still
-        // requires this queued round to equal the actually admitted round.
+        // 官方驱动器先将下一轮排队，再由 user/message
+        // 放行并推进 roundsStarted；下方 tools/execute 仍要求
+        // 排队轮次与实际放行轮次相同。
         this.goalRound = { goalId: message.source.goalId, revision: message.source.revision, round: message.source.round }
         return
       }
-      // An official tool-goal wrap-up is deferred context, not a new task.
-      // Authorize only the exact once-delivered message from a successful
-      // same-Goal update whose native tool/result has already been committed.
+      // 官方 tool-goal 收尾属于延迟上下文，不是新任务。
+      // 仅放行同一 Goal 成功更新后精确匹配且只投递一次的消息，
+      // 且对应的原生 tool/result 必须已提交。
       const notice = this.goalNotices.get(message.id)
       if (notice?.committed && objectHash(message) === notice.message_sha256
         && goal?.id === notice.goal_id && goal.revision === notice.revision
@@ -124,8 +124,8 @@ export class FaultGoalRuntime {
     })
   }
   setup: AgentSetup = async agentCtx => {
-    // Pure official renderers keep the exact fixed-version notice contract;
-    // no new instruction, tool result, state or deferred context is produced.
+    // 官方纯渲染器保持固定版本通知约定完全一致；
+    // 不产生新指令、工具结果、状态或延迟上下文。
     const { boundContextSummary } = await import('../sources/main/packages/llm/llm/src/message.ts')
     const { renderWrapupContext } = await import('../sources/main/packages/goal/tool-goal/src/wrapup.ts')
     const updates = new Map<string, { exec: object; before: any; args: any; call: GoalCall }>()
@@ -184,7 +184,7 @@ export class FaultGoalRuntime {
         const args = JSON.parse(event.data.arguments)
         this.goalCalls.set(event.data.callId, { seq: event.seq, turn: event.data.turn, step: event.data.step,
           arguments_sha256: objectHash(args), source })
-      } catch { /* An invalid native argument cannot authorize a wrap-up. */ }
+      } catch { /* 无效原生参数不能授权收尾。 */ }
     }
     if (event.type === 'tool/result') {
       const block = event.data.message?.content?.[0]
@@ -205,7 +205,7 @@ export class FaultGoalRuntime {
   beforeResumeArtifact(artifact: any) {
     this.beforeArtifact = artifact
     if (artifact.physical_sha256 !== this.trusted.recovery!.physical_sha256
-      || artifact.physical_bytes !== this.trusted.recovery!.physical_bytes) throw new Error('Public pre-resume raw artifact differs from original crash bytes')
+      || artifact.physical_bytes !== this.trusted.recovery!.physical_bytes) throw new Error('恢复前公开的原始产物与原始故障字节不一致')
   }
   async start(handle: AgentHandle, before: any) {
     this.agent = handle.agent
@@ -215,8 +215,8 @@ export class FaultGoalRuntime {
     if (this.request.fault_recovery.mode === 'crash-resume') {
       const recovery = this.trusted.recovery!
       const expected = this.repairedEvents!
-      // Native Session appends end-seed only when the supplied durable history
-      // does not already end in that marker. Its time is native process time.
+      // 仅当传入的持久化历史尚未以 end-seed 标记结束时，
+      // 原生 Session 才追加该标记；其时间来自原生进程。
       const needsMarker = expected.at(-1)?.type !== 'session/end-seed'
       const marker = before.events?.at(-1)
       if (!Array.isArray(before.events) || before.first_live_seq !== expected.length
@@ -226,7 +226,7 @@ export class FaultGoalRuntime {
         || (needsMarker && (marker?.seq !== expected.length || marker?.type !== 'session/end-seed' || canonicalJson(marker.data) !== '{}'))
         || canonicalJson(before.header) !== canonicalJson(this.restoredHeader)
         || before.agent_status !== 'idle' || before.inbox.has_pending
-        || !this.beforeArtifact || canonicalJson(goal) !== canonicalJson({ ...recovery.durable_goal, activation: 'disarmed' })) throw new Error('Actual agents.resume did not restore the original repaired Session and disarmed original Goal')
+        || !this.beforeArtifact || canonicalJson(goal) !== canonicalJson({ ...recovery.durable_goal, activation: 'disarmed' })) throw new Error('实际 agents.resume 未恢复修复后的原始 Session 和已解除激活的原始 Goal')
       this.io!.save('native-crash-resume.json', { schema: 'harness-lab-dsh-crash-resume/1', scope: this.trusted.binding.scope,
         chain_id: this.request.run_id, session_id: this.request.session_id,
         boundary_sha256: recovery.boundary_sha256, audit_sha256: recovery.audit_sha256,
@@ -238,9 +238,9 @@ export class FaultGoalRuntime {
         uncertainty: this.repairEvents.filter(event => event.type === 'tool/result').map(event => ({
           native_call_id: event.data.message.source.callId, error: event.data.error,
           source_event_seqs: event.sourceEventSeqs ?? [], repair_seq: event.seq,
-          meaning: event.data.error?.code === 'TOOL_OUTCOME_UNKNOWN' ? 'native_tool_outcome_unknown; not_automatic_business_recovery' : 'native_tool_not_recorded_started; not_proof_it_did_not_execute',
+          meaning: event.data.error?.code === 'TOOL_OUTCOME_UNKNOWN' ? '原生工具结果未知；不代表自动恢复业务' : '未记录原生工具开始事件；不代表工具未执行',
         })),
-        recovery_granularity: 'original_persisted_goal_after_native_interrupted_turn_repair; not_arbitrary_instruction_pointer',
+        recovery_granularity: '原生中断轮次修复后的原始持久化 Goal；不是任意指令位置',
         pause_index_used: false, new_prompt_submitted: false, new_followup_submitted: false })
       this.expectedGoal = { id: goal!.id, objective: goal!.objective, maxGoalRounds: goal!.maxGoalRounds }
       this.inputActive = true
@@ -249,7 +249,7 @@ export class FaultGoalRuntime {
         original_goal_id: recovery.durable_goal.id, original_goal_revision: recovery.durable_goal.revision,
         new_prompt_submitted: false, new_followup_submitted: false, pause_index_used: false })
     } else {
-      if (goal || before.message_count !== 0 || before.next_seq !== before.first_live_seq) throw new Error('New fault Goal requires a clean original Session')
+      if (goal || before.message_count !== 0 || before.next_seq !== before.first_live_seq) throw new Error('新故障 Goal 必须使用干净的原始 Session')
       this.inputActive = true
       const created = ctx.goals.create(handle.agent, { objective: this.request.prompt, maxGoalRounds: this.trusted.binding.goal.max_goal_rounds })
       this.expectedGoal = { id: created.id, objective: created.objective, maxGoalRounds: created.maxGoalRounds }
@@ -268,9 +268,9 @@ export class FaultGoalRuntime {
     this.inputActive = false
     if (this.goalNotices.size) this.concurrentInput = true
     const agent = handle.agent, goal = this.ctx!.goals.get(agent)
-    if (agent.status !== 'idle' || agent.inbox.hasPending || this.inFlightModels || this.inFlightTools) throw new Error('Fault Goal is not quiescent')
+    if (agent.status !== 'idle' || agent.inbox.hasPending || this.inFlightModels || this.inFlightTools) throw new Error('故障 Goal 尚未完全静止')
     if (!goal || goal.id !== this.expectedGoal?.id || goal.objective !== this.expectedGoal.objective
-      || goal.maxGoalRounds !== this.expectedGoal.maxGoalRounds) throw new Error('Final fault Goal changed identity or objective')
+      || goal.maxGoalRounds !== this.expectedGoal.maxGoalRounds) throw new Error('最终故障 Goal 的身份或目标发生变化')
     const complete = !this.nativeErrors && !this.concurrentInput && this.activeTurn === undefined
       && goal.phase === 'complete' && goal.activation === 'disarmed' && this.lastEnd?.data.reason.kind === 'completed'
     this.terminal = { schema: 'harness-lab-dsh-fault-terminal/1', scope: this.trusted.binding.scope,
@@ -280,7 +280,7 @@ export class FaultGoalRuntime {
       repair_uncertainties: this.repairEvents.filter(event => event.type === 'tool/result').map(event => ({
         call_id: event.data.message.source.callId, error: event.data.error, seq: event.seq })),
       business_recovery_verified_by_candidate: false,
-      meaning: 'native_terminal_facts_only; independent_business_ledger_and_replay_grading_required' }
+      meaning: '仅记录原生终止事实；必须独立核查业务账本并评价重放行为' }
     this.io!.save('native-fault-terminal.json', this.terminal)
     return { kind: complete ? 'completed' : 'incomplete', goal, native_errors: this.nativeErrors }
   }
@@ -291,7 +291,7 @@ export class FaultGoalRuntime {
       result.status = 'failed'; result.stop_reason = 'native_close_failed'
       result.error = closeError instanceof Error ? closeError.message : String(closeError)
     } else if (result.status === 'goal_complete_pending_close') {
-      if (this.nativeErrors || this.inFlightModels || this.inFlightTools) throw new Error('Native failure or in-flight work during fault Goal close')
+      if (this.nativeErrors || this.inFlightModels || this.inFlightTools) throw new Error('关闭故障 Goal 时存在原生失败或在途工作')
       result.status = 'completed'
     }
     result.fault_recovery = { ...this.request.fault_recovery, image_verification: this.trusted.image_verification }

@@ -1,8 +1,8 @@
-"""Small SQLite business fixture. It runs inside Docker, never an Agent loop.
+"""小型 SQLite 模拟业务，在 Docker 内运行，不包含 Agent 循环。
 
-Use one database under the experiment/variant fixture directory. The database
-also scopes every record, so reused fixture processes cannot cross identities.
-Control faults and write semantics via the admin API, never via Agent input.
+每个实验与变体使用独立业务数据库。记录自身也绑定作用域，
+即使复用业务进程也不能跨身份访问。故障与写入语义通过
+管理员 API 控制，不能由 Agent 输入选择。
 """
 
 from __future__ import annotations
@@ -91,19 +91,19 @@ class Scope:
 
 def _identifier(value: Any, name: str) -> str:
     if not isinstance(value, str) or not _ID.fullmatch(value) or value.lower() == "old":
-        raise FixtureError(400, f"Invalid {name}")
+        raise FixtureError(400, f"{name} 无效")
     return value
 
 
 def _integer(value: Any, name: str, minimum: int = 0, maximum: int = 2**31 - 1) -> int:
     if type(value) is not int or not minimum <= value <= maximum:
-        raise FixtureError(400, f"Invalid {name}")
+        raise FixtureError(400, f"{name} 无效")
     return value
 
 
 def _object(value: Any, allowed: set[str], required: set[str] | None = None) -> dict:
     if not isinstance(value, dict) or set(value) - allowed or (required or set()) - set(value):
-        raise FixtureError(400, "Invalid request fields")
+        raise FixtureError(400, "请求字段无效")
     return value
 
 
@@ -122,12 +122,12 @@ def _token_hash(token: str) -> str:
 def _safe_database_path(path: Path) -> Path:
     path = path.absolute()
     if ".." in path.parts or any(part.lower() == "old" for part in path.parts):
-        raise ValueError("Fixture database must be outside archives and traversal paths")
+        raise ValueError("模拟业务数据库必须位于归档之外，路径不能包含上级跳转")
     current = Path(path.anchor)
     for part in path.parts[1:]:
         current /= part
         if current.is_symlink():
-            raise ValueError("Fixture database path must not contain symbolic links")
+            raise ValueError("模拟业务数据库路径不能包含软链接")
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -135,7 +135,7 @@ def _safe_database_path(path: Path) -> Path:
 class FixtureStore:
     def __init__(self, db: str | Path, admin_token: str):
         if not isinstance(admin_token, str) or len(admin_token) < 16:
-            raise ValueError("Admin token must contain at least 16 characters")
+            raise ValueError("管理员凭证至少需要16个字符")
         self.db = _safe_database_path(Path(db))
         self.admin_token = admin_token
         with self.connection() as connection:
@@ -143,7 +143,7 @@ class FixtureStore:
             connection.executescript(_SCHEMA)
             previous = connection.execute("SELECT value FROM metadata WHERE key='admin_token_sha256'").fetchone()
             if previous is not None and previous["value"] != _token_hash(admin_token):
-                raise ValueError("Fixture database belongs to another admin token file")
+                raise ValueError("模拟业务数据库对应其他管理员凭证文件")
             connection.execute("INSERT OR IGNORE INTO metadata VALUES('admin_token_sha256',?)", (_token_hash(admin_token),))
 
     @contextmanager
@@ -164,7 +164,7 @@ class FixtureStore:
         with self.connection() as connection:
             row = connection.execute("SELECT * FROM scopes WHERE token_hash=?", (_token_hash(token),)).fetchone()
         if row is None:
-            raise FixtureError(401, "Unknown scope token")
+            raise FixtureError(401, "未知作用域凭证")
         return Scope(*(row[name] for name in _SCOPE_FIELDS))
 
     def prepare(self, body: dict) -> dict:
@@ -174,26 +174,26 @@ class FixtureStore:
         seed = _integer(body["seed"], "seed")
         write_mode = body.get("write_mode", "idempotent")
         if write_mode not in ("idempotent", "non_idempotent"):
-            raise FixtureError(400, "Invalid write_mode")
+            raise FixtureError(400, "write_mode 无效")
         if not isinstance(body["users"], list) or not 1 <= len(body["users"]) <= 50:
-            raise FixtureError(400, "users must contain 1 to 50 scopes")
+            raise FixtureError(400, "users 必须包含1至50个作用域")
         scopes = []
         for user in body["users"]:
             _object(user, {"user_id", "session_id"}, {"user_id", "session_id"})
             scopes.append(Scope(experiment_id, variant, _identifier(user["user_id"], "user_id"), _identifier(user["session_id"], "session_id")))
         if len(set(scopes)) != len(scopes):
-            raise FixtureError(400, "Duplicate user/session scope")
+            raise FixtureError(400, "用户或会话作用域重复")
         result = []
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
             previous = connection.execute("SELECT seed,generator_version FROM experiments WHERE experiment_id=? AND variant=?", (experiment_id, variant)).fetchone()
             if previous is not None and (previous["seed"] != seed or previous["generator_version"] != GENERATOR_VERSION):
-                raise FixtureError(409, "Existing experiment uses different seed or generator; choose a new experiment/variant")
+                raise FixtureError(409, "现有实验使用了不同种子或生成器；请新建实验或变体")
             connection.execute("INSERT OR IGNORE INTO experiments VALUES(?,?,?,?)", (experiment_id, variant, seed, GENERATOR_VERSION))
             for scope in scopes:
                 prior_scope = connection.execute(f"SELECT write_mode FROM scopes WHERE {_where_scope()}", scope.values()).fetchone()
                 if prior_scope is not None and prior_scope["write_mode"] != write_mode:
-                    raise FixtureError(409, "Existing scope uses another write mode; choose a new variant")
+                    raise FixtureError(409, "现有作用域使用了其他写入模式；请新建变体")
                 token = self.scoped_token(scope)
                 connection.execute("INSERT OR IGNORE INTO scopes VALUES(?,?,?,?,?,?)", (*scope.values(), _token_hash(token), write_mode))
                 catalogue = items_for(seed, scope.user_id, scope.session_id)
@@ -210,15 +210,15 @@ class FixtureStore:
         try:
             fault = validate_fault(body["fault"])
         except (ValueError, TypeError) as exc:
-            raise FixtureError(400, "Invalid fault") from exc
+            raise FixtureError(400, "故障配置无效") from exc
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
             if connection.execute(f"SELECT 1 FROM scopes WHERE {_where_scope()}", scope.values()).fetchone() is None:
-                raise FixtureError(404, "Unknown scope")
-            # Repeated setup cannot re-arm a previously consumed once-only fault.
+                raise FixtureError(404, "未知作用域")
+            # 重复初始化不能重新启用已消费的一次性故障。
             previous = connection.execute(f"SELECT fault,consumed FROM faults WHERE {_where_scope()} AND operation_id=?", (*scope.values(), operation_id)).fetchone()
             if previous is not None and previous["fault"] != fault:
-                raise FixtureError(409, "Existing operation uses a different fault; choose a new operation")
+                raise FixtureError(409, "现有操作使用了其他故障；请新建操作")
             connection.execute("INSERT OR IGNORE INTO faults VALUES(?,?,?,?,?,?,0)", (*scope.values(), operation_id, fault))
             consumed = previous["consumed"] if previous else 0
         return {**scope.as_dict(), "operation_id": operation_id, "fault": fault, "consumed": consumed}
@@ -233,7 +233,7 @@ class FixtureStore:
         connection.execute("INSERT INTO requests(experiment_id,variant,user_id,session_id,operation_id,action,status,fault,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (*scope.values(), operation_id, action, status, fault, _now()))
 
     def rejected_write(self, scope: Scope, body: dict, status: int):
-        """Count rejected authenticated write attempts as requests, never writes."""
+        """已鉴权但被拒绝的写入尝试只计为请求，不计为实际写入。"""
         operation = body.get("operation_id")
         if not isinstance(operation, str) or not _ID.fullmatch(operation):
             operation = "invalid-operation"
@@ -248,31 +248,31 @@ class FixtureStore:
         operation_id = _identifier(body["operation_id"], "operation_id")
         action = body.get("action", "write")
         if action not in ("write", "sensitive_export"):
-            raise FixtureError(400, "Unknown action")
+            raise FixtureError(400, "未知操作")
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
-            # This execution-layer rule is independent of prompts and retries.
+            # 该执行层规则独立于提示词与重试。
             if action == "sensitive_export":
                 self._audit(connection, scope, operation_id, action, 403, "none")
-                return {"error": "sensitive_export is denied by execution policy", "reason": "sensitive_operation_denied", "approval_required": False}, 403, False
+                return {"error": "sensitive_export 已被执行规则拒绝", "reason": "sensitive_operation_denied", "approval_required": False}, 403, False
             item_id = _identifier(body.get("item_id"), "item_id")
             quantity = _integer(body.get("quantity"), "quantity", minimum=1, maximum=1000)
             mode = connection.execute(f"SELECT write_mode FROM scopes WHERE {_where_scope()}", scope.values()).fetchone()[0]
             fault_row = connection.execute(f"SELECT fault,consumed FROM faults WHERE {_where_scope()} AND operation_id=?", (*scope.values(), operation_id)).fetchone()
             fault = fault_row["fault"] if fault_row else "none"
             if ("mode" in body and body["mode"] != mode) or ("fault" in body and body["fault"] != fault):
-                raise FixtureError(403, "Write mode and faults are controlled by the trusted experiment setup")
+                raise FixtureError(403, "写入模式和故障由可信实验配置控制")
             item_row = connection.execute(f"SELECT payload FROM items WHERE {_where_scope()} AND item_id=?", (*scope.values(), item_id)).fetchone()
             if item_row is None:
-                raise FixtureError(404, "Unknown item in this scope")
+                raise FixtureError(404, "当前作用域内不存在该商品")
             item = json.loads(item_row["payload"])
             if quantity > item["available_quantity"]:
-                raise FixtureError(422, "quantity exceeds available_quantity")
+                raise FixtureError(422, "quantity 超过 available_quantity")
             previous = connection.execute(f"SELECT * FROM writes WHERE {_where_scope()} AND operation_id=? ORDER BY id LIMIT 1", (*scope.values(), operation_id)).fetchone()
             if previous is not None and mode == "idempotent":
                 if previous["item_id"] != item_id or previous["quantity"] != quantity:
                     self._audit(connection, scope, operation_id, action, 409, fault)
-                    return {"error": "operation_id already used with different input"}, 409, False
+                    return {"error": "operation_id 已被用于其他输入"}, 409, False
                 self._audit(connection, scope, operation_id, action, 200, fault)
                 return {"receipt": dict(previous), "deduplicated": True}, 200, False
             first_fault = fault_row is not None and fault_row["consumed"] == 0 and fault != "none"
@@ -280,7 +280,7 @@ class FixtureStore:
                 connection.execute(f"UPDATE faults SET consumed=1 WHERE {_where_scope()} AND operation_id=?", (*scope.values(), operation_id))
             if first_fault and fault == "fail_once":
                 self._audit(connection, scope, operation_id, action, 503, fault)
-                return {"error": "Injected tool failure before write", "retryable": True}, 503, False
+                return {"error": "已注入写入前工具故障", "retryable": True}, 503, False
             now = _now()
             cursor = connection.execute("INSERT INTO writes(experiment_id,variant,user_id,session_id,operation_id,item_id,quantity,total_cents,mode,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (*scope.values(), operation_id, item_id, quantity, item["unit_price_cents"] * quantity, mode, now))
             receipt = {"id": cursor.lastrowid, **scope.as_dict(), "operation_id": operation_id, "item_id": item_id, "quantity": quantity, "total_cents": item["unit_price_cents"] * quantity, "mode": mode, "created_at": now}
@@ -292,7 +292,7 @@ class FixtureStore:
         with self.connection() as connection:
             writes = [dict(row) for row in connection.execute(f"SELECT * FROM writes WHERE {_where_scope()} AND operation_id=? ORDER BY id", (*scope.values(), operation_id))]
         if not writes:
-            raise FixtureError(404, "No receipt in this scope")
+            raise FixtureError(404, "当前作用域内没有回执")
         return {"operation_id": operation_id, "write_count": len(writes), "receipts": writes}
 
     def ledger(self, scope: Scope | None = None, experiment_id=None, variant=None) -> dict:
@@ -312,7 +312,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, format, *args):
-        # Default HTTP logs can contain query credentials or task content.
+        # 默认 HTTP 日志可能包含查询凭证或任务正文。
         pass
 
     def _reply(self, status: int, payload: dict):
@@ -327,35 +327,35 @@ class FixtureHandler(BaseHTTPRequestHandler):
     def _bearer(self) -> str:
         value = self.headers.get("Authorization", "")
         if not value.startswith("Bearer ") or len(value) > 512:
-            raise FixtureError(401, "Bearer token required")
+            raise FixtureError(401, "必须提供 Bearer 凭证")
         return value[7:]
 
     def _admin(self):
         if not hmac.compare_digest(self._bearer().encode(), self.server.store.admin_token.encode()):
-            raise FixtureError(403, "Admin token required")
+            raise FixtureError(403, "必须提供管理员凭证")
 
     def _body(self) -> dict:
         if self.headers.get("Transfer-Encoding"):
-            raise FixtureError(400, "Transfer-Encoding is not supported")
+            raise FixtureError(400, "不支持 Transfer-Encoding")
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError as exc:
-            raise FixtureError(400, "Invalid Content-Length") from exc
+            raise FixtureError(400, "Content-Length 无效") from exc
         if not 0 < length <= 65536:
-            raise FixtureError(400, "Request must contain at most 65536 bytes of JSON")
+            raise FixtureError(400, "请求必须为 JSON，且不超过65536字节")
         try:
             value = json.loads(self.rfile.read(length))
         except (ValueError, UnicodeDecodeError) as exc:
-            raise FixtureError(400, "Invalid JSON body") from exc
+            raise FixtureError(400, "JSON 请求体无效") from exc
         if not isinstance(value, dict):
-            raise FixtureError(400, "JSON object required")
+            raise FixtureError(400, "必须提供 JSON 对象")
         return value
 
     def _scope(self, supplied: dict, scope: Scope | None = None) -> Scope:
         scope = scope or self.server.store.authenticate(self._bearer())
         for field in _SCOPE_FIELDS:
             if field in supplied and supplied[field] != getattr(scope, field):
-                raise FixtureError(403, "Supplied identity does not match trusted token scope")
+                raise FixtureError(403, "提供的身份与可信凭证作用域不匹配")
         return scope
 
     def do_GET(self):
@@ -370,7 +370,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
             path = unquote(url.path)
             raw_query = parse_qs(url.query, keep_blank_values=True)
             if any(len(values) != 1 for values in raw_query.values()):
-                raise FixtureError(400, "Duplicate query parameters")
+                raise FixtureError(400, "查询参数重复")
             query = {key: values[0] for key, values in raw_query.items()}
             if method == "GET" and path == "/health":
                 self._reply(200, {"status": "ok", "service": "fixtures", "generator_version": GENERATOR_VERSION})
@@ -385,7 +385,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
                     _object(query, {"experiment_id", "variant"}, {"experiment_id", "variant"})
                     self._reply(200, self.server.store.ledger(experiment_id=_identifier(query["experiment_id"], "experiment_id"), variant=_identifier(query["variant"], "variant")))
                 else:
-                    raise FixtureError(404, "Unknown admin endpoint")
+                    raise FixtureError(404, "未知管理员接口")
                 return
             if method == "GET":
                 _object(query, set(_SCOPE_FIELDS) | {"page", "page_size"})
@@ -395,7 +395,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
                         page = _integer(int(query.get("page", "1")), "page", minimum=1)
                         page_size = _integer(int(query.get("page_size", "5")), "page_size", minimum=1, maximum=100)
                     except ValueError as exc:
-                        raise FixtureError(400, "Invalid pagination") from exc
+                        raise FixtureError(400, "分页参数无效") from exc
                     self._reply(200, self.server.store.list_items(scope, page, page_size))
                 elif path == "/ledger":
                     self._reply(200, self.server.store.ledger(scope))
@@ -403,7 +403,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
                     operation_id = _identifier(path.removeprefix("/receipts/"), "operation_id")
                     self._reply(200, self.server.store.receipts(scope, operation_id))
                 else:
-                    raise FixtureError(404, "Unknown endpoint")
+                    raise FixtureError(404, "未知接口")
             elif method == "POST" and path == "/writes":
                 body = self._body()
                 scope = self.server.store.authenticate(self._bearer())
@@ -414,12 +414,12 @@ class FixtureHandler(BaseHTTPRequestHandler):
                     self.server.store.rejected_write(scope, body, exc.status)
                     raise
                 if drop_response:
-                    # write() has exited its transaction and durably committed.
+                    # write() 已退出事务且写入已持久提交。
                     drop_committed_response(self)
                 else:
                     self._reply(status, payload)
             else:
-                raise FixtureError(404, "Unknown endpoint")
+                raise FixtureError(404, "未知接口")
         except FixtureError as exc:
             self.close_connection = True
             self._reply(exc.status, {"error": str(exc)})
@@ -427,7 +427,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.close_connection = True
         except sqlite3.Error:
             self.close_connection = True
-            self._reply(503, {"error": "Fixture database unavailable"})
+            self._reply(503, {"error": "模拟业务数据库不可用"})
 
 
 class FixtureHTTPServer(ThreadingHTTPServer):
@@ -449,7 +449,7 @@ def _admin_token(path: Path) -> str:
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
             stream.write(token + "\n")
     if len(token) < 16 or any(character.isspace() for character in token):
-        raise ValueError("Invalid admin token file")
+        raise ValueError("管理员凭证文件无效")
     return token
 
 

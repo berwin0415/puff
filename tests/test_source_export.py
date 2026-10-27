@@ -1,4 +1,4 @@
-"""Source preparation rejects stale pins and excludes runtime/private material."""
+"""源码准备应拒绝过期固定版本，并排除运行时与私有材料。"""
 
 import hashlib
 import importlib.util
@@ -53,20 +53,20 @@ def test_exports_source_license_and_lock_without_host_state(tmp_path):
     }
     assert manifest["sources"][0]["dirty"] is None
     assert manifest["sources"][0]["observed_archive_sha256"]
-    exporter.prepare(config, tmp_path / "out")  # Rebuilding our generated context is supported.
+    exporter.prepare(config, tmp_path / "out")  # 支持重新构建本仓库生成的上下文。
 
 
 def test_modified_archive_is_not_exported(tmp_path):
     config, source = archive_config(tmp_path, {"main.py": "hello"})
     Path(source["path"]).write_bytes(b"changed")
-    with pytest.raises(ValueError, match="hash mismatch"):
+    with pytest.raises(ValueError, match='哈希不匹配'):
         exporter.prepare(config, tmp_path / "out")
     assert not (tmp_path / "out/sample").exists()
 
 
 def test_archive_cannot_escape_context(tmp_path):
     config, _ = archive_config(tmp_path, {"../../escape.txt": "bad"})
-    with pytest.raises(ValueError, match="unsafe archive"):
+    with pytest.raises(ValueError, match='归档路径不安全'):
         exporter.prepare(config, tmp_path / "out")
     assert not (tmp_path / "escape.txt").exists()
 
@@ -76,7 +76,7 @@ def test_export_does_not_replace_unowned_directory(tmp_path):
     destination = tmp_path / "out/sample"
     destination.mkdir(parents=True)
     (destination / "keep.txt").write_text("user content")
-    with pytest.raises(ValueError, match="not generated"):
+    with pytest.raises(ValueError, match='非本脚本生成'):
         exporter.prepare(config, tmp_path / "out")
     assert (destination / "keep.txt").read_text() == "user content"
 
@@ -84,11 +84,11 @@ def test_export_does_not_replace_unowned_directory(tmp_path):
 def test_absolute_symlink_is_rejected(tmp_path):
     output = tmp_path / "export"
     output.mkdir()
-    with pytest.raises(ValueError, match="escapes"):
+    with pytest.raises(ValueError, match='越出源码目录'):
         exporter.write_link(output, Path("link"), "/etc/passwd")
 
 
-@pytest.mark.skipif(shutil.which("git") is None, reason="Git is required for Git-source verification")
+@pytest.mark.skipif(shutil.which("git") is None, reason="验证 Git 源码需要安装 Git")
 def test_dirty_git_checkout_is_not_exported(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -100,5 +100,5 @@ def test_dirty_git_checkout_is_not_exported(tmp_path):
     subprocess.run(["git", "-C", str(repo), "commit", "-m", "fixture"], check=True, capture_output=True)
     commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
     (repo / "main.py").write_text("modified")
-    with pytest.raises(ValueError, match="dirty source"):
+    with pytest.raises(ValueError, match='有未提交变更的源码'):
         exporter.export_git({"id": "main", "path": str(repo), "commit": commit}, tmp_path / "out")

@@ -20,23 +20,23 @@ services:
       HARNESS_LAB_ENVIRONMENT: container
     volumes:
       - type: bind
-        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/state
+        source: ${HARNESS_LAB_DATA_ROOT:?请设置 HARNESS_LAB_DATA_ROOT}/state
         target: /data/state
         bind: {create_host_path: false}
       - type: bind
-        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/workspaces
+        source: ${HARNESS_LAB_DATA_ROOT:?请设置 HARNESS_LAB_DATA_ROOT}/workspaces
         target: /data/workspaces
         bind: {create_host_path: false}
       - type: bind
-        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/fixtures
+        source: ${HARNESS_LAB_DATA_ROOT:?请设置 HARNESS_LAB_DATA_ROOT}/fixtures
         target: /data/fixtures
         bind: {create_host_path: false}
       - type: bind
-        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/budgets
+        source: ${HARNESS_LAB_DATA_ROOT:?请设置 HARNESS_LAB_DATA_ROOT}/budgets
         target: /data/budgets
         bind: {create_host_path: false}
       - type: bind
-        source: ${HARNESS_LAB_DATA_ROOT:?set HARNESS_LAB_DATA_ROOT}/runs
+        source: ${HARNESS_LAB_DATA_ROOT:?请设置 HARNESS_LAB_DATA_ROOT}/runs
         target: /data/runs
         bind: {create_host_path: false}
     networks: [lab]

@@ -1,8 +1,7 @@
-"""I25 rotation-only Docker lifecycle evidence checks; no runtime/SDK imports.
+"""I25 仅针对用户轮换的 Docker 生命周期证据检查，不导入运行时或 SDK。
 
-The contract follows I24's registered exact-ID terminal/removal approach, with
-the stricter native Worker close policy kept here. Unknown failures are errors.
-"""
+沿用 I24 已登记的精确 ID 终态/删除规则，并在此保留更严格的
+原生 Worker 关闭策略。未知失败按错误处理。"""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -137,9 +136,9 @@ def validate_registry(registry, plan, *, root=None, fault=None):
             and finite(registration.get("registered_monotonic")), "lifecycle_registration_invalid")
         require(value["role"] in {"worker", "observer", "fixtures", "tools", "model-proxy"},
             "lifecycle_registered_role_invalid")
-        # HostConfig.Init is fixed when this exact Docker ID is created. Bind
-        # its original inspect here; legacy global sample projections need no
-        # new field, and Workers retain their original startup policy.
+        # 此精确 Docker ID 创建时 HostConfig.Init 已固定。此处绑定
+        # 原始 inspect；旧全局采样投影无需新增字段，
+        # Worker 保留原始启动策略。
         require(value["role"] == "worker" or value.get("host_config_init") is True,
             "lifecycle_service_init_not_enabled")
         memory, cpu = CAPS["backend" if value["role"] == "observer" else value["role"]]
@@ -209,8 +208,8 @@ def validate_registry(registry, plan, *, root=None, fault=None):
             validate_deletion(deletions[ident], registration, request, terminal)
     require(sum(request.get("kind") == "injected_fault" for request in requests.values()) <= 1,
         "lifecycle_multiple_fault_victims")
-    # Check reservations over the complete lifecycle, including short-lived
-    # created/not-ready objects that might fit between two resource samples.
+    # 检查整个生命周期的资源预留，包括可能落在两次资源采样之间的
+    # 短生命周期 created/not-ready 对象。
     events = [(row["registered_monotonic"], 1, ident) for ident, row in registrations.items()]
     events += [(row["observed_monotonic"], 0, ident) for ident, row in terminals.items()]
     live = set()
@@ -344,7 +343,7 @@ def validate_sample(sample, registry, plan):
         if replies["top"]["return_code"] == 0:
             require(len(replies["top"]["stdout"].splitlines()) >= 2,
                 "lifecycle_transition_top_success_without_process")
-        # I24's narrow EOF case: top itself proves the exact object stopped.
+        # I24 的有限 EOF 情况：top 自身证明此精确对象已经停止。
         eof = replies["top"]["return_code"] == 1 and bool(replies["top"]["stderr"].strip())
         known_reply(replies["stats"], before[ident], eof=eof)
         if replies["stats"]["return_code"] == 0:
@@ -357,7 +356,7 @@ def validate_sample(sample, registry, plan):
 
 
 def resource_complete(sample):
-    """A lifecycle explanation preserves identity, not missing resource totals."""
+    """生命周期说明只能保留身份，不能补足缺失的资源总量。"""
     if "error" in sample or sample.get("lifecycle_transitions"):
         return False
     before, after = sample.get("docker_observations", []), sample.get("docker_after_observations", [])
@@ -372,7 +371,7 @@ def resource_complete(sample):
 
 
 def rotation_phase_metrics(samples):
-    """Do not turn omitted transition stats/top into zero usage or full peaks."""
+    """不能将过渡阶段缺失的 stats/top 当成零用量或完整峰值。"""
     from runner.metrics import summarize
     complete = [sample for sample in samples if resource_complete(sample)]
     whole_phase = bool(samples) and len(complete) == len(samples)
@@ -383,6 +382,6 @@ def rotation_phase_metrics(samples):
         resource_incomplete_samples=len(samples) - len(complete),
         actual_process_count={"mean": sum(counts) / len(counts), "peak": max(counts)} if whole_phase else None)
     if not whole_phase:
-        metric["note"] = ("Incomplete lifecycle resource observations: phase means/peaks and process totals "
-            "are unavailable; retain raw measured rows, never fill missing containers with zero.")
+        metric["note"] = ("生命周期资源观测不完整，无法计算阶段均值、峰值及进程总量；"
+            "保留原始测量记录，绝不将缺失容器补零。")
     return metric

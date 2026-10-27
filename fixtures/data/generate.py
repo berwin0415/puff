@@ -1,4 +1,4 @@
-"""Generate variable, reproducible catalogue data without embedding task answers."""
+"""生成可变化、可复现的商品目录，不嵌入任务答案。"""
 
 import hashlib
 import random
@@ -9,7 +9,7 @@ GENERATOR_VERSION = 1
 
 def items_for(seed: int, user_id: str, session_id: str) -> list[dict]:
     if type(seed) is not int or seed < 0:
-        raise ValueError("seed must be a nonnegative integer")
+        raise ValueError("seed 必须为非负整数")
     salt = int.from_bytes(hashlib.sha256(f"{user_id}\0{session_id}".encode()).digest()[:8], "big")
     random_source = random.Random(seed ^ salt)
     categories = ("office", "kitchen", "garden", "travel")

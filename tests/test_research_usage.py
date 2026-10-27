@@ -1,4 +1,4 @@
-"""Cost enrollment rejects active/foreign evidence without requiring task success."""
+"""费用登记拒绝活动或异属证据，不要求任务必须成功。"""
 from copy import deepcopy
 import hashlib
 import json

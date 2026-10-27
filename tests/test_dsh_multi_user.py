@@ -1,7 +1,7 @@
-"""Unrun offline boundary fixtures; never native I24 or cancellation evidence.
+"""离线边界测试初稿，不能作为原生 I24 或取消证据。
 
-Execute only later inside the reviewed Docker bench. These tests do not start
-SDKs, Docker, a model, or subprocesses; fake child assertions test our wrapper.
+仅在经过复核的 Docker 验收镜像中执行。不启动 SDK、Docker、
+模型或子进程；假子进程断言只测试本仓库包装层。
 """
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -44,7 +44,7 @@ def fixed_binding(tmp_path):
     for directory in vars(paths).values():
         directory.mkdir()
     task = m.Task("task-a", "user-a", "main", "a", scope, paths, d.CANDIDATE)
-    # Execution guards use the supervisor's actual task roots.
+    # 执行检查使用监督器实际任务根目录。
     guard_task = SimpleNamespace(scope=scope, state_dir=paths.state, workspace=paths.workspace)
     request = {"run_id": "chain-a", "session_id": "session-a", "prompt": "original objective",
         "workspace": "/workspace", "state_dir": "/state", "output_dir": "/evidence", "tools_url": "http://tools:8081",
@@ -126,10 +126,10 @@ def test_complete_inventory_includes_empty_directories_and_rejects_links(tmp_pat
 
 @pytest.fixture
 def real_bound_request_files(tmp_path, monkeypatch):
-    """Real file-size/read guards; only absolute paths and readonly flag mapped.
+    """使用真实文件大小与读取检查，只映射绝对路径和只读标志。
 
-    No _bound_request/verify_binding/read_bound_file stub and no SDK/child.
-    The statvfs flag is synthetic; this does not validate real mount safety.
+    不替换 _bound_request、verify_binding、read_bound_file，
+    不启动 SDK 或子进程。statvfs 标志为合成，不能证明真实挂载安全。
     """
     task, guard, request, binding, env = fixed_binding(tmp_path)
     config = task.paths.fixture
@@ -142,7 +142,7 @@ def real_bound_request_files(tmp_path, monkeypatch):
     binding["model"]["run_token_sha256"] = p.sha(b"offline-model-token")
     binding["tools"]["config_sha256"] = d.digest({"url": request["tools_url"], "scope": task.scope,
         "token_sha256": p.sha(b"offline-scope-token")})
-    # Same schema and per-file shape as prepare_candidate_source.inventory.
+    # 使用与 prepare_candidate_source.inventory 相同的结构及逐文件形状。
     entries = [{"path": "sources/main/packages/offline-fixture/src/module-" + str(number) + ".ts",
         "type": "file", "size": 0, "mode": 420, "sha256": p.sha(b"")} for number in range(10000)]
     source = {"schema": "harness-lab-source-manifest/1", "candidate": d.CANDIDATE,
@@ -195,7 +195,7 @@ def test_real_bound_request_retains_source_and_other_file_size_bounds(real_bound
         "adapter-over-1MiB": ("/opt/materials/LAB_ADAPTER_MANIFEST.json", 1024 * 1024),
         "request-over-1MiB": ("/config/request.json", 1024 * 1024),
         "binding-over-1MiB": ("/config/lifecycle.json", 1024 * 1024)}[changed]
-    # Valid JSON beyond the bound distinguishes file rejection from JSON errors.
+    # 超过上限但合法的 JSON 用于区分文件拒绝与 JSON 错误。
     paths[target].write_bytes(b'"' + b"x" * maximum + b'"\n')
     with pytest.raises(BoundaryError):
         worker._bound_request()
@@ -440,7 +440,7 @@ def test_idle_without_matching_native_end_stays_a_cancel_gap(tmp_path, monkeypat
     write_json(task.paths.run / "trusted/closed-observation.json", {"http": {"task_id": task.task_id, "principal": task.owner,
         "status": 200, "body": {"scope": task.scope, "process_observation": {"availability": "observed",
             "process_status": "exited", "exit_code": 1}}}})
-    monkeypatch.setattr(m, "validate_http_source", lambda *args: None)  # Boundary-only fixture, not HTTP proof.
+    monkeypatch.setattr(m, "validate_http_source", lambda *args: None)  # 仅用于边界测试，不是 HTTP 实验证据。
     tools = [{"scope": task.scope, "call_id": "read-one", "tool": "read_file", "phase": phase,
         "arguments": {"path": "request.json"}, "status": 200, "time": stamp} for phase in ("start", "finish")]
     ledger = {"requests": [], "writes": [], "faults": [], "request_count": 0, "write_count": 0}
@@ -452,9 +452,9 @@ def test_idle_without_matching_native_end_stays_a_cancel_gap(tmp_path, monkeypat
 
 
 def resume_materials(tmp_path, monkeypatch):
-    # Only emulate the read-only mount bit for these synthetic temp files.
-    # chmod changes permissions, not statvfs(ST_RDONLY); production still
-    # calls the unchanged immutable_bytes and actual bounded-file reader.
+    # 对合成临时文件只模拟只读挂载标志。
+    # chmod 只改变权限，不改变 statvfs(ST_RDONLY)；正式代码仍
+    # 调用未修改的 immutable_bytes 与真实有界文件读取器。
     monkeypatch.setattr(common_worker.os, "statvfs", lambda path: SimpleNamespace(f_flag=os.ST_RDONLY))
     task, guard, original, first, env = fixed_binding(tmp_path)
     a, b = task.paths.fixture / "attempts/worker-a", task.paths.fixture / "attempts/worker-b"
@@ -507,8 +507,8 @@ def test_resume_materials_retain_original_goal_files_and_budget_without_claiming
     _, guard, request, binding, _ = resume_materials(tmp_path, monkeypatch)
     result = d.verify_resume_materials(guard, request, binding)
     assert result["goal_id"] == "original-goal" and result["native_resume_completed"] is False
-    # B's Worker sees only B's mounts; the original native entrypoint rechecks
-    # the complete restored prefix before it can dispatch any work.
+    # B 的 Worker 只看到自身挂载；原生入口在派发工作前
+    # 再次检查完整恢复前缀。
     guard.attempts.pop("worker-a")
     assert d.verify_resume_materials(guard, request, binding)["native_resume_completed"] is False
 
@@ -561,8 +561,8 @@ def test_resume_replays_physical_bytes_even_with_rehashed_candidate_copies(tmp_p
     write_rows(physical, records)
     if mutation == "partial":
         physical.write_bytes(physical.read_bytes()[:-1])
-    # Even if an untrusted candidate rehashes its reports, the independent
-    # physical header/sequence/Goal/end and trusted live-event digest must hold.
+    # 即使不可信候选重新计算报告哈希，独立的物理文件头、序列、
+    # Goal、结束标记及可信实时事件摘要仍必须一致。
     a, b = guard.attempts["worker-a"], guard.attempts["worker-b"]
     artifact = p.read(a.evidence_dir / "session-artifact-after-flush.json")
     artifact["physical_sha256"] = p.sha(physical.read_bytes())
@@ -643,7 +643,7 @@ def test_surface_preparation_accepts_real_empty_sqlite_budget_without_reset(tmp_
     surface_budget(task, tmp_path)
     before = p.budget_snapshot(task.paths.budget, allow_empty=True)
     assert before["count"] == 0 and before["cap"] == 20 and before["rows"] == []
-    # Ordinary active-task snapshots retain their nonempty-history gate.
+    # 普通活跃任务快照仍要求非空历史。
     with pytest.raises(ValueError, match="model_call_reservation_history_invalid"):
         p.budget_snapshot(task.paths.budget)
     token = (task.paths.budget / "run.token").read_bytes()
@@ -764,7 +764,7 @@ def test_surface_refuses_network_changes_outside_its_exact_created_registration(
 
 
 def surface_host(tmp_path, monkeypatch):
-    """Exercise real host calibration/JSON writer; only Docker I/O is fake."""
+    """测试真实宿主校准与 JSON 写入器，仅 Docker 输入输出为替身。"""
     paths = SimpleNamespace(fixture=tmp_path / "fixture", run=tmp_path / "run")
     (paths.run / "surface-calibration").mkdir(parents=True)
     (paths.run / "trusted").mkdir()
@@ -818,6 +818,6 @@ def test_host_surface_rejects_unbound_network_before_launch(tmp_path, monkeypatc
         lab.network_registrations["9" * 64] = {**lab.network_registrations["8" * 64], "id": "9" * 64}
     else:
         lab.network_registrations["8" * 64]["trial_id"] = "other-trial"
-    with pytest.raises(RuntimeError, match="exact created network registration"):
+    with pytest.raises(RuntimeError, match='已创建网络的确切身份'):
         lab.calibrate_surface("main", "a")
     assert calls == []

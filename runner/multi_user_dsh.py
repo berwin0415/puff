@@ -1,4 +1,4 @@
-"""DSH-only I24 evidence adapters; no candidate imports, repair or new prompts."""
+"""仅用于 DSH 的 I24 证据适配；不导入候选框架、不修复或提供新提示。"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -131,8 +131,8 @@ def baseline_binding(task, pins, result):
     expected = {**original, "timeout_seconds": 300, "lifecycle": {"mode": "new", "chain_id": task.scope["variant"],
         "attempt_id": "worker-a", "binding_file": "/config/lifecycle.json"}}
     p.require(request == expected and integrity["remaining_seconds"] == 300, "dsh_baseline_request_changed")
-    # The pre-start inventory is now intentionally historical; the actual
-    # Worker checked it before launch, while final_native checks final storage.
+    # 启动前盘点此时有意作为历史记录；真实 Worker
+    # 已在启动前检查它，final_native 则检查最终存储。
     spec_env = environment(pins["model_name"], pins["worker_image_id"])
     d.verify_binding(task, request, binding, config_dir=target, environment=spec_env, verify_files=False)
     entry_raw = p.regular(task.paths.run / "attempts/worker-a/candidate/entrypoint.json")
@@ -143,8 +143,8 @@ def baseline_binding(task, pins, result):
         and all(entry["provenance"].get(key) == value for key, value in binding["materials"].items())
         and all(binding["materials"][key] == pins[key] for key in ("source_export_sha256", "adapter_export_sha256")),
         "dsh_baseline_entrypoint_changed")
-    # The frozen DSH result has session_id/lifecycle, not DA's run_id/scope;
-    # complete scope and source identity come from the original entry artifact.
+    # 冻结 DSH 结果包含 session_id/lifecycle，而非 DA 的 run_id/scope；
+    # 完整作用域和来源身份取自原始入口产物。
     p.require(result.get("session_id") == task.scope["session_id"] and p.number(result.get("elapsed_seconds"))
         and 0 < result["elapsed_seconds"] <= 300, "dsh_baseline_result_identity_or_budget_changed")
     p.require(all(result.get("lifecycle", {}).get(key) == value for key, value in request["lifecycle"].items()),
@@ -219,8 +219,8 @@ def cancel_native(task, trigger, tools, actual_ledger, *, seed, global_paths):
             and p.native_dsh(row)["time"] / 1000 > confirmation for _, _, row in raw), "dsh_work_after_cancel_confirmation")
     closed = p.read(task.paths.run / "trusted/closed-observation.json")["http"]
     validate_http_source(global_paths, task.kind, closed)
-    # The common grade validates the product control bytes and fixed Worker
-    # journal. Its protected close record retains the observed child exit.
+    # 公共判定验证产品控制字节及固定 Worker 日志。
+    # 其受保护关闭记录保留观测到的子进程退出。
     process = closed.get("body", {}).get("process_observation", {})
     p.require(closed.get("task_id") == task.task_id and closed.get("principal") == task.owner
         and closed.get("status") == 200 and closed.get("body", {}).get("scope") == task.scope
@@ -300,8 +300,8 @@ def accept_surface(task):
         "adapter_export_sha256": pins["adapter_export_sha256"], "surface_sha256": p.sha(raw), "process_exit": 0,
         "oom_killed": False, "model_call_count_before": 0, "model_call_count_after": 0, "real_model_token_mounted": False,
         "container_evidence": "trusted/surface-container.json"})
-    # Pins are created once before calibration; write the accepted augmentation
-    # as a new file so the original declaration is never silently replaced.
+    # 校准前只创建一次 pins；将接受的增补写为
+    # 新文件，不能静默替换原始声明。
     accepted = {**pins, "tool_surface_sha256": p.sha(raw)}
     p.create(task.paths.run / "trusted/surface-pins.json", accepted)
     p.dsh_contract(task.paths, accepted, task.scope)

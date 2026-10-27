@@ -1,9 +1,8 @@
-"""DRAFT ONLY: real pinned LangGraph drain/SQLite/A->B calibration; no model.
+"""初始草稿：固定 LangGraph 的真实 drain、SQLite 及 A→B 校准，不调用模型。
 
-Run only inside the fixed Deep Agents candidate image. Mount this script read-only
-as calibration input and mount one NEW empty evidence directory writable. The
-image's installed LangGraph and source verifier are used without replacement.
-This is runtime calibration, not a Deep Agents business-task pass.
+仅在固定 Deep Agents 候选镜像内运行。以只读方式挂载本脚本，
+并挂载一个全新空证据目录为可写。使用镜像原有 LangGraph 与来源
+校验器，不替换实现。这是运行时校准，不是业务任务通过证据。
 """
 from __future__ import annotations
 
@@ -93,14 +92,14 @@ def inventory(root, *, sync=False):
         mode = path.lstat().st_mode
         if stat.S_ISDIR(mode):
             continue
-        require(stat.S_ISREG(mode), "Native inventory contains a link or nonregular file")
+        require(stat.S_ISREG(mode), "原生清单包含链接或非普通文件")
         data = path.read_bytes()
         if sync:
             with path.open("rb") as stream:
                 os.fsync(stream.fileno())
         value[path.relative_to(root).as_posix()] = {"bytes": len(data),
             "mode": stat.S_IMODE(mode), "sha256": hashlib.sha256(data).hexdigest()}
-    require("checkpoints.sqlite" in value, "Missing native SQLite checkpoint database")
+    require("checkpoints.sqlite" in value, "缺少原生 SQLite 检查点数据库")
     return value
 
 
@@ -112,20 +111,20 @@ def validate_boundary(snapshot, expected=None):
     config = snapshot.config.get("configurable", {})
     checkpoint = config.get("checkpoint_id")
     require(config.get("thread_id") == THREAD and config.get("checkpoint_ns", "") == "",
-        "Wrong native checkpoint thread/namespace")
-    require(isinstance(checkpoint, str) and checkpoint, "Missing actual checkpoint ID")
-    require(expected is None or checkpoint == expected, "Original checkpoint is no longer head")
-    require(snapshot.values == {"done": ["first", "active"]}, "Wrong paused business state")
+        "原生检查点线程或命名空间不正确")
+    require(isinstance(checkpoint, str) and checkpoint, "缺少真实检查点 ID")
+    require(expected is None or checkpoint == expected, "原始检查点已不再是头检查点")
+    require(snapshot.values == {"done": ["first", "active"]}, "暂停业务状态不正确")
     require(tuple(snapshot.next) == ("finish",) and len(snapshot.tasks) == 1,
-        "Pause did not leave the actual final node pending")
+        "暂停后未留下真实最终节点待执行")
     require(not snapshot.interrupts and all(not task.error and not task.interrupts for task in snapshot.tasks),
-        "Pause contains an error or interrupt")
+        "暂停状态包含错误或中断")
     return checkpoint
 
 
 def installed_provenance():
-    # This directory and verifier are bundled in the immutable candidate image.
-    # The calibration mount contains no candidate package or source replacement.
+    # 本目录与校验器均打包在不可变候选镜像中。
+    # 校准挂载不包含候选包或源码替换材料。
     sys.path.insert(0, "/opt/materials/harness-lab")
     from verify_source import verify_source
     import langgraph.runtime
@@ -143,25 +142,25 @@ def make_graph(saver, root, attempt, entered=None, release=None):
 
     async def first(state: State):
         append(audit, {"attempt": attempt, "node": "first", "phase": "start", "input": state})
-        require(attempt == "worker-a", "B replayed already completed first node")
+        require(attempt == "worker-a", "B 重放了已完成的首节点")
         append(audit, {"attempt": attempt, "node": "first", "phase": "finish"})
         return {"done": ["first"]}
 
     async def active(state: State):
         append(audit, {"attempt": attempt, "node": "active", "phase": "start", "input": state})
-        require(attempt == "worker-a", "B replayed already completed active node")
-        require(state["done"] == ["first"], "First node did not commit before active node")
+        require(attempt == "worker-a", "B 重放了已完成的活跃节点")
+        require(state["done"] == ["first"], "首节点未在活跃节点前提交")
         entered.set()
-        # A real in-flight node is allowed to finish after the drain request.
-        # Its caller, graph executor, and checkpoint saver are never mocked.
+        # 允许真实在途节点在 drain 请求后完成。
+        # 不模拟其调用方、图执行器或 checkpoint 保存器。
         await release.wait()
         append(audit, {"attempt": attempt, "node": "active", "phase": "finish"})
         return {"done": ["active"]}
 
     async def finish(state: State):
         append(audit, {"attempt": attempt, "node": "finish", "phase": "start", "input": state})
-        require(attempt == "worker-b", "A ran the next node after requesting native drain")
-        require(state["done"] == ["first", "active"], "B did not receive the original native state")
+        require(attempt == "worker-b", "A 在请求原生 drain 后执行了下一节点")
+        require(state["done"] == ["first", "active"], "B 未收到原始原生状态")
         append(audit, {"attempt": attempt, "node": "finish", "phase": "finish"})
         return {"done": ["finish"]}
 
@@ -178,7 +177,7 @@ def make_graph(saver, root, attempt, entered=None, release=None):
 
 async def stream(graph, initial, control, root, attempt, observed):
     require(set(CONFIG["configurable"]) == {"thread_id", "checkpoint_ns"},
-        "Execution config unexpectedly contains checkpoint_id")
+        "执行配置意外包含 checkpoint_id")
     async for mode, event in graph.astream(initial, config=CONFIG,
             stream_mode=["updates", "tasks", "checkpoints"], durability="sync", control=control):
         append(root / (attempt + "-raw.jsonl"), {"mode": mode, "data": event})
@@ -196,7 +195,7 @@ async def worker_a(root):
     provenance = installed_provenance()
     entered, release = asyncio.Event(), asyncio.Event()
     control, observed = RunControl(), {}
-    require(not control.drain_requested, "RunControl is not fresh")
+    require(not control.drain_requested, "RunControl 不是新实例")
     create(root / "worker-a-start.json", {"pid": os.getpid(), "provenance": provenance,
         "execution_config": CONFIG, "durability": "sync", "initial": {"done": []}, "model_used": False})
     paused = None
@@ -205,7 +204,7 @@ async def worker_a(root):
 
         async def requester():
             await entered.wait()
-            require(list(observed.values()) == ["active"], "Request was not during the real active task")
+            require(list(observed.values()) == ["active"], "请求未发生在真实活跃任务期间")
             append(root / "control.jsonl", {"attempt": "worker-a", "phase": "before_public_request",
                 "observed_active_tasks": observed, "first_completed": True})
             control.request_drain(REASON)
@@ -219,8 +218,8 @@ async def worker_a(root):
                 await stream(graph, {"done": []}, control, root, "worker-a", observed)
             except GraphDrained as error:
                 require(type(error) is GraphDrained and error.reason == REASON and control.drain_reason == REASON,
-                    "Missing actual native GraphDrained for our request")
-                require(not observed, "Native stream left current tasks in flight")
+                    "当前请求缺少真实原生 GraphDrained")
+                require(not observed, "原生流仍有当前任务在途执行")
                 head = await graph.aget_state(CONFIG)
                 checkpoint = validate_boundary(head)
                 exact_config = {**CONFIG, "configurable": {**CONFIG["configurable"], "checkpoint_id": checkpoint}}
@@ -232,10 +231,10 @@ async def worker_a(root):
                     "head_sha256": digest(snapshot_value(head)), "exact_sha256": digest(snapshot_value(exact)),
                     "observed_active_tasks": observed, "model_used": False}
             else:
-                raise AssertionError("A completed without the actual native GraphDrained")
+                raise AssertionError("A 未出现真实原生 GraphDrained 就完成了")
             await request_task
-    # Complete native saver context exit occurs before any closed-file inventory.
-    require(paused is not None, "A has no actual native pause")
+    # 先完整退出原生保存器上下文，再盘点已关闭文件。
+    require(paused is not None, "A 没有真实原生暂停")
     paused.update({"saver_context_exited": True, "closed_state_files": inventory(root / "state", sync=True)})
     create(root / "worker-a-paused.json", paused)
     print(json.dumps({"attempt": "worker-a", "paused": True, "checkpoint_id": paused["checkpoint_id"]}))
@@ -246,11 +245,11 @@ async def worker_b(root):
     from langgraph.runtime import RunControl
     provenance = installed_provenance()
     paused = read(root / "worker-a-paused.json")
-    require(paused["saver_context_exited"] is True, "A saver close was not observed")
-    require(inventory(root / "state") == paused["closed_state_files"], "Closed SQLite/WAL changed before B opened saver")
-    require(provenance == read(root / "worker-a-start.json")["provenance"], "Installed materials changed")
+    require(paused["saver_context_exited"] is True, "未观测到 A saver 关闭")
+    require(inventory(root / "state") == paused["closed_state_files"], "B 打开 saver 前，已关闭 SQLite/WAL 发生变化")
+    require(provenance == read(root / "worker-a-start.json")["provenance"], "已安装材料发生变化")
     control, observed = RunControl(), {}
-    require(not control.drain_requested, "B reused A's drained RunControl")
+    require(not control.drain_requested, "B 复用了 A 已排空的 RunControl")
     create(root / "worker-b-start.json", {"pid": os.getpid(), "provenance": provenance,
         "execution_config": CONFIG, "durability": "sync", "initial": None, "new_prompt": False,
         "execution_checkpoint_id_present": False, "model_used": False})
@@ -262,16 +261,16 @@ async def worker_b(root):
             head = await graph.aget_state(CONFIG)
             validate_boundary(exact, checkpoint)
             validate_boundary(head, checkpoint)
-            require(digest(snapshot_value(exact)) == paused["exact_sha256"], "Exact snapshot changed across processes")
-            require(digest(snapshot_value(head)) == paused["head_sha256"], "Head snapshot changed across processes")
+            require(digest(snapshot_value(exact)) == paused["exact_sha256"], "精确快照跨进程后发生变化")
+            require(digest(snapshot_value(head)) == paused["head_sha256"], "头检查点快照跨进程后发生变化")
             create(root / "worker-b-binding.json", {"checkpoint_id": checkpoint,
                 "exact_and_current_head_verified": True, "execution_input": None,
                 "execution_config": CONFIG, "execution_checkpoint_id_present": False})
             await stream(graph, None, control, root, "worker-b", observed)
-            require(not observed and not control.drain_requested, "B ended with active tasks or an old drain request")
+            require(not observed and not control.drain_requested, "B 结束时仍有活跃任务或旧 drain 请求")
             final = await graph.aget_state(CONFIG)
-            require(final.values == {"done": ["first", "active", "finish"]}, "B did not continue original progress")
-            require(not final.next and not final.tasks and not final.interrupts, "B left unfinished native work")
+            require(final.values == {"done": ["first", "active", "finish"]}, "B 未继续原始进度")
+            require(not final.next and not final.tasks and not final.interrupts, "B 留下未完成原生任务")
             create(root / "worker-b-final-native.json", snapshot_value(final))
     create(root / "worker-b-complete.json", {"pid": os.getpid(), "completed": True,
         "saver_context_exited": True, "closed_state_files": inventory(root / "state", sync=True), "model_used": False})
@@ -279,15 +278,15 @@ async def worker_b(root):
 
 
 def coordinate(root, image_id):
-    require(image_id.startswith("sha256:") and len(image_id) == 71, "Pass the actual immutable Docker image ID")
-    require(not root.is_symlink() and root.is_absolute(), "Output root must be an explicit real directory")
+    require(image_id.startswith("sha256:") and len(image_id) == 71, "请传入真实不可变 Docker 镜像 ID")
+    require(not root.is_symlink() and root.is_absolute(), "输出根路径必须是明确的真实目录")
     root.mkdir(exist_ok=True)
-    require(not list(root.iterdir()), "Calibration requires a new empty output root")
+    require(not list(root.iterdir()), "校准需要全新空输出根目录")
     (root / "state").mkdir(mode=0o700)
     create(root / "calibration.json", {"schema": "harness-lab-native-runtime-calibration/1",
         "declared_image_id": image_id, "started_at": now(), "coordinator_pid": os.getpid(),
         "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "model_used": False, "scope": "real LangGraph Runtime/SQLite only; no Deep Agents business-task claim"})
+        "model_used": False, "scope": "仅覆盖真实 LangGraph Runtime/SQLite，不声称 Deep Agents 业务任务能力"})
     results = []
     for attempt in ("worker-a", "worker-b"):
         tick = time.monotonic()
@@ -299,19 +298,19 @@ def coordinate(root, image_id):
             except subprocess.TimeoutExpired:
                 child.kill()
                 child.wait(timeout=5)
-                raise AssertionError("Calibration child exceeded its fixed deadline") from None
+                raise AssertionError("校准子进程超过固定截止时间") from None
         results.append({"attempt": attempt, "pid": child.pid, "exit_code": exit_code,
             "elapsed_seconds": time.monotonic() - tick})
         create(root / (attempt + "-process.json"), results[-1])
-        require(exit_code == 0, attempt + " failed; inspect its retained log")
-    require(results[0]["pid"] != results[1]["pid"], "A and B must be distinct Python processes")
+        require(exit_code == 0, attempt + ' 失败；请检查其保留日志')
+    require(results[0]["pid"] != results[1]["pid"], "A 和 B 必须是不同 Python 进程")
     require(read(root / "worker-a-paused.json")["pid"] == results[0]["pid"]
-        and read(root / "worker-b-complete.json")["pid"] == results[1]["pid"], "Worker evidence PID mismatch")
+        and read(root / "worker-b-complete.json")["pid"] == results[1]["pid"], "Worker 证据 PID 不匹配")
     audit = rows(root / "node-audit.jsonl")
     actual = [(row["attempt"], row["node"], row["phase"]) for row in audit]
     expected = [(attempt, node, phase) for attempt, node in
         (("worker-a", "first"), ("worker-a", "active"), ("worker-b", "finish")) for phase in ("start", "finish")]
-    require(actual == expected, "Completed A nodes were repeated, or B did not run only the pending final node")
+    require(actual == expected, "A 已完成节点被重复执行，或 B 未仅执行待处理最终节点")
     create(root / "verdict.json", {"schema": "harness-lab-native-runtime-calibration-verdict/1",
         "passed": True, "finished_at": now(), "actual_graph_drained": True,
         "saver_closed_before_B": True, "distinct_processes": results,
@@ -330,7 +329,7 @@ def main():
     if args.mode == "coordinator":
         coordinate(args.root, args.image_id or "")
     else:
-        require(Path("/opt/venv/bin/python").samefile(sys.executable), "Use the image's fixed candidate Python runtime")
+        require(Path("/opt/venv/bin/python").samefile(sys.executable), "使用镜像内固定的候选 Python 运行时")
         asyncio.run((worker_a if args.mode == "worker-a" else worker_b)(args.root))
 
 

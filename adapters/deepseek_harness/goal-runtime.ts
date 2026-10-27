@@ -1,4 +1,4 @@
-/** I22 draft: public Goal lifecycle; no application-owned agent/task loop. */
+/** I22 草案：公开 Goal 生命周期；应用层不自建 Agent 或任务循环。 */
 import { mkdtempSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { canonicalJson, sha256, stateInventory } from './goal-binding.mjs'
@@ -15,7 +15,7 @@ type NativeEnd = { turn: number; reason: { kind: string }; seq: number; source: 
 type PauseIntent = { id: string; turn: number; at: string; source: Source; goal?: GoalView; goalSource?: Source; end?: NativeEnd }
 type Binding = ReturnType<typeof import('./goal-binding.mjs')['readGoalBinding']>
 
-/** Only an explicitly selected, separately frozen Goal entry supplies this bridge. */
+/** 仅显式选择且单独冻结的 Goal 入口提供此桥接器。 */
 export class GoalRuntime {
   readonly variant = 'goal-runtime'
   readonly profile = 'harness-lab-goal'
@@ -56,8 +56,8 @@ export class GoalRuntime {
     })
   }
   async beforeBoot() {
-    // Profiles/module links are reproducible process configuration in /tmp.
-    // Only native sessions use the persistent /state mount.
+    // profile 和模块链接是 /tmp 中可复现的进程配置。
+    // 仅原生会话使用持久化 /state 挂载。
     process.env.HARNESS_GOAL_SESSION_ROOT = resolve(this.request.state_dir, 'sessions')
     const { initProfile } = await import('../sources/main/packages/boot/app-boot/src/profile.ts')
     initProfile(resolve(this.runtimeHome, 'profiles', this.profile), ['@deepseek-ai/dsh-sdk-minimal'], 'startup')
@@ -69,8 +69,8 @@ export class GoalRuntime {
     ctx.on('agent/error', ({ agent }) => { if (agent === this.agent) { this.nativeErrors++; this.considerStop() } })
     ctx.on('agent/inbox/inserted', ({ agent, message }) => {
       if (agent !== this.agent) return
-      // This adapter never supplies ordinary followup/steer/inject input.
-      // Official goal-round messages are the sole automatic task producer.
+      // 此适配器不提供普通 followup/steer/inject 输入。
+      // 官方 Goal 轮次消息是唯一的自动任务生成来源。
       const goal = ctx.goals.get(agent)
       if (message.source.kind !== 'goal' || message.source.round <= 0 || message.source.goalId !== goal?.id) this.concurrentInput = true
     })
@@ -88,16 +88,16 @@ export class GoalRuntime {
       this.inFlightTools++
       try { return await next() } finally { this.inFlightTools-- }
     })
-    // Public monotonic guard freezes the trusted objective/round cap. Goal
-    // complete/blocked still belongs to the model through the official tool.
+    // 公开单调约束冻结可信目标与轮数上限；Goal 的
+    // complete/blocked 仍由模型通过官方工具决定。
     agentCtx.tools.guard(exec => {
       if (exec.name === 'create_goal') return 'i22_goal_already_created_by_trusted_control'
       if (exec.name === 'update_goal' && !['complete', 'blocked'].includes((exec.arguments as { action?: string }).action ?? '')) return 'i22_trusted_goal_spec_is_frozen'
       return undefined
     })
     agentCtx.on('agent/pre-step', async (payload, next) => {
-      // Snapshot the original claim before any downstream middleware adds
-      // runtime context. Never inspect decision.messages as the raw claim.
+      // 在下游中间件加入运行时上下文之前，先保存原始声明快照；
+      // 不把 decision.messages 当作原始声明检查。
       const claimedCount = payload.messages.length
       if (this.tryPause(payload, claimedCount, 'before_next')) return { kind: 'reject' }
       const decision = await next()
@@ -180,15 +180,15 @@ export class GoalRuntime {
         && before.first_live_seq === storedCount && before.next_seq === storedCount + 1 && before.events.length === storedCount + 1
         && marker?.seq === storedCount && marker?.type === 'session/end-seed' && canonicalJson(marker.data) === '{}'
         && sha256(canonicalJson(before.events.slice(0, storedCount))) === expected.session.persisted_events_sha256
-      if (!goal || canonicalJson(goal) !== canonicalJson(expected.goal) || !exactRestoredPrefix || before.header.id !== expected.session.id || before.header.cwd !== expected.session.cwd) throw new Error('Native restored Goal/Session differs from the trusted paused source before model dispatch')
-      if (this.artifact?.physical_sha256 !== expected.session.artifact_sha256) throw new Error('Restored raw Session bytes differ from trusted paused source')
+      if (!goal || canonicalJson(goal) !== canonicalJson(expected.goal) || !exactRestoredPrefix || before.header.id !== expected.session.id || before.header.cwd !== expected.session.cwd) throw new Error('模型分发前，原生恢复的 Goal/Session 与可信暂停源不一致')
+      if (this.artifact?.physical_sha256 !== expected.session.artifact_sha256) throw new Error('恢复后的原始 Session 字节与可信暂停源不一致')
       this.expectedGoal = { id: goal.id, objective: goal.objective, maxGoalRounds: goal.maxGoalRounds }
       this.inputActive = true
       const resumed = ctx.goals.resume(handle.agent, { id: goal.id, revision: goal.revision })
       this.append('native_goal_resume_returned', { native_api: 'goals.resume', input_type: 'persisted_goal_ref', goal: resumed,
         new_prompt_submitted: false, new_followup_submitted: false })
     } else {
-      if (goal || before.message_count !== 0 || before.next_seq !== before.first_live_seq) throw new Error('New Goal variant requires a clean native Session with no prior messages')
+      if (goal || before.message_count !== 0 || before.next_seq !== before.first_live_seq) throw new Error('新 Goal 变体必须使用没有历史消息的干净原生 Session')
       this.inputActive = true
       const created = ctx.goals.create(handle.agent, { objective: this.request.prompt, maxGoalRounds: this.trusted.binding.goal.max_goal_rounds })
       this.expectedGoal = { id: created.id, objective: created.objective, maxGoalRounds: created.maxGoalRounds }
@@ -201,7 +201,7 @@ export class GoalRuntime {
   private considerStop() {
     if (!this.inputActive || !this.agent || this.agent.status !== 'idle') return
     const goal = this.ctx!.goals.get(this.agent)
-    // Ignore transient idle between official active/armed Goal rounds.
+    // 忽略官方 active/armed Goal 轮次之间短暂的 idle 状态。
     if (!goal || goal.phase !== 'active' || goal.activation !== 'armed' || this.nativeErrors > 0) this.stopped.resolve()
   }
   async waitForStop(handle: AgentHandle) {
@@ -212,12 +212,12 @@ export class GoalRuntime {
     this.inputActive = false
     const agent = handle.agent
     const goal = this.ctx!.goals.get(agent)
-    if (agent.status !== 'idle' || agent.inbox.hasPending || this.inFlightModels || this.inFlightTools) throw new Error('Native Goal work has not reached a quiescent empty-inbox boundary')
-    if (!goal || goal.id !== this.expectedGoal?.id || goal.objective !== this.expectedGoal.objective || goal.maxGoalRounds !== this.expectedGoal.maxGoalRounds) throw new Error('Final Goal identity/spec differs from its frozen binding')
-    if (this.nativeErrors) throw new Error('Native agent/error observed; idle alone is not a successful pause or completion')
+    if (agent.status !== 'idle' || agent.inbox.hasPending || this.inFlightModels || this.inFlightTools) throw new Error('原生 Goal 工作尚未到达静止且收件箱为空的边界')
+    if (!goal || goal.id !== this.expectedGoal?.id || goal.objective !== this.expectedGoal.objective || goal.maxGoalRounds !== this.expectedGoal.maxGoalRounds) throw new Error('最终 Goal 的身份或规格与冻结绑定不一致')
+    if (this.nativeErrors) throw new Error('已观测到原生 agent/error；仅有 idle 不代表成功暂停或完成')
     const intent = this.intent
     if (intent?.goal) {
-      if (this.concurrentInput || this.activeTurn !== undefined || goal.phase !== 'paused' || goal.activation !== 'disarmed' || !intent.goalSource || !intent.end || this.lastEnd?.seq !== intent.end.seq || canonicalJson(intent.end.reason) !== canonicalJson({ kind: 'blocked' }) || canonicalJson(goal) !== canonicalJson(intent.goal)) throw new Error('Missing actual matching Goal pause/blocked turn-end/paused-disarmed state')
+      if (this.concurrentInput || this.activeTurn !== undefined || goal.phase !== 'paused' || goal.activation !== 'disarmed' || !intent.goalSource || !intent.end || this.lastEnd?.seq !== intent.end.seq || canonicalJson(intent.end.reason) !== canonicalJson({ kind: 'blocked' }) || canonicalJson(goal) !== canonicalJson(intent.goal)) throw new Error('缺少实际匹配的 Goal 暂停、blocked 轮次结束或 paused-disarmed 状态')
       this.artifact = artifact
       this.pauseIndex = { schema: 'harness-lab-goal-pause/1', candidate: 'deepseek_harness', chain_id: this.request.lifecycle!.chain_id,
         scope: this.trusted.binding.scope, session_id: this.request.session_id, goal,
@@ -242,9 +242,9 @@ export class GoalRuntime {
       result.status = 'failed'; result.stop_reason = 'native_close_failed'
       result.error = closeError instanceof Error ? closeError.message : String(closeError)
     } else if (result.status === 'pause_pending_close' && this.pauseIndex && this.artifact) {
-      if (this.nativeErrors || this.inFlightModels || this.inFlightTools) throw new Error('Native failure or in-flight work observed during close')
+      if (this.nativeErrors || this.inFlightModels || this.inFlightTools) throw new Error('关闭期间观测到原生失败或在途工作')
       const bytes = readFileSync(this.artifact.native_location.path)
-      if (sha256(bytes) !== this.artifact.physical_sha256) throw new Error('Native session artifact changed during close')
+      if (sha256(bytes) !== this.artifact.physical_sha256) throw new Error('原生会话产物在关闭期间发生变化')
       this.pauseIndex.source.close = 'handle_dispose_private_scopes_and_runtime_shutdown_all_resolved'
       const inventory = stateInventory(this.request)
       this.io!.save('native-state-index-after-close.json', inventory)

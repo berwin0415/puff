@@ -1,10 +1,8 @@
-"""I23 implementation awaiting Docker calibration; no recovery claim yet.
+"""I23 实现等待 Docker 校准，尚不声称具备恢复能力。
 
-Independent preparation, control and five-axis grading. It never runs an Agent,
-retries business work or infers crash recovery from an I22 pause snapshot.
-Deep Agents uses its original SQLite head; DSH uses official interrupted-turn
-repair then the same original Goal. Both entries await Docker calibration.
-"""
+独立准备、控制和五维判定。不运行 Agent，不重试业务，
+也不根据 I22 暂停快照推断崩溃恢复。Deep Agents 使用原始 SQLite 头检查点；
+DSH 先执行官方中断轮次修复，再使用同一原始 Goal。两个入口均待 Docker 校准。"""
 from __future__ import annotations
 
 import argparse
@@ -32,8 +30,8 @@ from runner.grading import audited_calls, expected_tools, grade_tools, prepare_t
 CANDIDATES = ('deepagents_langgraph', 'deepseek_harness')
 FAULTS = ('none', 'model_timeout', 'fail_once', 'drop_receipt_once', 'kill_before_write')
 ACTIONS = ('prepare', 'configure', 'bind-start', 'observe-gate', 'after-kill', 'bind-crash-resume', 'grade')
-# Only reviewed, image-bundled Python functions may be registered here. A user
-# JSON file, candidate result or I22 pause index cannot activate these paths.
+# 此处只可登记已审查且随镜像打包的 Python 函数。用户
+# JSON 文件、候选结果或 I22 暂停索引均不能激活这些路径。
 NATIVE_START_BINDERS = {}
 NATIVE_CRASH_BINDERS = {}
 require, read, create, regular, sha, digest = io.require, io.read, io.create, io.regular, io.sha, io.digest
@@ -85,7 +83,7 @@ def expected_target(args, paths, scope):
 
 
 def prepare(args, config, paths, scope):
-    """Exactly once, including the non-idempotent fixture mode from first setup."""
+    """只执行一次，包括从首次初始化就启用的非幂等 Fixture 模式。"""
     for path in (paths.run, paths.state, paths.workspace, paths.budget):
         require(not path.exists() and not path.is_symlink(), 'fault_chain_already_used')
     for path in (paths.run, paths.state, paths.workspace, paths.budget, paths.run / 'trusted'):
@@ -123,7 +121,7 @@ def prepare(args, config, paths, scope):
         'chain_id': args.chain_id, 'scope': scope, 'seed': args.seed, 'fault': args.fault, 'write_mode': args.write_mode,
         'task_sha256': task_hash, 'input_sha256': sha(regular(paths.run / 'input.json')),
         'request_sha256': sha(regular(paths.fixture / 'candidate-request.json'))})
-    # Host pin file is private and validated before any start binding is issued.
+    # 宿主机固定文件为私有文件，在发出任何启动绑定前验证。
     private(paths.run / 'trusted/pins.json', read(paths.fixture / 'host-pins.json'))
     pins_for(args, paths, scope)
     if args.fault == 'kill_before_write':
@@ -176,28 +174,27 @@ def native_gap(paths, name, message, *, binding=None):
 def bind_start(args, paths, scope, pins):
     binder = NATIVE_START_BINDERS.get(args.candidate)
     if binder is None:
-        return native_gap(paths, 'native-start-gap.json', 'I23 same-runtime start binder has not been source-reviewed and calibrated')
-    # A reviewed binder writes the native request/control and worker binding.
-    # It must use the exact original prompt once, chosen native runtime variant,
-    # unchanged tools/model/retries and a freshly empty native state directory.
+        return native_gap(paths, 'native-start-gap.json', 'I23 同运行时启动 binder 尚未完成源码审查和校准')
+    # 已审查 binder 写入原生请求、控制和 Worker 绑定。
+    # 它必须只使用一次精确原始提示、选定的原生运行时变体，
+    # 保持工具、模型和重试设置不变，并使用全新空原生状态目录。
     binder(args, paths, scope, pins)
     return True
 
 
 def native_tree(root):
-    """Same bounded file facts verified by the independent candidate entry."""
+    """独立候选入口验证同一组有大小限制的文件事实。"""
     index = io.inventory(root, root)
     return {row['path']: {'bytes': row['bytes'], 'sha256': row['sha256']}
             for row in index['files'] if row['root'] == 'state'}
 
 
 def decode_checkpoint(data):
-    """Read pinned serializer data without importing/reconstructing SDK classes.
+    """读取固定序列化器数据，不导入或重建 SDK 类。
 
-    Only pinned message, delta-snapshot and Overwrite data are projected.
-    These are inert dictionaries, never SDK objects or Python constructors.
-    All other extension values remain explicitly opaque hashes.
-    """
+    仅投影固定的消息、增量快照和 Overwrite 数据。
+    它们是静态字典，不是 SDK 对象或 Python 构造器。
+    其他扩展值均明确保留为不可解释的哈希。"""
     import ormsgpack
     def extension(code, payload):
         if code == 1:
@@ -231,15 +228,15 @@ def decode_checkpoint(data):
 
 
 def native_json_projection(value):
-    """The fixed entrypoint's JSON representation, without constructing objects."""
+    """复现固定入口的 JSON 表示，不构造对象。"""
     if isinstance(value, list):
         return [native_json_projection(item) for item in value]
     if isinstance(value, dict):
         if set(value) == {'native_class', 'fields'}:
             return native_json_projection(value['fields'])
         if set(value) == {'native_delta_snapshot'}:
-            # _DeltaSnapshot is a NamedTuple. json.dumps sees a tuple before
-            # invoking the entrypoint's default encoder, hence [value].
+            # _DeltaSnapshot 是 NamedTuple。json.dumps 在调用
+            # 入口 default 编码器前先看到元组，因此输出 [value]。
             return [native_json_projection(value['native_delta_snapshot'])]
         require('opaque_extension' not in value and 'opaque_type' not in value,
                 'fault_unsupported_native_public_projection')
@@ -248,7 +245,7 @@ def native_json_projection(value):
 
 
 def message_record(value):
-    """Only full messages emitted by the pinned tools graph are supported."""
+    """仅支持固定工具图发出的完整消息。"""
     classes = {'human': 'human.HumanMessage', 'ai': 'ai.AIMessage', 'tool': 'tool.ToolMessage',
         'system': 'system.SystemMessage', 'remove': 'modifier.RemoveMessage'}
     require(isinstance(value, dict) and set(value) == {'native_class', 'fields'}
@@ -277,12 +274,11 @@ def message_state(value):
 
 
 def replay_message_writes(seed, values, *, live=False):
-    """Pinned DA reducer on inert messages; this never becomes execution state.
+    """在静态消息上复现固定 DA reducer，不用作执行状态。
 
-    Ancestor replay uses the last Overwrite and all subsequent writes. One
-    live superstep uses DeltaChannel.update's sole Overwrite as its full value.
-    Unknown message-like inputs fail closed instead of guessing SDK coercion.
-    """
+    祖先重放使用最后一次 Overwrite 及后续全部写入。
+    单个运行中超步以 DeltaChannel.update 唯一的 Overwrite 为完整值。
+    未知的类消息输入一律拒绝，不猜测 SDK 强制转换。"""
     base, start, overwrites = message_state(seed), 0, []
     for index, value in enumerate(values):
         overwrite, replacement = message_overwrite(value)
@@ -337,7 +333,7 @@ def sqlite_writes(db, scope, checkpoint_id, *, messages_only=False):
 
 
 def sqlite_messages(db, scope, all_rows, head):
-    """Mirror the pinned saver parent walk, excluding the target's pending log."""
+    """复现固定 saver 的父链遍历，排除目标自身的待处理日志。"""
     by_id = {row[0]: row for row in all_rows}
     require(len(by_id) == len(all_rows) and len(by_id) <= 4096, 'fault_native_checkpoint_history_bound')
     checkpoint_id = head['id']
@@ -366,8 +362,8 @@ def sqlite_messages(db, scope, all_rows, head):
         require(isinstance(current, dict) and current.get('id') == parent, 'fault_invalid_native_checkpoint_value')
         cursor = parent
         ancestors.append(cursor)
-    # A seed belongs to the start of its own step. That step's writes are
-    # included too; target pending writes are deliberately never in this list.
+    # 种子属于其自身步骤起点，也包含该步骤的写入；
+    # 目标待处理写入特意不列入此表。
     ordered = list(reversed(ancestors))
     history = [{'checkpoint_id': cid, 'writes': sqlite_writes(db, scope, cid, messages_only=True)} for cid in ordered]
     messages = replay_message_writes(seed, [row['value'] for step in history for row in step['writes']])
@@ -380,11 +376,10 @@ def sqlite_messages(db, scope, all_rows, head):
 
 
 def natural_sqlite_audit(paths, scope, original):
-    """Inspect a private byte copy, including WAL, after exact A exclusion.
+    """精确排除 A 后，检查包含 WAL 的私有字节副本。
 
-    Never open the original database with SQLite: a read-only connection can
-    still touch SHM. The copy is diagnostic only and is never mounted into B.
-    """
+    绝不通过 SQLite 打开原库：只读连接仍可能触碰 SHM。
+    此副本仅供诊断，绝不挂载到 B。"""
     before = io.inventory(paths.state, paths.workspace)
     state = {row['path']: row for row in before['files'] if row['root'] == 'state'}
     require('checkpoints.sqlite' in state and 'pause-index.json' not in state, 'fault_natural_db_missing_or_safe_pause_substituted')
@@ -433,8 +428,8 @@ def natural_sqlite_audit(paths, scope, original):
         'messages': messages, 'message_history': history,
         'pending_writes': pending, 'pending_write_keys': sorted([row['task_id'], row['channel']] for row in pending),
         'original_prompt_sha256': sha(original['prompt'].encode()), 'native_inventory': before,
-        'original_files_unchanged': True, 'observation_mode': 'byte copy of original SQLite/WAL/SHM; readonly transaction in private scratch',
-        'execution_source': 'original candidate state, never this diagnostic copy', 'pause_index_used': False}
+        'original_files_unchanged': True, 'observation_mode': '复制原始 SQLite/WAL/SHM 字节，在私有临时目录中使用只读事务',
+        'execution_source': '使用原始候选状态，不使用此诊断副本', 'pause_index_used': False}
 
 
 def worker_binding(paths, scope, pins, attempt, request, controls, *, argv, entrypoint):
@@ -479,7 +474,7 @@ def deepagents_binding(args, paths, scope, pins, boundary=None):
                         and call.get('args') == arguments for call in actual_calls) == 1 for event in hit_events),
                 'fault_gate_call_not_in_original_natural_checkpoint')
         audit['gate_to_native_calls'] = [{'gate_event_id': event['event_id'], 'bridge_call_id': event['bridge_call_id'],
-            'native_tool_call_id': event['native_call_id'], 'source': 'independent physical AIMessage.tool_calls versus durable trusted prewrite hit'}
+            'native_tool_call_id': event['native_call_id'], 'source': '独立物理 AIMessage.tool_calls 与持久化可信预写入命中进行比较'}
             for event in hit_events]
         private(paths.run / 'trusted/native-crash-sqlite.json', audit)
         recovery = {'boundary_sha256': sha(regular(paths.run / 'trusted/crash-boundary.json')),
@@ -512,13 +507,13 @@ NATIVE_CRASH_BINDERS['deepagents_langgraph'] = deepagents_binding
 
 
 def deepseek_binding(args, paths, scope, pins, boundary=None):
-    """Same isolated native Goal runtime for A, B and the no-fault baseline."""
+    """A、B 和无故障基线使用同一隔离原生 Goal 运行时。"""
     original = read(paths.fixture / 'candidate-request.json')
     attempt = 'worker-b' if boundary is not None else 'worker-a'
     target = paths.fixture / 'attempts' / attempt
     require(not list((paths.run / 'attempts' / attempt / 'candidate').iterdir()), 'fault_attempt_output_not_fresh')
-    # The host must freeze the no-model calibration in pins before any binding.
-    # Recomputing a replacement expected hash here would accept changed bytes.
+    # 宿主机必须在绑定前将无模型校准冻结到 pins。
+    # 此处重新计算替代预期哈希，会错误接受已变化字节。
     contract_hash = io.dsh_contract(paths, pins, scope)
     recovery, used = None, 0
     if boundary is None:
@@ -549,7 +544,7 @@ def deepseek_binding(args, paths, scope, pins, boundary=None):
             'assistant_event_seq': next(row['seq'] for row, block in calls if block['id'] == event['native_call_id']),
             'durable_tool_call_seqs': [row['seq'] for row in audit['events'] if row['type'] == 'tool/call'
                 and row['data'].get('callId') == event['native_call_id']],
-            'source': 'independent original physical assistant tool-call versus trusted durable prewrite hit'} for event in hits]
+            'source': '独立原始物理 assistant 工具调用与可信持久化预写入命中进行比较'} for event in hits]
         private(paths.run / 'trusted/native-crash-dsh.json', audit)
         recovery = {key: audit[key] for key in ('physical_path', 'physical_bytes', 'physical_sha256', 'committed_bytes',
             'committed_prefix_sha256', 'events_sha256', 'next_seq', 'expected_repaired_events_sha256',
@@ -589,11 +584,10 @@ def deepseek_start(args, paths, scope, pins):
 
 
 def dsh_interrupted_closers(events):
-    """Independent data-only mirror of the pinned public Session repair.ts.
+    """独立以纯数据复现固定公共 Session repair.ts。
 
-    These events are expected evidence only; the bench never writes them into
-    native state. agents.resume must perform and durably record actual repair.
-    """
+    这些事件仅用于预期证据，bench 绝不将其写入原生状态。
+    agents.resume 必须实际执行修复并持久化记录。"""
     turn, step, pending = None, None, {}
     for event in events:
         kind, details = event['type'], event.get('data', {})
@@ -618,6 +612,7 @@ def dsh_interrupted_closers(events):
     seq, stamp, closers = events[-1]['seq'] + 1, events[-1]['time'], []
     for call_id, item in pending.items():
         started = 'call_seq' in item
+        # 以下英文须精确复现固定上游的修复事件，不作为本仓库的新提示。
         text = ('The tool call was interrupted after it was recorded, but no result was durably recorded. Its outcome is unknown. '
             'Decide whether to retry from the tool semantics: retry only if the operation is read-only or idempotent; '
             'if it may have side effects, first verify external state or ask the user. Do not retry blindly.' if started else
@@ -640,12 +635,11 @@ def dsh_interrupted_closers(events):
 
 
 def dsh_physical_prefix(data, scope):
-    """Strict plaintext/unpacked format only, retaining a torn final fragment.
+    """仅支持严格明文、未打包格式，保留撕裂的末尾片段。
 
-    The pinned native scanner can also discard malformed complete tail rows.
-    This first lab entry fails closed for those rows rather than broadening its
-    accepted repair region; such a chain is a documented durability gap.
-    """
+    固定原生扫描器也会丢弃格式错误的完整尾行。
+    首轮实验对此类行一律拒绝，不扩展可接受的修复范围；
+    这类链属于已记录的持久性缺口。"""
     end = data.rfind(b'\n') + 1
     require(end > 0, 'fault_dsh_header_not_committed')
     records = [io.decode(row) for row in data[:end].splitlines()]
@@ -659,7 +653,7 @@ def dsh_physical_prefix(data, scope):
 
 
 def deepseek_crash_observation(paths, scope, pins):
-    """Read original bytes without Session loading, repair, extra flush or write."""
+    """读取原始字节，不加载 Session、不修复、不额外 flush 或写入。"""
     original = read(paths.fixture / 'candidate-request.json')
     before = io.inventory(paths.state, paths.workspace)
     require(not any(row['root'] == 'state' and ('pause-index' in row['path'] or 'lifecycle-pause' in row['path'])
@@ -706,8 +700,8 @@ def deepseek_crash_observation(paths, scope, pins):
         'expected_repaired_next_seq': len(events) + len(closers), 'expected_repaired_events_sha256': digest(events + closers),
         'unended_turn': turn, 'recorded_tools_without_durable_result': calls,
         'user_message_sources_in_open_tail': sources, 'actual_inbox_splices_in_open_tail': splices,
-        'claim_meaning': 'only actual agent/inbox/spliced removedCount/outcome/inserted records describe claims; user/message is not a claim',
-        'boundary': 'natural durable prefix only; buffered events and process-local activation are not inferred'}
+        'claim_meaning': '仅使用实际 agent/inbox/spliced 的 removedCount/outcome/inserted 记录描述领取；user/message 不算领取',
+        'boundary': '仅使用自然持久化前缀，不推断缓冲事件或进程本地激活状态'}
     require(before == io.inventory(paths.state, paths.workspace), 'fault_dsh_crash_observation_changed_native_state')
     return observed
 
@@ -750,7 +744,7 @@ def observe_gate(args, paths, scope):
             and all(row.get('attempt_id') == 'worker-a' and row.get('operation_id') == target['operation_id']
                     and row.get('arguments_sha256') == digest(wanted) for row in hits), 'fault_gate_hit_wrong_arguments')
     private(paths.run / 'trusted/gate-hit.json', snapshot)
-    # Host consumes only durable-source identity, not expected business answers.
+    # 宿主机只消费持久化来源身份，不消费预期业务答案。
     private(paths.run / 'trusted/gate-signal.json', {'chain_id': args.chain_id, 'scope': scope, 'attempt_id': 'worker-a',
         'snapshot_sha256': sha(regular(paths.run / 'trusted/gate-hit.json')), 'hit_event_id': hits[0]['event_id'],
         'observed_at': io.now(), 'observed': True})
@@ -758,7 +752,7 @@ def observe_gate(args, paths, scope):
 
 
 def killed_worker(record, pins, scope):
-    """External SIGKILL137 is injection evidence, never a healthy process exit."""
+    """外部 SIGKILL137 只证明故障注入，不能算健康进程退出。"""
     require(record.get('schema') == 'harness-lab-fault-worker/1' and record.get('attempt_id') == 'worker-a'
             and record.get('chain_id') == pins['chain_id'] and record.get('scope') == scope, 'fault_kill_foreign_worker')
     before, live, after = (record.get(key, {}) for key in ('before_start', 'before_kill', 'after_exit'))
@@ -785,7 +779,7 @@ def killed_worker(record, pins, scope):
 
 
 def model_snapshot(paths, *, allow_empty=False):
-    """I23 permits real failures; unlike I22, injected_timeout is expected."""
+    """I23 允许真实失败；与 I22 不同，injected_timeout 在预期内。"""
     token_hash = sha(regular(paths.budget / 'run.token').strip())
     database = paths.budget / 'calls.sqlite'
     regular(database)
@@ -812,16 +806,16 @@ def after_kill(args, paths, scope, pins):
     gate_request(paths, 'POST', '/abandon', json={'gate_id': args.chain_id, 'attempt_id': 'worker-a'})
     snapshot = validated_gate(args, paths, scope)
     deadline = time.monotonic() + 5
-    # Wait only for durable admitted work to finish by its original handler.
-    # Unknown is terminal for this controller: never mark it known or retry it.
+    # 仅等待持久化准入的任务由其原始处理器完成。
+    # 对本控制器而言，未知就是终态：不改成已知，也不重试。
     while (snapshot.get('unsettled_dispatches') and time.monotonic() < deadline
             and all(row.get('state') == 'admitted' for row in snapshot['unsettled_dispatches'])):
         time.sleep(0.1)
         snapshot = validated_gate(args, paths, scope)
     private(paths.run / 'trusted/gate-after-kill.json', snapshot)
-    # Conservative: no hand-written resolution of unknown/admitted calls. Host
-    # may call this only after normal in-flight completion was independently
-    # observed. An unsettled row ends the chain as a documented unknown.
+    # 采取保守规则：不手工解决未知或已准入调用。宿主机
+    # 只有在独立观测到在途调用正常完成后，才能调用此函数。
+    # 未结束的记录使整条链以已记录的未知状态结束。
     require(snapshot['gate']['state'] == 'abandoned' and snapshot.get('unsettled_dispatches') == [], 'fault_A_requests_not_quiescent')
     ledger = ledger_request(paths, 'GET', '/admin/ledger', params={'experiment_id': 'fault-recovery', 'variant': args.chain_id})
     require(scoped_ledger(ledger, scope), 'fault_before_recovery_ledger_invalid')
@@ -857,20 +851,20 @@ def bind_crash_resume(args, paths, scope, pins):
         'crash_boundary_sha256': sha(regular(paths.run / 'trusted/crash-boundary.json'))}
     binder = NATIVE_CRASH_BINDERS.get(args.candidate)
     if binder is None:
-        return native_gap(paths, 'native-recovery-gap.json', 'No source-reviewed crash entry registered; B was not created and original input was not resent', binding=gap_binding)
-    # Must inspect only naturally persisted A state in this bench image; pin
-    # original thread/Goal/Session, pending writes and runtime identity. No
-    # candidate self-index, flush after SIGKILL, restored safe-pause index, new
-    # Goal, or model/tool invocation may manufacture missing progress.
+        return native_gap(paths, 'native-recovery-gap.json', '未登记经过源码审查的崩溃恢复入口；未创建 B，也未重发原始输入', binding=gap_binding)
+    # 只能在此 bench 镜像检查 A 自然持久化的状态；固定
+    # 原始 thread/Goal/Session、待处理写入及运行时身份。
+    # 不能靠候选自报索引、SIGKILL 后 flush、恢复安全暂停索引、
+    # 新 Goal 或模型/工具调用伪造缺失进展。
     try:
         binder(args, paths, scope, pins, boundary)
     except ValueError as error:
-        # Missing natural durable work is a measured native capability gap.
-        # Identity/source corruption and changed evidence still fail closed.
+        # 缺失自然持久化任务属于测得的原生能力缺口。
+        # 身份或来源损坏、证据变化仍一律拒绝。
         if args.candidate == 'deepseek_harness' and str(error) in {
                 'fault_dsh_original_session_not_persisted', 'fault_dsh_original_goal_not_persisted',
                 'fault_dsh_original_goal_not_resumable'}:
-            return native_gap(paths, 'native-recovery-gap.json', str(error) + '; no B/new prompt/replacement Goal was created', binding=gap_binding)
+            return native_gap(paths, 'native-recovery-gap.json', str(error) + '；未创建 B、新提示或替代 Goal', binding=gap_binding)
         raise
     return True
 
@@ -899,7 +893,7 @@ def operation_analysis(ledger, events, scope, before=None):
                             all(row.get(key) == actual.get(key) for key in ('id', 'operation_id', 'item_id', 'quantity', 'total_cents')) for actual in writes)]
             if matching:
                 queries.append({'server_call_id': start['call_id'], 'tool': start['tool'], 'finish_time': finish['time'],
-                                'matched_write_ids': [row['id'] for row in matching], 'origin': 'candidate_or_model_native_call; no bench query'})
+                                'matched_write_ids': [row['id'] for row in matching], 'origin': 'candidate_or_model_native_call；bench 未查询'})
         result.append({'operation_id': operation, 'tool_write_calls': len(tool_writes), 'business_request_count': len(requests),
             'actual_write_count': len(writes), 'request_ids': [row['id'] for row in requests],
             'request_statuses': [row['status'] for row in requests], 'write_ids': [row['id'] for row in writes],
@@ -939,12 +933,10 @@ def injection_valid(args, paths, scope, ledger, budget):
 
 
 def controlled_failure_native(paths, scope, candidate, attempt, facts):
-    """Bench-only decode of DA's original physical terminal message.
+    """仅在 bench 中解码 DA 的原始物理终态消息。
 
-    The host's stdlib reader freezes BLOB hashes; only the independent bench
-    imports the pinned safe MessagePack decoder. It never reconstructs SDK
-    classes or treats a candidate snapshot as the physical checkpoint.
-    """
+    宿主机标准库读取器固定 BLOB 哈希；只有独立 bench 导入固定的安全 MessagePack 解码器。
+    不重建 SDK 类，也不把候选框架快照当作物理检查点。"""
     if candidate != 'deepagents_langgraph':
         return {'physical_native_failure_verified': True, 'reader': 'bound_public_dsh_jsonl'}
     directory = paths.run / 'attempts' / attempt / 'candidate'
@@ -969,7 +961,7 @@ def controlled_failure_native(paths, scope, candidate, attempt, facts):
 
 
 def process_evidence(paths, scope, pins, args):
-    """Independent exact image/mount/process checks;137 remains an injection."""
+    """独立检查精确镜像、挂载和进程；137 仍属于注入。"""
     config = load_config().for_environment('container')
     records = {}
     for attempt in ('worker-a', 'worker-b'):
@@ -1049,7 +1041,7 @@ def process_evidence(paths, scope, pins, args):
 
 
 def control_exit_expected(paths, scope, pins, processes, record):
-    """An explicit no-recovery diagnostic is not a crashed control program."""
+    """明确的未恢复诊断不等于控制程序崩溃。"""
     code = record.get('exit_code')
     if type(code) is int and code == 0:
         return True
@@ -1089,7 +1081,7 @@ def control_exit_expected(paths, scope, pins, processes, record):
 
 
 def resource_evidence(paths, scope, pins, processes):
-    """No zero fill: raw stats and exact observed lifecycle transitions agree."""
+    """不补零：原始 stats 必须与精确观测的生命周期转换相符。"""
     import math
     from runner.metrics import memory_bytes
     orchestration = read(paths.run / 'trusted/orchestration-final.json')
@@ -1221,12 +1213,11 @@ def resource_evidence(paths, scope, pins, processes):
 
 
 def live_message_projection(audit, snapshot):
-    """Account separately for the current head's actual completed-task writes.
+    """单独统计当前头检查点中实际已完成任务的写入。
 
-    graph.aget_state(current-head config) exposes a live view, while the saver
-    returns raw storage. NULL_TASK_ID input is applied first, then outputs of
-    current tasks. No pending write is folded into the ancestor/base audit.
-    """
+    graph.aget_state(current-head config) 提供运行中视图，saver 则返回原始存储。
+    先应用 NULL_TASK_ID 输入，再应用当前任务输出。
+    不将待处理写入折叠进祖先/基线审计。"""
     tasks = snapshot.get('tasks')
     require(isinstance(tasks, list), 'fault_public_live_tasks_missing')
     registered = {}
@@ -1241,8 +1232,8 @@ def live_message_projection(audit, snapshot):
         require(type(value) in (str, int, bool, list), 'fault_public_live_task_path_invalid')
         if isinstance(value, list):
             return '~' + ', '.join(task_path(item) for item in value)
-        # The pinned scheduler appends False to PUSH paths. Its task_path_str
-        # uses isinstance(int), which intentionally formats bool as 0/1 too.
+        # 固定调度器会在 PUSH 路径追加 False。其 task_path_str
+        # 使用 isinstance(int)，故有意将 bool 也格式化为 0/1。
         return f'{value:010d}' if isinstance(value, int) else value
     paths = [task_path(task['path']) for task in registered.values()]
     require(len(set(paths)) == len(paths), 'fault_public_live_task_path_ambiguous')
@@ -1309,11 +1300,10 @@ def deepagents_resume_evidence(paths, scope, pins):
 
 
 def deepseek_resume_evidence(paths, scope, pins):
-    """Correlate original bytes, actual native repair, original Goal and B log.
+    """关联原始字节、实际原生修复、原始 Goal 和 B 日志。
 
-    No self-reported hash alone proves recovery. Final original physical JSONL
-    must contain exactly the independently expected prefix and native closers.
-    """
+    仅有自报哈希不能证明恢复。最终原始物理 JSONL 必须精确包含
+    独立预期的前缀和原生关闭事件。"""
     directory = paths.run / 'attempts/worker-b/candidate'
     binding = read(paths.fixture / 'attempts/worker-b/fault-goal.json')
     recovery = binding.get('recovery', {})
@@ -1342,8 +1332,8 @@ def deepseek_resume_evidence(paths, scope, pins):
     expected = audit['events'] + dsh_interrupted_closers(audit['events'])
     require(audit['expected_repair_events'] == expected[len(audit['events']):]
             and digest(expected) == audit['expected_repaired_events_sha256'], 'fault_dsh_expected_repair_changed')
-    # The physical JSONL tag is not part of public SessionHeader. The sole
-    # official default is delegationDepth=0; retain every other header field.
+    # 物理 JSONL 的 tag 不属于公共 SessionHeader。唯一
+    # 官方默认值为 delegationDepth=0；保留其他全部头字段。
     io.restored_dsh_header({key: value for key, value in audit['header'].items() if key != 'type'}, before.get('header'))
     events = before.get('events')
     needs_marker = not expected or expected[-1]['type'] != 'session/end-seed'
@@ -1388,7 +1378,7 @@ def deepseek_resume_evidence(paths, scope, pins):
             'fault_dsh_public_goal_resume_observation_missing')
     uncertainty = [{'native_call_id': event['data']['message']['source']['callId'], 'native_error': event['data']['error'],
         'repair_seq': event['seq'], 'source_event_seqs': event.get('sourceEventSeqs', []),
-        'source': 'original physical B log at native repair seq; independent business ledger required'}
+        'source': '原生修复序号处的原始物理 B 日志；必须提供独立业务账本'}
         for event in audit['expected_repair_events'] if event['type'] == 'tool/result']
     require([row.get('native_call_id') for row in result.get('uncertainty', [])] == [row['native_call_id'] for row in uncertainty]
             and all(row.get('error') == source['native_error'] and row.get('repair_seq') == source['repair_seq']
@@ -1399,12 +1389,12 @@ def deepseek_resume_evidence(paths, scope, pins):
         'repair_events_verified_against_actual_original_physical_log': True,
         'uncertainty': uncertainty, 'original_open_tail_inbox_splices': audit['actual_inbox_splices_in_open_tail'],
         'native_goal_phase_at_end': final_goal['phase'], 'business_automatic_completion_implied': False,
-        'recovery_granularity': 'original durable Goal after official interrupted-turn repair; no arbitrary execution-position guarantee'}
+        'recovery_granularity': '官方中断轮次修复后的原始持久化 Goal；不保证任意执行位置恢复'}
     private(paths.run / 'trusted/native-recovery-dsh-evidence.json', evidence)
     return evidence
 
 def terminal_completion(paths, pins, scope, attempt):
-    """Scope-independent terminal facts; no I22 pause or recovery assumptions."""
+    """与作用域无关的终态事实，不假定 I22 暂停或恢复。"""
     directory = paths.run / 'attempts' / attempt / 'candidate'
     result = read(directory / 'result.json')
     require(result.get('status') == result.get('native_status') == 'completed' and not result.get('error')
@@ -1435,7 +1425,7 @@ def terminal_completion(paths, pins, scope, attempt):
 
 
 def grade(args, paths, scope, pins):
-    """A failure is retained in a new verdict, never hidden by a rerun."""
+    """将失败保留在新判定中，不通过重跑掩盖。"""
     checks, axes = [], {}
     def check(name, callback):
         try:
@@ -1512,18 +1502,18 @@ def grade(args, paths, scope, pins):
     elif business and business['passed'] and terminal and recovered and axes['budget_and_process']['passed']:
         handling = 'automatic_completed'
     else:
-        # Explicit failure/needs-confirmation require reviewed native evidence
-        # decoders. A missing artifact, budget exhaustion or candidate free text
-        # is not an honest pending-confirmation state by itself.
+        # 显式失败或待确认必须使用已审查的原生证据
+        # 解码器。仅凭产物缺失、预算耗尽或候选自由文本，
+        # 不能认定已如实进入待确认状态。
         handling = 'incomplete'
     axes['handling_outcome'] = handling
     verdict = {'schema': 'harness-lab-fault-verdict/1', 'candidate': args.candidate, 'chain_id': args.chain_id,
         'seed': args.seed, 'fault': args.fault, 'write_mode': args.write_mode, 'axes': axes, 'checks': checks,
         'passed': handling == 'automatic_completed', 'implementation_stage': 'docker_chain_evaluated',
-        'limitations': ['Native recovery claims apply only when this chain has verified recovery evidence; calibration is recorded separately',
-                        'native explicit-failure/needs-confirmation decoders remain unimplemented; no inference from free text',
-                        'DSH restores the original durable Goal after native repair, not an arbitrary interrupted instruction; malformed complete tail rows fail closed',
-                        'no exactly-once guarantee; one local Docker chain only']}
+        'limitations': ['只有此链具有已验证恢复证据时才声称原生恢复；校准单独记录',
+                        '原生显式失败/待确认解码器尚未实现；不根据自由文本推断',
+                        'DSH 在原生修复后恢复原始持久化 Goal，不保证恢复任意中断指令；格式错误的完整尾行一律拒绝',
+                        '不保证恰好一次；仅覆盖一条本地 Docker 链']}
     create(paths.run / 'verdict.json', verdict)
     return verdict['passed']
 
@@ -1550,8 +1540,8 @@ def main():
     if args.action == 'bind-start':
         return 0 if bind_start(args, paths, scope, pins) else 3
     if args.action == 'observe-gate':
-        # A healthy read-only poll exits0; presence of the exclusive trusted
-        # signal file conveys a hit. Errors still fail, never become not-hit.
+        # 健康只读轮询以 0 退出；独占可信信号文件存在
+        # 表示命中。错误仍判失败，不能算未命中。
         print(json.dumps({'gate_hit': observe_gate(args, paths, scope)}))
         return 0
     if args.action == 'after-kill':

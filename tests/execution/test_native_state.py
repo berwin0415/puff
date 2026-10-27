@@ -1,7 +1,7 @@
-"""Adversarial calibration with synthetic state and Docker transport doubles.
+"""使用合成状态和 Docker 传输替身进行对抗性校准。
 
-Run in the Docker bench. No candidate SDK, Docker daemon or model is invoked;
-these tests validate rejection behavior, never candidate capabilities.
+在 Docker 验收镜像中运行，不调用候选 SDK、Docker 服务或模型；
+这里只校验拒绝行为，不证明候选能力。
 """
 from argparse import Namespace
 from contextlib import closing
@@ -97,7 +97,7 @@ def evidence(tmp_path, monkeypatch):
 def test_equal_native_state_in_a_different_deleted_worker_chain_passes(evidence):
     assert probe.grade(evidence.args) == 0
     verdict = json.loads((evidence.replacement.parent / "verdict.json").read_text())
-    assert verdict["passed"] and "task continuation was not tested" in verdict["claim"]
+    assert verdict["passed"] and '未验证任务继续执行' in verdict["claim"]
 
 
 @pytest.mark.parametrize("corruption", ["source_hash", "source_pointer", "foreign_scope", "same_container",
@@ -156,19 +156,19 @@ def test_matching_candidate_receipt_values_cannot_replace_independent_audit(evid
     altered = deepcopy(evidence.audits)
     altered[1]["result"]["receipts"][0]["quantity"] = 99
     jsonl(evidence.paths.run / "tool-events.jsonl", altered)
-    with pytest.raises(ValueError, match="independently audited"):
+    with pytest.raises(ValueError, match='独立审计'):
         probe.receipt_sources(evidence.state, evidence.original, evidence.scope)
 
 
 def graph_evidence(item, actual_business):
-    """A real native-format SQLite row, independent from exported JSON."""
+    """独立于导出 JSON 的真实原生格式 SQLite 记录。"""
     import ormsgpack
 
     checkpoint_id = "checkpoint-current"
     native = {"config": {"configurable": {"thread_id": "main", "checkpoint_ns": "", "checkpoint_id": checkpoint_id}},
         "checkpoint": {"id": checkpoint_id, "channel_values": {"business_state": item.state}}}
-    # Opaque LangGraph message extensions are legitimate outside the plain
-    # business channel. Bench must not import or reconstruct their classes.
+    # 普通业务通道之外可以有不透明 LangGraph 消息扩展；
+    # 验收程序不能导入或重建这些扩展类。
     stored = {"id": checkpoint_id, "channel_values": {"business_state": actual_business,
         "messages": [ormsgpack.Ext(5, ormsgpack.packb(["unimportable.module", "SyntheticMessage", {}]))]}}
     database = item.paths.state / "checkpoints.sqlite"
@@ -202,7 +202,7 @@ def test_graph_business_values_are_independently_read_from_real_sqlite_with_opaq
 
 
 def deepagents_reader(monkeypatch):
-    """Load the stdlib entry module only; never import/run a candidate SDK."""
+    """仅加载标准库入口模块，不导入或运行候选 SDK。"""
     root = Path(__file__).resolve().parents[2] / "adapters/deepagents_langgraph"
     for name in ("verify_source", "detailed_support", "run_control", "pause_recovery"):
         spec = spec_from_file_location(name, root / (name + ".py"))
@@ -244,7 +244,7 @@ def test_cold_sqlite_gate_never_discards_possible_committed_sidecar(tmp_path, mo
     sidecar = database.with_name(database.name + suffix)
     sidecar.write_bytes(b"possible transaction not represented in the primary")
     before = probe.inventory(tmp_path)
-    with pytest.raises(ValueError, match="Nonempty SQLite WAL/journal"):
+    with pytest.raises(ValueError, match='非空 SQLite WAL 或日志'):
         cold_inventory(reader, database, monkeypatch)
     assert probe.inventory(tmp_path) == before
 
@@ -261,10 +261,10 @@ def test_cold_sqlite_gate_rejects_a_real_committed_transaction_still_in_wal(tmp_
         db.execute("INSERT INTO actual_state VALUES('committed only in the WAL')")
         db.commit()
         assert database.with_name(database.name + "-wal").stat().st_size > 0
-        # This unexpected open writer violates the cold-store precondition;
-        # the gate must not silently read an older primary-only state.
+        # 意外存活的写入连接违反冷读前提；
+        # 检查不能静默读取只有主库文件的旧状态。
         before = probe.inventory(tmp_path)
-        with pytest.raises(ValueError, match="Nonempty SQLite WAL/journal"):
+        with pytest.raises(ValueError, match='非空 SQLite WAL 或日志'):
             cold_inventory(reader, database, monkeypatch)
         assert probe.inventory(tmp_path) == before
 
@@ -286,7 +286,7 @@ def test_cold_sqlite_gate_rejects_unsafe_primary_and_companions(tmp_path, monkey
         path.mkdir()
     else:
         os.mkfifo(path)
-    # lstat rejection occurs before reading a FIFO or following a symlink.
+    # 读取 FIFO 或沿软链接访问之前，先由 lstat 检查拒绝。
     with pytest.raises(ValueError):
         cold_inventory(reader, database, monkeypatch)
     assert target.read_bytes() == b"must not be traversed"
@@ -338,7 +338,7 @@ def test_graph_immutable_inspection_detects_changes_beyond_the_initial_primary_h
         def close(self):
             self.connection.close()
     monkeypatch.setattr(probe.sqlite3, "connect", ChangingConnection)
-    with pytest.raises(ValueError, match="inventory changed|Nonempty SQLite WAL/journal"):
+    with pytest.raises(ValueError, match='清单在冷检查期间变化|非空 SQLite WAL 或日志'):
         probe.native_binding("deepagents_langgraph", {}, native, evidence.state, evidence.paths, evidence.scope)
 
 
@@ -366,9 +366,9 @@ def test_graph_same_checkpoint_id_and_hash_cannot_make_a_fake_snapshot_authorita
         native["config"]["configurable"]["thread_id"] = "foreign-thread"
         for directory, name in ((evidence.original, "business-state.json"), (evidence.replacement, "business-state-reconnected.json")):
             export(directory, name, evidence.scope, native, evidence.state, "/checkpoint/channel_values/business_state")
-    # Rebind every plausible checksum and immutable baseline to the actual DB.
-    # Thus rejection must come from its real stored business values/identity,
-    # not an unrelated stale checksum or a changed file comparison.
+    # 将全部合理校验和及不可变基线重新绑定到实际数据库。
+    # 因此拒绝必须来自真实存储的业务值或身份，
+    # 不能来自无关的过期校验和或文件变化比较。
     digest = hashlib.sha256(database.read_bytes()).hexdigest()
     for directory, name in ((evidence.original, "business-state.json"), (evidence.replacement, "business-state-reconnected.json")):
         record = json.loads((directory / name).read_text())
@@ -415,7 +415,7 @@ def dsh_evidence(item):
 
 
 def dsh_metadata_evidence(item):
-    """Synthetic real-shape call/result provenance; no candidate execution."""
+    """与真实调用及结果来源同结构的合成记录，不运行候选。"""
     session = dsh_evidence(item)
     item.state = {**deepcopy(item.state), "session_id": "main", "scope": deepcopy(item.scope)}
     entry = item.state["operations"]["order-one"]
@@ -434,7 +434,7 @@ def dsh_metadata_evidence(item):
 
 
 def rebind_dsh_metadata(item, session, rows, pointer="/data/meta/business_state"):
-    """Rebind checksums/baseline so failures test provenance, not stale hashes."""
+    """重新绑定校验和与基线，确保失败来自来源校验而非陈旧哈希。"""
     jsonl(session, rows)
     event = next(row for row in rows if row.get("seq") == 1)
     for directory, name in ((item.original, "business-state.json"), (item.replacement, "business-state-reconnected.json")):
@@ -607,7 +607,7 @@ def test_native_source_still_rejects_file_and_directory_symlinks(evidence, tmp_p
         write(item.replacement / "business-state-reconnected.json", record)
     else:
         source.symlink_to(outside / source.name)
-    with pytest.raises(ValueError, match="cannot follow symlinks"):
+    with pytest.raises(ValueError, match='不能跟随符号链接'):
         probe.projection(item.replacement, "business-state-reconnected.json", item.scope)
     assert probe.grade(item.args) == 1
 

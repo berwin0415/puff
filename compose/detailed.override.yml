@@ -1,19 +1,19 @@
-# Explicitly applied only by scripts/run_detailed.py, never by screening.
-# Credentials are synthetic per-run browser inputs; fixture/admin tokens stay
-# outside these mounts. Browser artifacts are read-only for the Agent adapter.
+# 仅由 scripts/run_detailed.py 显式应用，不用于初筛。
+# 凭证是每轮合成的浏览器输入；Fixture 和管理员 token
+# 不放入这些挂载。Agent 适配器只能读取浏览器产物。
 x-detailed-volumes: &detailed-volumes
       - type: bind
-        source: ${LAB_FIXTURE_HOST:?detailed fixture path required}/scope.json
+        source: ${LAB_FIXTURE_HOST:?需要详细实验 Fixture 路径}/scope.json
         target: /config/scope.json
         read_only: true
         bind: {create_host_path: false}
       - type: bind
-        source: ${LAB_FIXTURE_HOST:?detailed fixture path required}/browser-credentials.json
+        source: ${LAB_FIXTURE_HOST:?需要详细实验 Fixture 路径}/browser-credentials.json
         target: /config/browser-credentials.json
         read_only: true
         bind: {create_host_path: false}
       - type: bind
-        source: ${LAB_EVIDENCE_HOST:?detailed evidence path required}/browser
+        source: ${LAB_EVIDENCE_HOST:?需要详细实验证据路径}/browser
         target: /browser-artifacts
         read_only: true
         bind: {create_host_path: false}

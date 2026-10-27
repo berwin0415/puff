@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Stage the lab launcher/plugin beside a verified upstream OpenClaw export.
+"""在已核验的上游 OpenClaw 导出旁准备实验启动器与插件。
 
-Does not install dependencies or execute candidate code. Run source export first.
+不安装依赖或执行候选代码。请先导出源码。
 """
 import argparse
 import hashlib
@@ -20,25 +20,25 @@ def digest(data):
 def stage(context, repository):
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     sources = source.get("sources", [])
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "openclaw":
-        raise ValueError("Expected the current OpenClaw source export")
+        raise ValueError('需要当前 OpenClaw 源码导出')
     if len(sources) != 1 or sources[0].get("commit") != EXPECTED_COMMIT or sources[0].get("observed_commit") != EXPECTED_COMMIT or sources[0].get("dirty") is not False:
-        raise ValueError("Wrong or unverified OpenClaw source revision")
+        raise ValueError('OpenClaw 源码版本不匹配或未经核验')
     destination = context / "harness-lab"
     if destination.exists():
         if destination.is_symlink() or not (context / "LAB_ADAPTER_MANIFEST.json").is_file():
-            raise ValueError("Refusing to replace unstaged adapter material")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []
     for relative in FILES:
         origin = repository / "adapters" / "openclaw" / relative
         if origin.is_symlink() or not origin.is_file():
-            raise ValueError("Expected a regular reviewed adapter file")
+            raise ValueError('需要已审查的普通适配文件')
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         data = origin.read_bytes()

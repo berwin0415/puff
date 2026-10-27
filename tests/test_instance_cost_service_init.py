@@ -1,7 +1,7 @@
-"""I25 service-init calibration source; not evidence of a Docker execution.
+"""I25 服务 init 校准源码，不是 Docker 执行证据。
 
-Only fake transport and synthetic original-state records are used.  Do not
-import fixtures from older calibration modules or relax native exit policies.
+只使用传输替身和合成原状态记录。不能导入早期校准模块的
+测试数据，也不能放宽原生退出要求。
 """
 from copy import deepcopy
 import io
@@ -43,7 +43,7 @@ def projection(role="fixtures", *, status="created", init=MISSING, exit_code=0):
 
 def complete_registry(role="fixtures", *, init=True, exit_code=0):
     created = projection(role, init=init)
-    before = projection(role, status="running")  # Existing global projection intentionally has no Init.
+    before = projection(role, status="running")  # 原全局投影刻意不包含 Init。
     exited = projection(role, status="exited", exit_code=exit_code)
     plan = {"trial_id": "service-init-calibration", "candidate_image_id": "sha256:" + "1" * 64,
         "bench_image_id": "sha256:" + "2" * 64, "services_image_id": "sha256:" + "3" * 64}
@@ -69,7 +69,7 @@ def complete_registry(role="fixtures", *, init=True, exit_code=0):
 
 
 class FakeLab:
-    """All subprocess replies are in-memory; no actual Docker call exists."""
+    """全部子进程响应都在内存中，不存在真实 Docker 调用。"""
     def __init__(self, root, *, role="fixtures", actual_init=True):
         self.root, self.role, self.actual_init = root, role, actual_init
         self.plan = {"trial_id": "service-init-calibration", "candidate_image_id": "sha256:" + "1" * 64,
@@ -95,7 +95,7 @@ class FakeLab:
         if not self.created:
             return []
         value = self.safe_projection()
-        value.pop("host_config_init", None)  # Frozen old observation shape is retained.
+        value.pop("host_config_init", None)  # 保留冻结的早期观察结构。
         return [value]
 
     def safe_projection(self):
@@ -136,7 +136,7 @@ class FakeLab:
         if argv[:2] == ["docker", "start"]:
             self.running = True
             return SimpleNamespace(returncode=0, stdout=IDENT + "\n", stderr="")
-        raise AssertionError("Unexpected fake Docker command: " + repr(argv))
+        raise AssertionError("非预期模拟 Docker 命令：" + repr(argv))
 
 
 def service(lifecycle, *, role="fixtures"):
@@ -163,7 +163,7 @@ def test_init_flag_is_insufficient_if_actual_docker_init_is_missing_false_null_o
     with pytest.raises(ValueError, match="lifecycle_service_init_not_enabled"):
         service(lifecycle)
     argv = next(command for command in lab.calls if command[:2] == ["docker", "create"])
-    assert "--init" in argv  # The flag is a request, never substitute for the actual inspect field.
+    assert "--init" in argv  # 标志只表示请求，不能替代实际 inspect 字段。
     assert lifecycle.registrations == {} and lifecycle.starts == {}
     assert not any(command[:2] == ["docker", "start"] for command in lab.calls)
 

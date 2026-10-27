@@ -1,7 +1,7 @@
-"""Application business fields inside the public SDK mapping run context.
+"""公开 SDK 映射式运行上下文中的应用业务字段。
 
-No scheduler, conversation replay, automatic receipt lookup or substitute
-checkpoint. The public Runner/RunState own persistence of this context.
+此处不实现调度、对话重放、自动回执查询，也不提供替代检查点。
+此上下文由公开 Runner/RunState 负责持久化。
 """
 from copy import deepcopy
 
@@ -13,7 +13,7 @@ def new_business_state():
 def quantity_denial(arguments, quantity_limit):
     quantity = arguments.get("quantity")
     if type(quantity) is int and quantity > quantity_limit:
-        return {"error": "Business write quantity exceeds the execution rule", "reason": "quantity_limit_exceeded",
+        return {"error": "业务写入数量超过执行规则的限制", "reason": "quantity_limit_exceeded",
             "approval_required": False, "quantity": quantity, "quantity_limit": quantity_limit,
             "operation_id": arguments.get("operation_id"), "http_forwarded": False}
     return None
@@ -68,28 +68,28 @@ def observe_operation(context, tool, arguments, status, payload, source):
 
 
 def read_business_state(native_json, expected_scope):
-    """Read the documented JSON output, never SDK private object attributes."""
+    """读取文档所述的 JSON 输出，不访问 SDK 私有对象属性。"""
     envelope = native_json.get("context") if isinstance(native_json, dict) else None
     context = envelope.get("context") if isinstance(envelope, dict) else None
     if not isinstance(context, dict) or context.get("scope") != expected_scope:
-        raise ValueError("Native RunState context has a different trusted scope")
+        raise ValueError("原生 RunState 上下文的可信作用域不匹配")
     state = context.get("business_state")
     if (not isinstance(state, dict) or state.get("schema_version") != 1
             or not isinstance(state.get("operations"), dict)
             or type(state.get("receipt_confirmed")) is not bool):
-        raise ValueError("Native RunState does not contain the business mapping context")
+        raise ValueError("原生 RunState 不包含业务映射上下文")
     operation = state.get("operation_id")
     if operation is not None and (not isinstance(operation, str) or operation not in state["operations"]):
-        raise ValueError("Native business current operation is inconsistent")
+        raise ValueError("原生业务当前操作不一致")
     return deepcopy(state)
 
 
 async def restore_business_state(agent, native_json, expected_scope):
-    """Use public RunState restoration, then read its public JSON projection.
+    """使用公开 RunState 恢复接口，再读取其公开 JSON 投影。
 
-    The caller must verify ownership/integrity of the complete trusted snapshot
-    and reconstruct the same Agent/tool definitions before invoking this helper.
-    A successful call proves deserialization, not cross-container task progress.
+    调用者必须先核验完整可信快照的归属与完整性，并重建相同的
+    Agent 和工具定义，再调用此辅助函数。调用成功仅证明反序列化成功，
+    不代表任务已跨容器继续执行。
     """
     from agents import RunState
 

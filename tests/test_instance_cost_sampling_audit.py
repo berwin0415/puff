@@ -1,4 +1,4 @@
-"""Synthetic offline-audit calibration; run only in the pinned Docker bench."""
+"""合成离线审计校准，仅在固定 Docker 验收镜像内运行。"""
 from __future__ import annotations
 
 import copy
@@ -21,7 +21,7 @@ def material():
             control = {"sequence": sequence, "phase": phase, "kind": None, "probe_nonce": f"{sequence:032x}"}
             controls[sequence] = control
             row[key] = {"control_sequence": sequence, "phase": phase, "kind": None, "probe_nonce": control["probe_nonce"]}
-            sequence += 2  # Real phase changes/other probes can consume IDs.
+            sequence += 2  # 实际阶段切换或其他探针也可能消耗 ID。
         samples.append(row)
     status = {"started_monotonic": 1.0, "finished_monotonic": 23.0, "samples_written": len(samples), "completed": True}
     log = {"complete_json_lines": True, "line_count": len(samples), "invalid_line_numbers": []}
@@ -74,7 +74,7 @@ def test_old_on_demand_and_resident_control_formats_are_understood_without_fabri
     for key in ("observer_before", "observer_after"):
         samples[0][key]["phase"] = first_phase
         controls[samples[0][key]["control_sequence"]]["phase"] = first_phase
-    controls[2] = {"sequence": 2, "phase": first_phase, "kind": None}  # phase-only control has no nonce
+    controls[2] = {"sequence": 2, "phase": first_phase, "kind": None}  # 仅含阶段的控制请求没有 nonce。
     if change == "nonce":
         samples[2]["observer_before"]["probe_nonce"] = "a" * 32
     elif change == "phase":
@@ -228,7 +228,7 @@ def test_cli_requires_new_output_outside_original_trial_and_does_not_overwrite(t
 @pytest.mark.parametrize("spelling", ("old", "OLD", "dotdot", "dot", "double-slash", "trailing-slash", "relative"))
 def test_cli_refuses_archives_and_noncanonical_spelling_before_reading_sources(tmp_path, monkeypatch, capsys, target, spelling):
     monkeypatch.setattr(audit, "require_docker", lambda: None)
-    monkeypatch.setattr(audit, "audit_trial", lambda *_: pytest.fail("Rejected path must not read trial evidence"))
+    monkeypatch.setattr(audit, "audit_trial", lambda *_: pytest.fail("被拒绝路径不得读取实验原始证据"))
     base = str(tmp_path)
     invalid = {"old": base + "/old/trial", "OLD": base + "/OLD/trial", "dotdot": base + "/work/../trial",
         "dot": base + "/./trial", "double-slash": base + "//trial", "trailing-slash": base + "/trial/",

@@ -1,4 +1,4 @@
-# Frozen packaging tools; registry artifact hashes taken from current verified locks.
+# 固定的打包工具；注册表产物哈希取自当前已核验的锁文件。
 uv==0.9.18 \
     --hash=sha256:11e1e406590d3159138288203a41ff8a8904600b8628a57462f04ff87d62c477 \
     --hash=sha256:17b5502f7689c4dc1fdeee9d8437a9a6664dcaa8476e70046b5f4753559533f5 \

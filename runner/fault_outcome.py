@@ -1,9 +1,8 @@
-"""Data-only evidence for a quiescent Worker exit1, never task success.
+"""为静止 Worker 的 exit1 提供纯数据证据，不代表任务成功。
 
-The host, independent bench and batch reader recheck these same source bytes.
-No candidate SDK, model, tool or executable native-state loader is executed. Unsupported catch
-paths remain evidence failures rather than being guessed from error text.
-"""
+宿主机、独立 bench 和批量读取器重新检查同一份来源字节。
+不执行候选 SDK、模型、工具或可执行原生状态加载器。
+不支持的异常捕获路径仍判为证据失败，不根据错误文本猜测。"""
 from __future__ import annotations
 
 import hashlib
@@ -77,12 +76,10 @@ def stopped(snapshot):
 
 
 def controlled_failure(run, fixture, scope, pins, candidate, attempt, actual, *, state):
-    """Return bound failure facts, or reject incomplete/unhealthy evidence.
+    """返回已绑定的失败事实，或拒绝不完整/不健康的证据。
 
-`incomplete` includes a wrapper refusing completion although the native turn
-completed. That remains an observed unsuccessful attempt, never a success or
-an assertion that the candidate honestly resolved business uncertainty.
-"""
+`incomplete` 包含原生轮次已完成、但包装层拒绝确认完成的情况。
+这仍是观测到的失败尝试，不能记作成功，也不能据此断言候选框架已如实解决业务不确定性。"""
     need(candidate in {'deepagents_langgraph', 'deepseek_harness'}
          and attempt in {'worker-a', 'worker-b'} and isinstance(actual, dict) and stopped(actual), 'process_exit1')
     need(pins.get('candidate') == candidate and pins.get('scope') == scope
@@ -176,8 +173,8 @@ def dsh(source, directory, request, original, result, entry, scope, pins, attemp
          and type(terminal.get('concurrent_input')) is bool and terminal.get('business_recovery_verified_by_candidate') is False,
          'dsh_terminal_identity')
     live_header, persisted_header = dict(idle.get('header', {})), dict(artifact.get('header', {}))
-    # The public live Session omits the persistence-only default depth on a
-    # newly created session. Preserve every other field and any nonzero depth.
+    # 公共运行中 Session 对新建会话省略了仅用于持久化的默认 depth。
+    # 保留其他所有字段及任何非零 depth。
     live_header.setdefault('delegationDepth', 0)
     persisted_header.setdefault('delegationDepth', 0)
     need(artifact == terminal.get('artifact') == native.get('artifact') and artifact.get('scope') == scope
@@ -239,12 +236,10 @@ def dsh(source, directory, request, original, result, entry, scope, pins, attemp
 
 
 def da_checkpoint_metadata(config, metadata):
-    """Pinned checkpoint/base.get_checkpoint_metadata, as plain JSON data.
+    """以普通 JSON 数据复现固定 checkpoint/base.get_checkpoint_metadata。
 
-    SQLite calls this before writing metadata; checkpoint stream events expose
-    the earlier loop metadata. Preserve its precedence, NUL removal and exact
-    excluded/private/non-scalar configuration rules.
-    """
+    SQLite 在写元数据前调用此逻辑；检查点流事件暴露更早的循环元数据。
+    保留其优先级、NUL 移除及精确的排除/私有/非标量配置规则。"""
     need(isinstance(config, dict) and isinstance(metadata, dict), 'da_checkpoint_metadata_objects')
     excluded = {'thread_id', 'checkpoint_id', 'checkpoint_ns', 'checkpoint_map',
         'langgraph_step', 'langgraph_node', 'langgraph_triggers', 'langgraph_path', 'langgraph_checkpoint_ns'}
@@ -287,8 +282,8 @@ def da(source, directory, request, original, result, entry, scope):
     metadata = last.get('response_metadata', {})
     tasks = snapshot.get('tasks', [])
     need(isinstance(tasks, list) and all(isinstance(row, dict) or isinstance(row, list) and len(row) == 7 for row in tasks), 'da_native_tasks')
-    # Limit this change to quiescent terminal-message failures. Pending task /
-    # interrupt outcomes need a separate reviewed physical-state decoder.
+    # 此变更仅限静止终态消息失败。待处理任务或中断
+    # 结果需要单独审查的物理状态解码器。
     need(tasks == [] and snapshot.get('next') == [] and not snapshot.get('interrupts')
          and last.get('type') == 'ai' and not last.get('tool_calls') and not last.get('invalid_tool_calls'), 'da_unreviewed_pending_state')
     errors = [row.get('error') if isinstance(row, dict) else row[3] for row in tasks]
@@ -317,9 +312,9 @@ def da(source, directory, request, original, result, entry, scope):
          for key in ('values', 'next', 'tasks'))
          and checkpoints[-1].get('config', {}).get('configurable', {}).get('thread_id') == scope['session_id']
          and checkpoints[-1].get('config', {}).get('configurable', {}).get('checkpoint_ns', '') == '', 'da_checkpoint_stream_source')
-    # create_deep_agent.with_config supplies this one scalar metadata value.
-    # lc_versions is a mapping and lc_agent_name defaults to None, so the
-    # pinned saver excludes both. rm_pregel_keys omits metadata in the stream.
+    # create_deep_agent.with_config 提供此唯一标量元数据值。
+    # lc_versions 为映射，lc_agent_name 默认为 None，因此
+    # 固定 saver 排除二者；rm_pregel_keys 在流中省略 metadata。
     expected_metadata = da_checkpoint_metadata({'metadata': {'ls_integration': 'deepagents'},
         'configurable': checkpoints[-1]['config']['configurable']}, checkpoints[-1].get('metadata'))
     need(snapshot.get('metadata') == expected_metadata, 'da_checkpoint_metadata_merge')
@@ -329,8 +324,8 @@ def da(source, directory, request, original, result, entry, scope):
         path = source.roots['state'] / ('checkpoints.sqlite' + suffix)
         if path.exists() or path.is_symlink():
             wal = source.bytes('state', 'checkpoints.sqlite' + suffix)
-    # Open only copies: even mode=ro can create an SQLite shared-memory file
-    # next to a WAL database. Candidate state remains byte-for-byte untouched.
+    # 只打开副本：即使 mode=ro，也可能在 WAL 数据库旁
+    # 创建 SQLite 共享内存文件。候选状态保持逐字节不变。
     with tempfile.TemporaryDirectory(prefix='fault-outcome-') as temporary:
         copied = Path(temporary) / 'checkpoints.sqlite'
         copied.write_bytes(database)

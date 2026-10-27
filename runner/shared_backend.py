@@ -1,9 +1,7 @@
-"""I24 fixed-fixture product boundary, not a production identity/control platform.
+"""I24 固定 Fixture 的产品边界，不是生产身份或控制平台。
 
-Clients select only an already registered task and operation. Owner checks occur
-before body/state/control checks. Startup/attempt selection remains trusted code;
-pause/resume are explicitly unconnected here, never synthetic successes.
-"""
+客户端只能选择已登记任务和操作。先检查所有者，再检查正文、状态和控制。
+启动与尝试选择仍属于可信代码；此处未接通暂停/恢复，绝不合成成功。"""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -26,14 +24,14 @@ _HASH = re.compile(r"[a-f0-9]{64}\Z")
 
 
 class AuditJournal:
-    """Owner-side append-only output; mount outside every candidate-writable tree."""
+    """所有者侧仅追加输出，必须挂载在所有候选框架可写目录树之外。"""
     def __init__(self, filename):
         self.path = Path(filename)
         _absolute(str(self.path.parent))
         if not self.path.is_absolute() or self.path.name in {"", ".", ".."} or self.path.is_symlink():
             raise BoundaryError("invalid_audit_path", 400)
         self.lock = threading.Lock()
-        # Fresh journal only; do not silently overwrite failed-trial evidence.
+        # 只创建新日志，不静默覆盖失败实验的证据。
         self.descriptor = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
 
     def __call__(self, value):
@@ -75,11 +73,10 @@ class ProductBackend:
         self.audit({"kind": kind, "time": datetime.now(timezone.utc).isoformat(), **values})
 
     def authorize(self, header, task_id, operation, request_id):
-        """Returns a trusted principal/task pair or a fixed safe HTTP error.
+        """返回可信的主体/任务对，或固定且安全的 HTTP 错误。
 
-        Never audit Authorization or attacker-controlled body data. A target's
-        actual state is consulted only after the owner matches.
-        """
+        绝不审计 Authorization 或攻击者可控正文。
+        只有所有者匹配后才查询目标实际状态。"""
         hit = None
         if isinstance(header, str) and header.startswith("Bearer ") and 0 < len(header[7:]) <= 512 and not re.search(r"\s", header[7:]):
             digest = hashlib.sha256(header[7:].encode()).hexdigest()
@@ -111,7 +108,7 @@ class ProductBackend:
         expected_method = "GET" if operation in {"state", "events", "artifacts"} else "POST"
         if method != expected_method:
             raise BoundaryError("method_not_allowed", 405)
-        # Even a valid owner cannot substitute fixture ownership/control fields.
+        # 即使所有者有效，也不能替换 Fixture 归属或控制字段。
         if body != {}:
             raise BoundaryError("request_fields_forbidden", 400)
         if operation != "events" and query:
@@ -128,12 +125,12 @@ class ProductBackend:
             return 200, self.supervisor.artifacts(task.task_id)
         if operation == "cancel":
             return 202, self.supervisor.cancel(task.task_id, request_id)
-        # These still undergo real owner authorization; root integrates the
-        # already-proven I22 lifecycle before they can become positive controls.
+        # 这些操作仍执行真实所有者鉴权；根编排器接入
+        # 已验证的 I22 生命周期后，才能作为正向控制。
         raise BoundaryError("control_not_connected", 501)
 
     def dispatch(self, header, task_id, operation, *, method="GET", body=None, query=None, request_id=None):
-        """Pure request boundary used by HTTP and no-candidate calibration tests."""
+        """HTTP 和无候选框架校准测试共用的纯请求边界。"""
         request_id = request_id or str(uuid4())
         try:
             task = self.authorize(header, task_id, operation, request_id)
@@ -174,7 +171,7 @@ class ProductHandler(BaseHTTPRequestHandler):
         self.close_connection = True
 
     def _handle(self):
-        # Server-generated correlation ID; a client cannot overwrite it.
+        # 关联 ID 由服务端生成，客户端不能覆盖。
         request_id = str(uuid4())
         backend = self.server.backend
         connection = str(uuid4())
@@ -186,8 +183,8 @@ class ProductHandler(BaseHTTPRequestHandler):
             if len(parts) != 4 or parts[1] != "tasks" or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", parts[2]) or parts[3] not in _OPERATIONS:
                 raise BoundaryError("route_not_found", 404)
             task_id, operation = parts[2], parts[3]
-            # Authorize first, including for malformed bodies and inapplicable
-            # operations: a foreign paused/running task always remains foreign.
+            # 始终先鉴权，包括格式错误正文和不适用操作；
+            # 他人的暂停或运行任务始终属于他人。
             task = backend.authorize(self.headers.get("Authorization"), task_id, operation, request_id)
             if self.headers.get("Transfer-Encoding") is not None:
                 raise BoundaryError("invalid_body", 400)
@@ -210,7 +207,7 @@ class ProductHandler(BaseHTTPRequestHandler):
             try:
                 self._reply(status, payload, request_id)
             finally:
-                # Ordinary finite request close, not proof of SSE reconnect.
+                # 普通有限请求结束，不能证明 SSE 重连。
                 backend.record("connection_close_requested", request_id=request_id, connection_id=connection,
                                reason="response_finished_close_requested_not_transport_eof_or_sse_reconnect")
 
@@ -230,11 +227,10 @@ def load_fixture(filename):
 
 
 def validate_journal_location(supervisor, journal_path):
-    """Reject every candidate-visible task tree, including read-only config.
+    """拒绝所有候选框架可见的任务目录树，包括只读配置。
 
-    The containing root still requires real root-only permissions. This path
-    check prevents accidental placement; it does not create a UID boundary.
-    """
+    所在根目录仍须具有真实的 root 独占权限。此路径检查用于防止误放，
+    本身不能建立 UID 边界。"""
     journal_path = Path(journal_path)
     for task in supervisor.tasks.values():
         roots = [task.workspace, task.state_dir,
@@ -244,7 +240,7 @@ def validate_journal_location(supervisor, journal_path):
             raise BoundaryError("audit_inside_candidate_tree", 400)
 
 
-# Deliberately no startup CLI. The trusted Docker experiment must supply its
-# real Worker registry and protected journal; importing this boundary must not
-# start candidates or offer a same-UID fallback. Separate container Workers can
-# reuse ProductBackend without depending on shared_uid.
+# 故意不提供启动 CLI。可信 Docker 实验必须提供
+# 真实 Worker 注册表和受保护日志；导入此边界不能
+# 启动候选框架或提供同 UID 回退。独立容器 Worker 可
+# 复用 ProductBackend，无需依赖 shared_uid。

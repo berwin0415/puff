@@ -1,4 +1,4 @@
-// Infrastructure probe only. This program is never supplied as a candidate tool.
+// 仅为基础设施探针；不会将本程序作为候选工具提供。
 import { chromium } from 'playwright';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';

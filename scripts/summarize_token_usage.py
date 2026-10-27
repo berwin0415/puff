@@ -1,9 +1,6 @@
-"""Project token counters from explicitly enrolled, closed native evidence.
+"""从明确登记且已闭合的原生证据提取 token 计数。
 
-Standard library only. Never opens a database, imports a candidate, runs a task,
-or prints native payloads. The separately verified spend summary proves closure;
-this program verifies its inventory binding and frozen metadata before locating
-the narrowly supported native files. Missing evidence remains unknown.
+仅使用标准库。不打开数据库、导入候选、运行任务或打印原生载荷。闭合由独立核验的消耗汇总证明；本程序先核验清单绑定和冻结元数据，再定位受限支持的原生文件。缺失证据保持未知。
 """
 
 import argparse
@@ -38,7 +35,7 @@ FLOW_METADATA = {'protected/plan.json', 'protected/tasks.json', 'protected/flow-
 
 
 class EvidenceError(ValueError):
-    """Only fixed reason codes may cross the evidence/output boundary."""
+    """证据与输出边界仅允许通过固定原因码。"""
 
 
 def require(condition, code):
@@ -112,8 +109,8 @@ def source_ref(root, path, sha, *, line=None, pointer=None):
 def read_rows(root, path):
     data = read_bytes(path)
     sha = hashlib.sha256(data).hexdigest()
-    # A killed process may leave an incomplete final line. It is a real parse
-    # gap, never repaired or silently ignored, and excludes the unit's totals.
+    # 被杀进程可能留下不完整末行。这是真实解析缺口，
+    # 不修补或静默忽略，且不汇总该材料单元的总量。
     try:
         lines = data.decode('utf-8').splitlines()
         rows = [(json.loads(line), source_ref(root, path, sha, line=index))
@@ -169,7 +166,7 @@ def validate_arithmetic(result):
 
 
 def normalize_usage(usage, kind):
-    """Presence-aware projection; never infer missing details from SDK zeros."""
+    """按字段是否实际存在提取；不从 SDK 默认零推断缺失细分。"""
     result = unknown_fields()
     if not isinstance(usage, dict):
         return result
@@ -214,8 +211,8 @@ def normalize_usage(usage, kind):
         set_count(result, 'cache_read_tokens', prompt_details, 'cached_tokens' if wire else 'cache_read')
         set_count(result, 'cache_write_tokens', prompt_details, 'cache_write_tokens' if wire else 'cache_creation')
         set_count(result, 'reasoning_tokens', output_details, 'reasoning_tokens' if wire else 'reasoning')
-        # DeepSeek's legacy explicit cache hit field is an alternate only when
-        # the standard detail is absent; contradictory alternatives conflict.
+        # 仅在标准细分缺失时，才使用 DeepSeek 旧版显式缓存命中字段；
+        # 两种来源相互矛盾则记为冲突。
         if wire and 'prompt_cache_hit_tokens' in usage:
             alternate = usage['prompt_cache_hit_tokens']
             existing = result['cache_read_tokens']
@@ -304,8 +301,8 @@ def parse_dsh(rows, unit, scope):
         else:
             require(isinstance(usage, dict), 'invalid_usage_object')
         identity = [unit, 'model', *pair, attempts[pair]]
-        # Samples for an attempt replace earlier samples, matching the native
-        # fold, but a prior invalid/contradictory sample is never repaired away.
+        # 同一 attempt 的后续样本替换前样本，与原生折叠规则一致；
+        # 但不能借此抹去之前无效或矛盾的样本。
         key = digest(identity); fields = normalize_usage(usage, 'dsh')
         if key in items:
             prior = items[key]
@@ -329,8 +326,8 @@ def parse_deepagents(rows, unit, scope):
         data = row.get('data')
         if not isinstance(data, dict) or not isinstance(data.get('model'), dict):
             continue
-        # Only the model node's emitted delta is read. Checkpoint values,
-        # task inputs/results and resident prepared history are never searched.
+        # 仅读取模型节点输出的增量。不搜索 checkpoint 值、
+        # 任务输入或结果，以及 resident 准备的历史。
         require(scope_equal(row.get('scope'), scope), 'unbound_or_foreign_native_scope')
         messages = data['model'].get('messages')
         require(isinstance(messages, list), 'unsupported_model_update')
@@ -499,7 +496,7 @@ def bound_scope(value, variant, *, owner=None, session=None):
 
 
 def i24_attempts(documents, facts, run, task_id, suffix, kind):
-    """Expected files follow closed registered execution, never file presence."""
+    """预期文件依据已闭合的登记执行确定，不按文件是否存在猜测。"""
     registry = documents.get('container-transition-registry.json')
     require(isinstance(registry, dict) and isinstance(registry.get('registrations'), dict)
             and isinstance(registry.get('retirements'), dict), 'unbound_scope_worker_lifecycle')
@@ -596,7 +593,7 @@ def locate(root, entry, facts):
                 and chain.get('candidate') == entry['candidate'], 'unbound_native_chain')
         scope = bound_scope(chain.get('scope'), run.name, owner='alice', session='main')
         paths = [run / 'attempts' / attempt / 'candidate/raw-events.jsonl' for attempt in ('worker-a', 'worker-b')]
-        # B may never have been launched; no directory traversal is performed.
+        # B 可能从未启动；不遍历目录。
         return [p for p in paths if p.exists()], scope, refs
     raise EvidenceError('unsupported_closure_structure')
 
@@ -641,7 +638,7 @@ def summarize(inventory_path, spend_summary_path):
             excluded['outside_four_candidate_remote_scope'] += 1
             continue
         require(identifier(entry.get('run_id')) and isinstance(entry.get('closure_sources'), list), 'invalid_entry_identity')
-        # This relative path is output only after validation. Its file is never opened.
+        # 相对路径仅在核验后输出；不打开其指向文件。
         within(root, entry['budget_path'])
         facts = frozen.get('closure_facts')
         require(isinstance(facts, dict), 'missing_closed_execution_facts')
@@ -706,7 +703,7 @@ def summarize(inventory_path, spend_summary_path):
             'coverage_ratio': None, 'request_linkage': 'not_established'}
     return {'schema': 'harness-lab-token-usage-summary/1',
         'inventory': {'sha256': inventory_sha}, 'spend_summary': {'sha256': spend_sha},
-        'claim': 'Known partial provider/native counters only; no complete bill, request coverage or amount inferred',
+        'claim': '仅包含已知的部分供应商或原生计数；不据此推断完整账单、请求覆盖率或金额',
         'enrolled_budget_entries': len(units),
         'unique_run_directories': len({e['run_path'] for e in entries if e.get('candidate') in CANDIDATES and e.get('upstream_kind') == 'remote'}),
         'excluded_entries': dict(excluded), 'units': units, 'by_candidate': candidate_totals,
@@ -716,14 +713,14 @@ def summarize(inventory_path, spend_summary_path):
         'parse_error_units': sum('invalid_native_jsonl' in u['issues'] or 'invalid_json' in u['issues'] for u in units),
         'known_by_field': summarize_observations(all_observations),
         'request_linkage': 'not_established', 'coverage_ratio': None,
-        'limitations': ['No SQL or model execution; spend request classifications are copied from the verified summary.',
-            'Only the narrowly supported native primary sources are read; checkpoints, raw reasoning, output bodies and cost fields are never emitted.',
-            'Deep Agents model updates exclude replayed input/checkpoint history; usage-only stream chunks without a model update are not recovered by this version.',
-            'SDK native default-zero Usage and synthetic response IDs are never used; only scoped transport wire events are supported.',
-            'I24 expected attempt files follow frozen registered/retired Workers; a missing file is an explicit evidence gap, not proof that execution never started.',
-            'I25 supports only baseline/active/wake/fault tasks in the frozen inventory; inactive-wake and later rotation tasks are unsupported.',
-            'Unscoped legacy formats, missing or changing evidence and unsupported structures remain unknown.',
-            'Known subtotals are not complete research totals; missing cache/reasoning fields remain null.']}
+        'limitations': ['不执行 SQL 或模型；消耗请求分类直接复制已核验汇总。',
+            '仅读取受限支持的原生主来源；不输出 checkpoint、原始推理、响应正文或费用字段。',
+            'Deep Agents 模型 updates 排除重放输入和 checkpoint 历史；本版不恢复缺少模型 update 的纯 usage 流片段。',
+            '不使用 SDK 原生默认零 Usage 或合成响应 ID；仅支持绑定 scope 的传输层原始事件。',
+            'I24 预期 attempt 文件按冻结且已登记或回收的 Worker 确定；缺失文件是明确证据缺口，不能证明执行从未开始。',
+            'I25 仅支持冻结清单中的 baseline/active/wake/fault 任务；不支持 inactive-wake 和后续轮换任务。',
+            '无 scope 的旧格式、缺失或变化的证据以及未支持结构均保持未知。',
+            '已知小计不是完整调研总量；缺失的缓存或推理字段保持 null。']}
 
 
 def main():
@@ -736,8 +733,8 @@ def main():
         output = absolute_path(args.output, exists=False)
         require(output.suffix == '.json' and not output.exists() and output.parent.is_dir(), 'output_requires_new_json_file')
         result = summarize(args.inventory, args.spend_summary)
-        # Exclusive output never replaces old evidence. No source payload or
-        # exception is printed even when malformed input includes secret text.
+        # 独占输出不替换旧证据。即使格式错误的输入包含密钥文本，
+        # 也不打印来源载荷或异常。
         with output.open('x') as stream:
             json.dump(result, stream, ensure_ascii=False, indent=2)
             stream.write('\n')

@@ -1,4 +1,4 @@
-"""Signal/evidence glue for public LangGraph RunControl, never task.cancel()."""
+"""连接信号、证据与公开 LangGraph RunControl，绝不调用 task.cancel()。"""
 from __future__ import annotations
 
 import asyncio
@@ -69,8 +69,8 @@ class NativeRunControl:
             "admitted": bool(admitted), "refusal_reason": None if admitted else "duplicate_request" if self.request is not None else "no_active_native_task"})
         if not admitted:
             return
-        # This is the official public method. It does not cancel an asyncio
-        # task, abort in-flight HTTP or terminate the process.
+        # 这是官方公开方法，不会取消 asyncio
+        # 任务、终止在途 HTTP 请求或结束进程。
         returned = self.control.request_drain(reason)
         native_source = self.evidence.append("raw-events.jsonl", {
             "type": "native_control_api_returned", "time": self.evidence.now(), **common,
@@ -83,7 +83,7 @@ class NativeRunControl:
         self.request = {**common, "request_source": source, "api_source": api_source}
 
     def drained(self, error, snapshot):
-        """Called only from the actual `except GraphDrained` branch."""
+        """仅从实际的 `except GraphDrained` 分支调用。"""
         self.active = False
         reason = error.reason
         native_source = self.evidence.append("raw-events.jsonl", {

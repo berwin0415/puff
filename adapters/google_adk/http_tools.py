@@ -1,4 +1,4 @@
-"""Project trusted HTTP JSON Schemas through ADK's documented BaseTool API."""
+"""通过 ADK 文档中的 BaseTool API 投影可信 HTTP JSON 结构。"""
 
 import httpx
 from google.adk.tools.base_tool import BaseTool
@@ -19,12 +19,12 @@ class HttpTool(BaseTool):
         )
 
     async def run_async(self, *, args: dict, tool_context) -> dict:
-        # This projection never retries tools. The agent must inspect an unknown
-        # write outcome itself rather than repeating a potentially committed write.
+        # 此投影不重试工具；写入结果未知时，Agent 必须自行检查，
+        # 避免重复执行可能已提交的写入。
         try:
             response = await self.client.post("/call", json={"name": self.name, "arguments": args})
         except httpx.HTTPError:
-            return {"error": {"code": "http_transport_failure", "message": "Tool transport failed; side-effect state is unknown"}}
+            return {"error": {"code": "http_transport_failure", "message": "工具传输失败；副作用状态未知"}}
         try:
             body = response.json()
         except ValueError:
@@ -39,12 +39,12 @@ async def load_tools(client: httpx.AsyncClient) -> list[HttpTool]:
     response.raise_for_status()
     payload = response.json()
     if not isinstance(payload, dict) or not isinstance(payload.get("tools"), list) or not payload["tools"]:
-        raise ValueError("Invalid trusted tool listing")
+        raise ValueError("可信工具清单无效")
     tools, seen = [], set()
     for entry in payload["tools"]:
         name = entry.get("name")
         if not isinstance(name, str) or not name or not name.replace("_", "").isalnum() or name in seen or not isinstance(entry.get("description"), str) or not isinstance(entry.get("input_schema"), dict) or entry["input_schema"].get("type") != "object":
-            raise ValueError("Invalid or duplicate trusted tool definition")
+            raise ValueError("可信工具定义无效或重复")
         seen.add(name)
         tools.append(HttpTool(entry, client))
     return tools

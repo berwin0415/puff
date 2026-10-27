@@ -1,4 +1,4 @@
-"""A real bound tool process cannot switch credentials, workspace or scope."""
+"""真实绑定工具进程不能切换凭证、工作区或作用域。"""
 
 from contextlib import contextmanager
 import json
@@ -31,10 +31,10 @@ class ToolsProcess:
             selector.register(self.process.stdout, selectors.EVENT_READ)
             if not selector.select(10):
                 self.stop()
-                raise RuntimeError("Tool CLI did not become ready")
+                raise RuntimeError("工具 CLI 未就绪")
             line = self.process.stdout.readline()
             if not line:
-                raise RuntimeError("Tool CLI failed: " + self.process.stderr.read())
+                raise RuntimeError("工具 CLI 失败：" + self.process.stderr.read())
             information = json.loads(line)
             assert self.binding["fixture_token"] not in line
             self.base_url = f"http://127.0.0.1:{information['port']}"
@@ -127,6 +127,6 @@ def test_bad_backend_binding_fails_before_listening_or_creating_workspace(tmp_pa
     process.path.write_text(json.dumps(process.binding), encoding="utf-8")
     completed = subprocess.run([sys.executable, "-m", "execution.tools.server", "--host", "127.0.0.1", "--port", "0", "--binding-file", str(process.path)], capture_output=True, text=True, timeout=10)
     assert completed.returncode != 0
-    assert "does not belong" in completed.stderr
+    assert '不属于' in completed.stderr
     assert not Path(process.binding["workspace"]).exists()
     assert process.binding["fixture_token"] not in completed.stdout + completed.stderr

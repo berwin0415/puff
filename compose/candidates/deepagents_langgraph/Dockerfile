@@ -1,4 +1,4 @@
-# Fixed python 3.12 Linux arm64 base, already verified by the experiment.
+# 固定的 Python 3.12 Linux arm64 基础镜像，已由实验核验。
 ARG PYTHON_IMAGE=python:3.12.13-slim-bookworm@sha256:3f9c7f75b916e8279e24136d7a57769aba9e193715be52570417698c52d6eed0
 FROM ${PYTHON_IMAGE}
 
@@ -18,11 +18,11 @@ COPY SOURCE_MANIFEST.json /opt/materials/
 COPY harness-lab/verify_source.py /opt/materials/source-verifier/verify_source.py
 COPY harness-lab/pyproject.toml harness-lab/uv.lock /opt/materials/harness-lab/
 WORKDIR /opt/materials/harness-lab
-# First install locked registry wheels and locked build backends. Then build
-# local source wheels without an implicit, independently resolved build env.
-# I19 adds the separately pinned official MCP Python SDK to this candidate's
-# lock. I10's historical image used the earlier lock and is separate evidence.
-# Neither upstream's older uv.lock nor a host virtualenv is used.
+# 先安装锁定的 registry wheel 和构建后端，再构建本地源码 wheel；
+# 不隐式创建另行解析依赖的构建环境。
+# I19 向此候选的锁文件加入单独固定的官方 MCP Python SDK。
+# I10 历史镜像使用较早的锁文件，作为独立证据保留。
+# 不使用上游旧 uv.lock 或宿主虚拟环境。
 RUN --mount=type=cache,id=harness-lab-deepagents-uv-linux-arm64,target=/root/.cache/uv,sharing=locked \
     python /opt/materials/source-verifier/verify_source.py --source-only \
     && uv sync --frozen --no-dev --no-install-local --no-build \

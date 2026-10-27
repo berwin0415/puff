@@ -1,7 +1,7 @@
-"""Count and forward model requests without changing their API protocol.
+"""计数并转发模型请求，不改变 API 协议。
 
-Each process serves one run token and one persistent SQLite call budget. It owns
-the upstream credential; the candidate receives only the local run token.
+每个进程服务一个运行凭证和一份持久 SQLite 调用预算。
+上游凭证只由本服务持有，候选仅获得本地运行凭证。
 """
 
 from __future__ import annotations
@@ -34,11 +34,11 @@ HOP_HEADERS = {
 
 
 class CallBudget:
-    """Reserve before network access; one database is permanently bound to a run."""
+    """出网前预占调用额度；每个数据库永久绑定一条运行。"""
 
     def __init__(self, database: Path, run_token: str, cap: int):
         if cap < 1 or not run_token or "\n" in run_token or "\r" in run_token:
-            raise ValueError("Invalid model proxy budget configuration")
+            raise ValueError("模型代理预算配置无效")
         self.database = Path(database)
         self.cap = cap
         self.database.parent.mkdir(parents=True, exist_ok=True)
@@ -50,7 +50,7 @@ class CallBudget:
             db.execute("INSERT OR IGNORE INTO budget VALUES(1, ?, ?)", (binding, cap))
             saved = db.execute("SELECT token_hash, cap FROM budget WHERE id=1").fetchone()
             if saved != (binding, cap):
-                raise ValueError("Budget database belongs to a different run or call limit")
+                raise ValueError("预算数据库对应其他运行或调用上限")
 
     def connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.database, timeout=30)
@@ -87,11 +87,11 @@ class ProxyConfig:
         parsed = urlsplit(self.upstream_base_url)
         if (parsed.scheme not in {"http", "https"} or not parsed.hostname
                 or parsed.username or parsed.password or parsed.query or parsed.fragment):
-            raise ValueError("Invalid upstream model base URL")
+            raise ValueError("上游模型 API 基础地址无效")
         if not self.upstream_api_key or any(c in self.upstream_api_key for c in "\r\n"):
-            raise ValueError("Missing or invalid upstream credential")
+            raise ValueError("上游凭证缺失或无效")
         if self.timeout_seconds <= 0 or self.max_request_bytes < 1:
-            raise ValueError("Invalid model proxy limits")
+            raise ValueError("模型代理限制无效")
 
 
 def forwarded_headers(headers, *, request: bool) -> dict[str, str]:
@@ -108,7 +108,7 @@ def create_server(config: ProxyConfig, host: str = "0.0.0.0", port: int = 8081) 
         protocol_version = "HTTP/1.1"
 
         def log_message(self, _format, *args):
-            # Request headers, paths and HTTP client exceptions may contain secrets.
+            # 请求头、路径与 HTTP 客户端异常可能包含秘密。
             pass
 
         def reply(self, status: int, error_type: str, message: str):
@@ -130,37 +130,37 @@ def create_server(config: ProxyConfig, host: str = "0.0.0.0", port: int = 8081) 
                 self.end_headers()
                 self.wfile.write(data)
             else:
-                self.reply(404, "not_found", "Unknown endpoint")
+                self.reply(404, "not_found", "未知接口")
 
         def do_POST(self):
             if not secrets.compare_digest(self.headers.get("Authorization", ""), "Bearer " + config.run_token):
-                self.reply(401, "unauthorized", "Invalid run credential")
+                self.reply(401, "unauthorized", "运行凭证无效")
                 return
             suffix = ALLOWED_PATHS.get(self.path)
             if suffix is None:
-                self.reply(404, "not_found", "Model endpoint is not allowed")
+                self.reply(404, "not_found", "不允许访问该模型接口")
                 return
             if self.headers.get("Transfer-Encoding"):
-                self.reply(400, "invalid_request", "Content-Length is required")
+                self.reply(400, "invalid_request", "必须提供 Content-Length")
                 return
             try:
                 length = int(self.headers.get("Content-Length", "-1"))
             except ValueError:
                 length = -1
             if length < 0 or length > config.max_request_bytes:
-                self.reply(413, "invalid_request", "Invalid request body length")
+                self.reply(413, "invalid_request", "请求体长度无效")
                 return
             body = self.rfile.read(length)
             if len(body) != length:
-                self.reply(400, "invalid_request", "Incomplete request body")
+                self.reply(400, "invalid_request", "请求体不完整")
                 return
             call_id = budget.reserve(suffix)
             if call_id is None:
-                self.reply(429, "call_limit_exceeded", "Model request count limit reached")
+                self.reply(429, "call_limit_exceeded", "模型请求次数已达上限")
                 return
             if call_id in config.inject_timeout_at:
                 budget.finish(call_id, "injected_timeout")
-                self.reply(504, "model_timeout", "Injected model timeout")
+                self.reply(504, "model_timeout", "已注入模型超时故障")
                 return
             headers = forwarded_headers(self.headers, request=True)
             headers["Authorization"] = "Bearer " + config.upstream_api_key
@@ -191,12 +191,12 @@ def create_server(config: ProxyConfig, host: str = "0.0.0.0", port: int = 8081) 
             except httpx.TimeoutException:
                 budget.finish(call_id, "upstream_timeout")
                 if not sent_headers:
-                    self.reply(504, "model_timeout", "Upstream model request timed out")
+                    self.reply(504, "model_timeout", "上游模型请求超时")
                 self.close_connection = True
             except httpx.HTTPError:
                 budget.finish(call_id, "upstream_error")
                 if not sent_headers:
-                    self.reply(502, "upstream_error", "Upstream model request failed")
+                    self.reply(502, "upstream_error", "上游模型请求失败")
                 self.close_connection = True
             except (BrokenPipeError, ConnectionResetError):
                 budget.finish(call_id, "client_disconnected")

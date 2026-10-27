@@ -1,4 +1,4 @@
-"""Small website backed by the same scoped business API used by tools."""
+"""小型网页站点，复用工具使用的同一作用域业务 API。"""
 
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ class SiteHandler(BaseHTTPRequestHandler):
     def form(self):
         size = int(self.headers.get("Content-Length", "0"))
         if size > 8192:
-            raise ValueError("Form too large")
+            raise ValueError("表单过大")
         return {k: values[0] for k, values in parse_qs(self.rfile.read(size).decode()).items()}
 
     def do_GET(self):

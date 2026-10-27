@@ -1,4 +1,4 @@
-"""Host-only Docker orchestration. Agent execution and grading belong in images."""
+"""宿主仅编排 Docker；Agent 执行和评分均在镜像内进行。"""
 from __future__ import annotations
 
 import argparse
@@ -72,7 +72,7 @@ class Lab:
                 except Exception:
                     failures.append(service)
         if failures:
-            print('Cleanup could not reach Docker for: ' + ', '.join(sorted(set(failures))), file=sys.stderr)
+            print('清理时无法通过 Docker 确认以下对象：' + ', '.join(sorted(set(failures))), file=sys.stderr)
 
     def containers(self):
         result = self.call(['docker', 'ps', '-aq', '--filter', 'label=com.docker.compose.project=harness-lab'], capture=True, timeout=5)
@@ -80,7 +80,7 @@ class Lab:
         if not ids:
             return []
         data = json.loads(self.call(['docker', 'inspect', *ids], capture=True, timeout=5).stdout)
-        # Do not serialize Config.Env: the proxy owns an upstream credential.
+        # 不序列化 Config.Env：代理持有上游凭证。
         return [{'id': c['Id'], 'name': c['Name'], 'image_id': c['Image'],
                  'image_tag': c['Config']['Image'], 'state': c['State'],
                  'memory_limit': c['HostConfig']['Memory'], 'cpu_nano': c['HostConfig']['NanoCpus'],
@@ -98,16 +98,16 @@ class Lab:
                           'model_call_cap': self.config.budget.max_model_calls,
                           'model_cost_enforced': False, 'model_called': False}, indent=2))
         if info['OSType'] != 'linux' or info['MemTotal'] < self.config.resources.memory_bytes:
-            raise RuntimeError('Docker environment is below the configured budget')
+            raise RuntimeError('Docker 环境未达到配置的资源预算')
 
     def infrastructure(self, run_id):
         if any(c['state']['Running'] for c in self.containers()):
-            raise RuntimeError('A harness-lab container is already running; finish that run first')
+            raise RuntimeError('已有 harness-lab 容器运行，请先结束该轮实验')
         date = datetime.now(ZoneInfo('Asia/Shanghai')).date().isoformat()
         paths = self.config.paths_for('infrastructure', run_id, 'infrastructure', 'alice', 'main', run_id, case='browser', date=date)
         evidence = paths.run
         if evidence.exists():
-            raise RuntimeError('Run ID already exists; use a new ID without overwriting evidence')
+            raise RuntimeError('运行 ID 已存在；请使用新 ID，不要覆盖证据')
         self.env.update({'LAB_EXPERIMENT_ID': 'infrastructure', 'LAB_VARIANT': run_id,
                          'LAB_EVIDENCE_HOST': str(evidence),
                          'LAB_WORKSPACE_HOST': str(paths.workspace)})
@@ -132,12 +132,12 @@ class Lab:
                          str(fixture / 'browser-probe.json') + ':/input/browser-probe.json:ro',
                          'browser', '/opt/browser/acceptance.mjs', timeout=120)
             active_ids = self.containers()
-            # Remove the primitive Chromium process before MCP starts its own browser.
+            # MCP 启动自身浏览器前，先删除基础 Chromium 进程。
             self.call(['docker', 'rm', probe_name])
             self.compose('run', '--rm', '--entrypoint', 'python', 'bench', '-m', 'runner.infrastructure', 'verify', '--run-id', run_id, '--date', date)
             passed = True
         except Exception as exc:
-            errors.append(type(exc).__name__ + ': infrastructure command failed; inspect saved service logs')
+            errors.append(type(exc).__name__ + '：基础设施命令失败；请检查已保存的服务日志')
             raise
         finally:
             self.halt(names=(probe_name,))
@@ -159,26 +159,26 @@ class Lab:
                 self.cleanup(('browser', 'site', 'tools', 'fixtures'), names=(probe_name,))
 
     def wait_health(self, service, port):
-        # The HTTP request itself executes inside the built bench image.
+        # HTTP 请求本身在已构建的 bench 镜像内执行。
         code = ('import httpx,time\n'
                 'for i in range(30):\n'
                 ' try:\n'
                 f'  r=httpx.get("http://{service}:{port}/health",timeout=1,trust_env=False); r.raise_for_status(); break\n'
                 ' except httpx.HTTPError: time.sleep(0.3)\n'
-                'else: raise SystemExit("Service health timed out")\n')
+                'else: raise SystemExit("服务健康检查超时")\n')
         self.compose('run', '--rm', '--entrypoint', 'python', 'bench', '-c', code)
 
     def run_candidate(self, candidate, run_id, seed):
         if any(c['state']['Running'] for c in self.containers()):
-            raise RuntimeError('Another experiment is still running')
+            raise RuntimeError('另一项实验仍在运行')
         paths = self.config.paths_for('screening', run_id, candidate, 'alice', 'main', run_id, case='tools')
         if paths.run.exists() or paths.fixture.exists():
-            raise RuntimeError('Run ID already exists; use a new ID without overwriting evidence')
-        # Compose resolves env-file quoting. Keep its result in memory; never log it.
+            raise RuntimeError('运行 ID 已存在；请使用新 ID，不要覆盖证据')
+        # Compose 解析 env-file 引号。结果仅留在内存，不写日志。
         resolved = json.loads(self.compose('--profile', 'model', 'config', '--format', 'json', capture=True).stdout)
         model = resolved['services']['model-proxy']['environment'].get('MODEL_NAME')
         if not model or not isinstance(model, str):
-            raise RuntimeError('The selected MODEL_NAME is missing')
+            raise RuntimeError('缺少所选的 MODEL_NAME')
         del resolved
         self.env.update({'LAB_EXPERIMENT_ID': 'screening', 'LAB_VARIANT': run_id,
                          'LAB_EVIDENCE_HOST': str(paths.run), 'LAB_WORKSPACE_HOST': str(paths.workspace),
@@ -217,7 +217,7 @@ class Lab:
             records = self.containers()
             grade_exit = self.compose('run', '--rm', '--entrypoint', 'python', 'bench', '-m', 'runner.experiment', 'grade', *common, check=False).returncode
         finally:
-            # Stop paid execution before any evidence I/O that itself can fail.
+            # 在任何可能失败的证据 I/O 之前，先停止付费执行。
             self.halt(names=(container_name,), services=('model-proxy',))
             event.set()
             if sampler is not None:
@@ -233,8 +233,8 @@ class Lab:
                                 'candidate_exit_code': candidate_exit, 'grade_exit_code': grade_exit,
                                 'containers': records or self.containers(), 'execution_profile': profile,
                                 'real_model_credential_owner': 'model-proxy only',
-                                'candidate_output_mount': 'candidate subdirectory only; trusted audits remain outside',
-                                'plan_scope': step + ' one-run screening; no pause/resume conclusion'}
+                                'candidate_output_mount': '仅候选子目录；可信审计材料保存在外部',
+                                'plan_scope': step + ' 单轮初筛；不据此判断暂停或恢复能力'}
                     (paths.run / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
                     metrics = summarize(samples)
                     metrics['phases'] = {phase: summarize([s for s in samples if s['phase'] == phase])
@@ -255,7 +255,7 @@ class Lab:
                           'containers': [json.loads(line) for line in data.splitlines()]}
             except Exception:
                 sample = {'unix_time': at, 'phase': getattr(self, 'sampling_phase', 'infrastructure'),
-                          'containers': [], 'error': 'Docker sampling failed'}
+                          'containers': [], 'error': 'Docker 采样失败'}
             samples.append(sample)
             with path.open('a') as stream:
                 stream.write(json.dumps(sample) + '\n')
@@ -297,7 +297,7 @@ def main():
     elif args.action == 'run':
         raise SystemExit(lab.run_candidate(args.candidate, args.run_id, args.seed))
     else:
-        parser.exit(2, 'Candidate control is not connected yet; no state was changed.\n')
+        parser.exit(2, '尚未接通候选控制；未改变任何状态。\n')
 
 
 if __name__ == '__main__':

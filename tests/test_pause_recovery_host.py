@@ -1,7 +1,7 @@
-"""Unexecuted I22 host transport tests, authored in /tmp only.
+"""I22 宿主传输测试初稿，最初仅在 /tmp 编写。
 
-All Docker/process/clock operations below are test doubles. These tests verify
-orchestration boundaries, not framework behavior or candidate capability.
+下方 Docker、进程和时钟操作全部为测试替身，
+只验证编排边界，不证明框架行为或候选能力。
 """
 from argparse import Namespace
 from copy import deepcopy
@@ -31,7 +31,7 @@ class Clock:
 
 
 class ThreadDouble:
-    """No thread runs. Retain whether every control Event is stopped/joined."""
+    """不运行线程，只记录各控制事件是否停止并完成 join。"""
     created = []
 
     def __init__(self, target, args=(), daemon=None):
@@ -90,7 +90,7 @@ class DockerDoubleLab(host.PauseLab):
                 "State": {"Status": "created", "Running": False}}
             self.clock.value += self.create_cost
             if self.fail_create:
-                # Docker may have created a named container before CLI timeout.
+                # CLI 超时前，Docker 可能已经创建指定名称的容器。
                 raise subprocess.TimeoutExpired(args, 30)
             return subprocess.CompletedProcess(args, 0, identity + "\n", "")
         if args[:2] == ["docker", "inspect"]:
@@ -117,7 +117,7 @@ class DockerDoubleLab(host.PauseLab):
             return subprocess.CompletedProcess(args, 0, "", "")
         if args[:2] == ["docker", "run"]:
             return subprocess.CompletedProcess(args, 0, '{"passed":true}\n', "")
-        raise AssertionError("Unexpected Docker transport command: " + repr(args))
+        raise AssertionError("非预期 Docker 传输命令：" + repr(args))
 
     @staticmethod
     def exited():
@@ -140,7 +140,7 @@ class DockerDoubleLab(host.PauseLab):
         self.commands.append(("health", service, str(port)))
 
     def sample(self, event, samples, evidence):
-        raise AssertionError("Thread double must not execute sampling")
+        raise AssertionError("线程替身不得实际执行采样")
 
     def bench(self, action, **kwargs):
         self.bench_actions.append((action, kwargs))
@@ -211,7 +211,7 @@ def test_worker_uses_immutable_image_exact_mounts_and_caps(lab_fixture):
 def test_created_worker_mismatch_never_starts_and_still_cleans(lab_fixture, corruption):
     lab, args, _ = lab_fixture
     lab.corruption = corruption
-    with pytest.raises(RuntimeError, match="Created Worker"):
+    with pytest.raises(RuntimeError, match='创建的 Worker'):
         lab.run_chain(args)
     assert not any(command[:2] == ("docker", "start") for command in lab.commands)
     assert not lab.raw
@@ -237,7 +237,7 @@ def test_replacement_uses_floored_original_remaining_budget_and_charges_creation
 def test_dsh_a_b_mount_native_bindings_readonly_with_only_original_budget_token(lab_fixture, monkeypatch):
     lab, args, _ = lab_fixture
     args.candidate, args.variant = "deepseek_harness", "requested-pause"
-    # Calibration validity belongs to its separate tests; no runtime is invoked.
+    # 校准有效性由独立测试负责；此处不运行候选。
     monkeypatch.setattr(lab, "calibrate_surface", lambda: None)
     assert lab.run_chain(args) == 0
     commands = [command for command in lab.commands if command[:2] == ("docker", "create")]
@@ -272,7 +272,7 @@ def test_create_timeout_remembers_name_and_cleans_possible_created_container(lab
 def test_creation_can_exhaust_budget_without_starting_or_allocating_more_time(lab_fixture):
     lab, args, _ = lab_fixture
     lab.create_cost = 301
-    with pytest.raises(TimeoutError, match="Cumulative active budget exhausted"):
+    with pytest.raises(TimeoutError, match='累计活跃预算已用尽'):
         lab.run_chain(args)
     assert not any(command[:2] == ("docker", "start") for command in lab.commands)
     assert not lab.raw
@@ -285,10 +285,10 @@ def test_evidence_write_failure_still_halts_paid_execution_then_removes_all(lab_
     def fail(path, value):
         if path.name == filename:
             lab.commands.append(("injected_evidence_failure", filename))
-            raise OSError("synthetic evidence disk failure")
+            raise OSError("模拟证据磁盘故障")
         return original(path, value)
     monkeypatch.setattr(host, "save", fail)
-    with pytest.raises(OSError, match="synthetic evidence disk failure"):
+    with pytest.raises(OSError, match="模拟证据磁盘故障"):
         lab.run_chain(args)
     failure = lab.commands.index(("injected_evidence_failure", filename))
     assert any(command[:3] == ("docker", "rm", "-f") for command in lab.commands[failure:])
@@ -303,10 +303,10 @@ def test_candidate_log_open_failure_closes_every_control_thread(lab_fixture, mon
     original = Path.open
     def fail(path, *positional, **kwargs):
         if path.name == "candidate.log":
-            raise OSError("synthetic candidate log failure")
+            raise OSError("模拟候选日志故障")
         return original(path, *positional, **kwargs)
     monkeypatch.setattr(Path, "open", fail)
-    with pytest.raises(OSError, match="synthetic candidate log failure"):
+    with pytest.raises(OSError, match="模拟候选日志故障"):
         lab.run_chain(args)
     controls = [thread for thread in ThreadDouble.created if thread.target.__name__ == "pause_trigger"]
     assert all(thread.args[-1].is_set() and thread.joined for thread in controls)
@@ -317,9 +317,9 @@ def test_attach_transport_failure_after_handler_start_still_joins_and_cleans(lab
     lab, args, _ = lab_fixture
     args.variant = "requested-pause"
     def broken_attach(*_args, **_kwargs):
-        raise OSError("synthetic attach transport failure")
+        raise OSError("模拟 attach 传输失败")
     monkeypatch.setattr(host.subprocess, "run", broken_attach)
-    with pytest.raises(OSError, match="synthetic attach transport failure"):
+    with pytest.raises(OSError, match="模拟 attach 传输失败"):
         lab.run_chain(args)
     controls = [thread for thread in ThreadDouble.created if thread.target.__name__ == "pause_trigger"]
     assert len(controls) == 1 and controls[0].args[-1].is_set() and controls[0].joined
@@ -330,7 +330,7 @@ def test_attach_transport_failure_after_handler_start_still_joins_and_cleans(lab
 def test_unknown_docker_inspect_failure_is_not_absence(lab_fixture, stderr):
     lab, _, _ = lab_fixture
     lab.call = lambda command, **kwargs: subprocess.CompletedProcess(command, 1, "", stderr)
-    with pytest.raises(RuntimeError, match="absence is unproven"):
+    with pytest.raises(RuntimeError, match='尚未证明对象不存在'):
         lab.snapshot(WORKER_ID)
 
 
@@ -343,7 +343,7 @@ def test_only_explicit_missing_inspect_error_is_accepted_as_absence(lab_fixture)
 def test_bench_cli_uses_frozen_image_and_exact_container_host_record_path(lab_fixture):
     lab, args, _ = lab_fixture
     assert lab.run_chain(args) == 0
-    # Exercise the real CLI builder after run_chain; transport remains a double.
+    # 在 run_chain 后测试真实 CLI 构造器；传输仍使用替身。
     host.PauseLab.bench(lab, "bind-start", host_record=lab.paths.run / "trusted/pins.json")
     command = next(command for command in reversed(lab.commands) if command[:2] == ("docker", "run"))
     assert BENCH in command and "harness-lab-bench:local" not in command
@@ -381,7 +381,7 @@ def sampling_lab(tmp_path, *, final_state=None, absent=False, inspect_error=Fals
         inspected.append(identity)
         assert identity == WORKER_ID
         if inspect_error:
-            raise RuntimeError('synthetic Docker inspect unavailable')
+            raise RuntimeError('模拟 Docker inspect 不可用')
         return None if absent else {**deepcopy(worker), 'state': deepcopy(final_state or DockerDoubleLab.exited())}
     lab.snapshot = snapshot
     def call(command, **_kwargs):
@@ -467,7 +467,7 @@ def test_wait_monitor_is_retained_for_exit_inspection_until_generic_cleanup(tmp_
     host.PauseLab.wait_after_delete(lab, {'after_exit': {'id': WORKER_ID}})
     assert len(commands) == 1 and '--rm' not in commands[0]
     assert 'harness-lab-wait-monitor-monitor-unit' in lab.names
-    # Ordinary short-lived bench commands intentionally retain their old policy.
+    # 普通短时验收命令刻意保留原策略。
     assert '--rm' in lab.bench_command()
 
 
@@ -490,7 +490,7 @@ def test_absence_accepts_docker_case_variants_only_for_exact_identity(message):
 def test_absence_never_accepts_other_identity_or_mixed_runtime_failures(stdout, stderr):
     lab = host.PauseLab.__new__(host.PauseLab)
     lab.call = lambda command, **kwargs: subprocess.CompletedProcess(command, 1, stdout, stderr)
-    with pytest.raises(RuntimeError, match='absence is unproven'):
+    with pytest.raises(RuntimeError, match='尚未证明对象不存在'):
         lab.snapshot(WORKER_ID)
 
 

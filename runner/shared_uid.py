@@ -1,9 +1,8 @@
-"""Optional I24 root-owned UID calibration; not needed for two Docker Workers.
+"""可选的 I24 root 所有 UID 校准；双 Docker Worker 不依赖此项。
 
-No public registration/start API. Default I22 adapters are never accepted here.
-Candidate shared entry points are a separate, still-unimplemented integration.
-This module is not an agent runtime, queue, pool or production sandbox.
-"""
+不提供公开注册或启动 API，此处不接受默认 I22 适配器。
+候选框架共享入口仍是尚未实现的单独集成。
+此模块不是 Agent 运行时、队列、池或生产沙箱。"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -34,7 +33,7 @@ _CANDIDATE_ENTRIES = {
 
 
 def _status(pid):
-    """Actual Linux status fields; never synthesize child identity from fixture."""
+    """读取真实 Linux 状态字段，不能根据 Fixture 合成子进程身份。"""
     values = {}
     for line in Path(f"/proc/{pid}/status").read_text().splitlines():
         key, separator, value = line.partition(":")
@@ -54,7 +53,7 @@ def _directory(path, uid, gid, mode):
 
 
 def _ancestors(path):
-    """Only root can replace protected parents; root sticky /tmp is allowed in calibration."""
+    """只有 root 可替换受保护父目录；校准允许 root 所有且带 sticky 位的 /tmp。"""
     for parent in Path(path).parents:
         descriptor = _open_directory(parent)
         try:
@@ -78,12 +77,12 @@ def _file(path, uid, gid, mode, *, limit=65536):
 def _uids(status):
     values = tuple(int(item) for item in status["Uid"].split())
     if len(values) != 4:
-        raise ValueError("invalid UID fields")
+        raise ValueError("无效 UID 字段")
     return values
 
 
 def uid_processes(uid):
-    """A bounded observation of actual UID processes, not arbitrary-fork containment."""
+    """对真实 UID 进程作有界观测，不证明任意派生进程均被约束。"""
     found = []
     for entry in os.scandir("/proc"):
         if not entry.name.isdecimal():
@@ -109,11 +108,10 @@ class TaskIdentity:
 
 
 class RootTaskSupervisor(TaskSupervisor):
-    """Fresh non-root process per attempt; irreversible application revocation.
+    """每次尝试启动新的非 root 进程，应用层撤销不可逆。
 
-    Root-only policy/materials and Linux permissions are prerequisites. This
-    neither isolates network namespaces nor proves native pause/cancel/recovery.
-    """
+    前提为 root 独占的策略/材料及 Linux 权限。
+    此处不隔离网络命名空间，也不证明原生暂停、取消或恢复。"""
     def __init__(self, tasks, identities, journal, *, private_root, max_active=2,
                  allow_calibration=False, popen_factory=subprocess.Popen, handoff_guard=None):
         if os.geteuid() != 0 or _status(os.getpid()).get("NoNewPrivs") != "1":
@@ -208,8 +206,8 @@ class RootTaskSupervisor(TaskSupervisor):
             "services": {"tools": f"http://tools-{task.task_id}:8081", "model": f"http://model-proxy-{task.task_id}:8082/v1"}}
         if binding != expected:
             raise BoundaryError("shared_task_binding_mismatch", 400)
-        # Candidate entry integration must validate its complete request/token/
-        # lifecycle schema against this root-owned spawn identity before SDK I/O.
+        # 候选框架共享入口在 SDK I/O 前，必须将完整 request/token/
+        # lifecycle 模式与此 root 所有的启动身份核对。
         _file(request, 0, identity.gid, 0o440)
         return binding
 
@@ -234,8 +232,8 @@ class RootTaskSupervisor(TaskSupervisor):
             if sum(item.process.poll() is None for item in self.owned.values()) >= self.max_active:
                 raise BoundaryError("active_task_limit", 429)
             if old is not None:
-                # No default fallback: the existing I22 verifier is a separate
-                # trusted integration, not an invented resume decision here.
+                # 不提供默认回退：现有 I22 验证器属于单独的
+                # 可信集成，不能在此虚构恢复决定。
                 if self.handoff_guard is None:
                     raise BoundaryError("shared_native_handoff_not_connected")
                 self.handoff_guard(task, old, attempt_id)
@@ -244,8 +242,8 @@ class RootTaskSupervisor(TaskSupervisor):
                 raise BoundaryError("attempt_evidence_not_empty")
             env = {"PATH": os.defpath, "LANG": "C.UTF-8", "PYTHONUNBUFFERED": "1",
                    "PYTHONDONTWRITEBYTECODE": "1", **spec.environment}
-            # Keep supervisor stdio in private storage. Existing lifecycle
-            # adapters require a genuinely empty candidate output directory.
+            # 将 supervisor 标准输入输出保留在私有存储中。现有生命周期
+            # 适配器要求候选输出目录确实为空。
             stdout_path = self.private_root / f"{task_id}-{attempt_id}.stdout"
             stderr_path = self.private_root / f"{task_id}-{attempt_id}.stderr"
             try:
@@ -321,8 +319,8 @@ class RootTaskSupervisor(TaskSupervisor):
                      action="application_SIGKILL_teardown", native_cancel_confirmed=False)
         while True:
             current = uid_processes(identity.uid)
-            # Reap supervisor-owned direct children. Zombies cannot perform work
-            # but remain explicit until their parent/namespace init reaps them.
+            # 回收 supervisor 直接拥有的子进程。僵尸进程无法工作，
+            # 但在父进程或命名空间 init 回收前仍明确记录。
             for (task_id, _), owned in self.owned.items():
                 if task_id == task.task_id:
                     owned.process.poll()
@@ -353,7 +351,7 @@ class RootTaskSupervisor(TaskSupervisor):
             time.sleep(0.02)
 
     def revoke(self, task_id, *, timeout_seconds=2):
-        """Trusted irreversible teardown. Never represents native task cancellation."""
+        """可信且不可逆的清理，不代表原生任务取消。"""
         if type(timeout_seconds) not in (int, float) or not 0 < timeout_seconds <= 10:
             raise BoundaryError("invalid_teardown_timeout", 400)
         with self.lock:

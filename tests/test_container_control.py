@@ -1,7 +1,7 @@
-"""Unrun boundary tests: fake Worker HTTP, real files/product HTTP, no candidate.
+"""边界测试初稿：使用假 Worker HTTP、真实文件与产品 HTTP，不运行候选。
 
-The fake upstream deliberately proves no native capability or resource result.
-Read-only mount enforcement is replaced only in these unit calibrations.
+上游替身不证明原生能力或资源结果。只在单元校准中
+替换只读挂载检查。
 """
 from copy import deepcopy
 from dataclasses import replace
@@ -53,7 +53,7 @@ class FakeTransport:
         action = url.path.rsplit("/", 1)[1]
         self.calls.append({"url": request.full_url, "method": request.method, "body": request.data})
         if url.hostname in self.offline or action == "start" and self.fail_start:
-            raise URLError("synthetic transport loss, no native claim")
+            raise URLError("模拟传输丢失，不作原生能力声明")
         value = dict(self.expected[url.hostname])
         if self.wrong_task:
             value["task_id"] = "other-task"
@@ -74,8 +74,8 @@ class FakeTransport:
 
 @pytest.fixture
 def container_lab(tmp_path, monkeypatch):
-    # Actual runtime uses immutable_bytes/statvfs. This fake-transport fixture
-    # uses temporary local files and never claims a Docker/mount verification.
+    # 真实运行使用 immutable_bytes/statvfs；此传输替身测试
+    # 使用本地临时文件，不声称已验证 Docker 或真实挂载。
     monkeypatch.setattr(control, "immutable_bytes", lambda path, **kwargs: Path(path).read_bytes())
     monkeypatch.setattr(control, "read_secret", lambda path: Path(path).read_text().strip())
     tasks, routes, expected = [], [], {}
@@ -128,7 +128,7 @@ def container_lab(tmp_path, monkeypatch):
 @pytest.mark.parametrize("action", ["state", "events", "artifacts", "pause", "resume", "cancel"])
 def test_foreign_request_never_reaches_worker_or_durable_material(container_lab, action, monkeypatch):
     lab = container_lab
-    monkeypatch.setattr(control, "read_bound_file", lambda *args, **kwargs: pytest.fail("foreign durable read"))
+    monkeypatch.setattr(control, "read_bound_file", lambda *args, **kwargs: pytest.fail("读取了他人的持久化数据"))
     status, value = lab["call"]("task-b", action, method="POST", body={"worker": "task-a", "secret": "body-secret"}, query={"after": ["bad"]})
     assert (status, value) == (403, {"error": {"code": "scope_denied"}})
     assert lab["transport"].calls == []
@@ -233,7 +233,7 @@ def test_attempt_event_cursor_can_still_read_original_after_replacement(containe
     task = registry.tasks["task-a"]
     for attempt, text in (("worker-a", "original"), ("worker-b", "replacement")):
         (task.attempts[attempt].evidence_dir / "raw-events.jsonl").write_text(json.dumps({"event": text}) + "\n")
-    # This selection calibrates only persistent cursor routing, never a resume.
+    # 此选择只校准持久游标路由，不执行续跑。
     registry.current["task-a"] = "worker-b"
     status, events = lab["call"]("task-a", "events", query={"attempt": ["worker-a"], "after": ["0"]})
     assert status == 200 and events["cursor_domain"]["attempt_id"] == "worker-a"
@@ -273,7 +273,7 @@ def test_actual_product_socket_eof_then_new_authenticated_connection_preserves_o
         connection.close()
         deadline = time.monotonic() + 2
         while not any(row["kind"] == "connection_peer_eof" and row["connection_id"] == old_id for row in lab["journal"].rows):
-            assert time.monotonic() < deadline, "Actual peer EOF was not observed"
+            assert time.monotonic() < deadline, "未观测到真实对端 EOF"
             time.sleep(0.01)
         second = http.client.HTTPConnection(*server.server_address, timeout=2)
         second.request("GET", "/tasks/task-a/state", headers=headers)

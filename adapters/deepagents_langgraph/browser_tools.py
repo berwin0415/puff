@@ -1,4 +1,4 @@
-"""Primitive MCP tools using the pinned official Python SDK's public APIs."""
+"""通过固定版本官方 Python SDK 的公开 API 提供 MCP 基础操作工具。"""
 
 from contextlib import AsyncExitStack
 from datetime import timedelta
@@ -47,16 +47,16 @@ class BrowserTools:
                 "phase": "list_tools", "result": result.model_dump(mode="json", by_alias=True, exclude_none=True)})
             for tool in result.tools:
                 if tool.name in definitions:
-                    raise ValueError("Browser MCP listed a duplicate tool")
+                    raise ValueError("浏览器 MCP 返回了重复的工具")
                 definitions[tool.name] = tool
             cursor = result.nextCursor
             if cursor is None:
                 break
             if cursor in seen_cursors:
-                raise ValueError("Browser MCP repeated a pagination cursor")
+                raise ValueError("浏览器 MCP 返回了重复的分页游标")
             seen_cursors.add(cursor)
         if not REQUIRED_BROWSER_TOOLS <= definitions.keys():
-            raise ValueError("Browser MCP is missing required primitive tools")
+            raise ValueError("浏览器 MCP 缺少必需的基础操作工具")
         self.evidence.save("browser-tool-surface.json", {"scope": self.evidence.scope,
             "transport": "official_mcp_streamable_http_client", "sdk": "mcp==1.28.1",
             "discovered": sorted(definitions), "allowed": sorted(BROWSER_TOOLS & definitions.keys()),
@@ -84,7 +84,7 @@ class BrowserTools:
                     "status": 500, "error_type": type(error).__name__, "error": str(error),
                     "native_error": getattr(error, "error", None)})
                 self.evidence.append("browser-actions.jsonl", {**base, "tool": name, "phase": "finish", "status": 500, "source": source})
-                raise ToolException(f"Browser MCP transport or protocol error: {type(error).__name__}: {error}") from error
+                raise ToolException(f"浏览器 MCP 传输或协议错误：{type(error).__name__}: {error}") from error
             payload = result.model_dump(mode="json", by_alias=True, exclude_none=True)
             status = 500 if result.isError else 200
             source = self.evidence.append("mcp-events.jsonl", {**base, "time": self.evidence.now(), "phase": "finish", "status": status, "result": payload})
@@ -100,8 +100,8 @@ class BrowserTools:
                     self.evidence.append("download-events.jsonl", {**base, "source": source, "status": "copied", **self.download})
                 except (OSError, ValueError) as error:
                     self.evidence.append("download-events.jsonl", {**base, "source": source, "native_path": native_path, "status": "missing", "error": str(error)})
-            # Keep complete SDK protocol fields in retained canonical evidence;
-            # the Agent receives the same serialized CallToolResult content.
+            # 在保留的规范证据中保存完整 SDK 协议字段；
+            # Agent 接收相同的序列化 CallToolResult 内容。
             return json.dumps(payload, ensure_ascii=False)
 
         return execute

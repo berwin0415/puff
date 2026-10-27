@@ -1,12 +1,12 @@
-/** Official MCP client, original tool schemas and wire evidence; no page workflow. */
+/** 官方 MCP 客户端、原始工具结构和传输证据；不实现页面流程。 */
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { BROWSER_TOOLS, appendEvidence, copyNativeDownload, nativeDownloadPaths } from './detailed-options.mjs'
 
 export async function createBrowserClient({ browser, scope, outputDir, workspace, redact, deadlineAt }, signal) {
-  // Resolve the exact dependency already locked by official OpenClaw. This
-  // helper is loaded on the host only for syntax checking, never SDK execution.
+  // 解析官方 OpenClaw 已锁定的精确依赖；此辅助模块
+  // 在宿主机仅为语法检查加载，不执行 SDK。
   const require = createRequire('/opt/openclaw/package.json')
   const { Client } = require('@modelcontextprotocol/sdk/client/index.js')
   const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/client/streamableHttp.js')
@@ -29,8 +29,8 @@ export async function createBrowserClient({ browser, scope, outputDir, workspace
     }
     return await send(message, options)
   }
-  // Instrument the documented public transport callback before connect so
-  // initialize/listTools and every original response remain observable too.
+  // 连接前观测文档所述的公开传输回调，以便同时记录
+  // initialize/listTools 以及每个原始响应。
   let onmessage
   Object.defineProperty(transport, 'onmessage', {
     configurable: true,
@@ -52,13 +52,13 @@ export async function createBrowserClient({ browser, scope, outputDir, workspace
   })
   const requestOptions = parentSignal => {
     const remaining = Math.min(30_000, deadlineAt - Date.now())
-    if (remaining <= 0) throw new Error('Browser task deadline expired')
+    if (remaining <= 0) throw new Error('浏览器任务已超过执行时限')
     return { timeout: remaining, signal: parentSignal ? AbortSignal.any([parentSignal, AbortSignal.timeout(remaining)]) : AbortSignal.timeout(remaining) }
   }
   const close = async () => {
     let timer
     try {
-      await Promise.race([client.close(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MCP close timeout')), 2000); timer.unref() })])
+      await Promise.race([client.close(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MCP 关闭超时')), 2000); timer.unref() })])
     } finally { clearTimeout(timer) }
   }
   try {
@@ -71,10 +71,10 @@ export async function createBrowserClient({ browser, scope, outputDir, workspace
       cursor = response.nextCursor
       if (!cursor) break
     }
-    if (cursor) throw new Error('Unbounded MCP tool metadata')
+    if (cursor) throw new Error('MCP 工具元数据超过大小上限')
     const tools = BROWSER_TOOLS.map(name => {
       const matches = discovered.filter(tool => tool.name === name)
-      if (matches.length !== 1 || typeof matches[0].description !== 'string' || matches[0].inputSchema?.type !== 'object') throw new Error(`Missing or invalid original browser tool: ${name}`)
+      if (matches.length !== 1 || typeof matches[0].description !== 'string' || matches[0].inputSchema?.type !== 'object') throw new Error(`原始浏览器工具缺失或无效：${name}`)
       const tool = matches[0]
       return { name: tool.name, description: tool.description, input_schema: structuredClone(tool.inputSchema) }
     })
@@ -83,7 +83,7 @@ export async function createBrowserClient({ browser, scope, outputDir, workspace
       tools,
       close,
       async call(name, arguments_, callId, callSignal) {
-        if (!BROWSER_TOOLS.includes(name) || typeof callId !== 'string' || !callId) throw new Error('Invalid bound browser tool call')
+        if (!BROWSER_TOOLS.includes(name) || typeof callId !== 'string' || !callId) throw new Error('已绑定的浏览器工具调用无效')
         const metadata = { callId, nativeName: name }
         let result, failure
         try {
@@ -108,8 +108,8 @@ export async function createBrowserClient({ browser, scope, outputDir, workspace
             }
           }
         } else {
-          append('mcp-client-events.jsonl', { call_id: callId, native_tool: name, phase: 'error', error: failure instanceof Error ? failure.message : 'Missing native MCP response' })
-          failure ??= new Error('Missing native MCP response')
+          append('mcp-client-events.jsonl', { call_id: callId, native_tool: name, phase: 'error', error: failure instanceof Error ? failure.message : '缺少原生 MCP 响应' })
+          failure ??= new Error('缺少原生 MCP 响应')
         }
         if (failure) throw failure
         return result

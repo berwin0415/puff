@@ -1,4 +1,4 @@
-"""Pure positive/negative scope evidence calibration; no candidate or Docker."""
+"""作用域证据的纯正反例校准，不启动候选或 Docker。"""
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -161,7 +161,7 @@ def row(data, attempt, name):
 
 
 def refresh(data):
-    """Make corruptions internally hash-consistent, exercising semantic rejection."""
+    """使损坏数据内部哈希一致，从而测试语义拒绝。"""
     for attempt in data["attempts"]:
         for key, ref in attempt.items():
             if isinstance(ref, dict) and "stream" in ref and "line" in ref:
@@ -185,7 +185,7 @@ def test_complete_trusted_matrix_accepts_real_owner_results_and_active_log_growt
     result = grade(data)
     assert result["passed"], result
     assert result["metrics"]["probes"] == (72 if reuse else 36)
-    assert data == original  # Grading is pure and never rewrites native evidence.
+    assert data == original  # 判定为纯读取，不能改写原生证据。
 
 
 @pytest.mark.parametrize("reuse", [False, True])
@@ -226,7 +226,7 @@ def test_resume_new_run_uses_real_lineage_and_the_declared_cursor_domain(cursor_
         assert before["event_cursor_domain"] == after["event_cursor_domain"]
         after["event_cursor"] = 0
         refresh(data)
-        assert not grade(data)["passed"]  # Task-level cursors cannot reset for a new native run.
+        assert not grade(data)["passed"]  # 不能因创建新的原生运行而重置任务级游标。
 
 
 @pytest.mark.parametrize("defect", ["missing_domain", "foreign_domain", "domain_kind_switch", "old_run_domain",
@@ -276,7 +276,7 @@ def test_pause_and_cancel_cannot_use_another_registered_native_run_as_their_resu
     result = grade(data)
     assert not result["passed"]
     assert result["checks"][0]["name"] == "trusted_plan_and_matrix"
-    assert result["checks"][0]["passed"] is False  # Invalid target rebinding is rejected before success observations.
+    assert result["checks"][0]["passed"] is False  # 在读取成功观察之前，先拒绝无效目标重绑定。
 
 
 def test_legacy_all_a_positive_foreign_content_false_and_empty_snapshots_never_pass():

@@ -1,4 +1,4 @@
-"""I23 independent resource evidence calibration, not live Docker results."""
+"""I23 独立资源证据校准，不是真实 Docker 运行结果。"""
 from copy import deepcopy
 import json
 from types import SimpleNamespace

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Add experiment-owned entry files to an already verified DSH build context.
+"""向已核验的 DSH 构建上下文添加实验入口文件。
 
-Run prepare_candidate_source.py first. This script changes neither the external
-repository nor the exported sources/main tree. No candidate code is executed.
+请先运行 prepare_candidate_source.py。本脚本不修改外部仓库或已导出的 sources/main 树，不执行候选代码。
 """
 
 import argparse
@@ -26,20 +25,20 @@ def digest(data: bytes) -> str:
 def stage(context: Path, repository: Path, *, goal_runtime: bool = False) -> dict:
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     if goal_runtime and context == (repository / "external/build-context/deepseek_harness").resolve():
-        raise ValueError("I22 must use a separate context; the existing detailed build material is frozen")
+        raise ValueError('I22 必须使用独立上下文；现有详细实验构建材料已冻结')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "deepseek_harness":
-        raise ValueError("Expected the current DeepSeek Harness exported context")
+        raise ValueError('需要当前 DeepSeek Harness 导出上下文')
     sources = source.get("sources", [])
     if len(sources) != 1 or sources[0].get("commit") != EXPECTED_COMMIT or sources[0].get("observed_commit") != EXPECTED_COMMIT or sources[0].get("dirty") is not False:
-        raise ValueError("Wrong or unverified DSH source revision")
+        raise ValueError('DSH 源码版本不匹配或未经核验')
     destination = context / "harness-lab"
     if destination.exists():
         if destination.is_symlink() or not (context / "LAB_ADAPTER_MANIFEST.json").is_file():
-            raise ValueError("Refusing to replace unstaged adapter material")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []
@@ -66,7 +65,7 @@ def stage(context: Path, repository: Path, *, goal_runtime: bool = False) -> dic
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--context", type=Path, default=Path("external/build-context/deepseek_harness"))
-    parser.add_argument("--goal-runtime", action="store_true", help="Include the separately frozen I22 Goal entry; do not overwrite an existing detailed context")
+    parser.add_argument("--goal-runtime", action="store_true", help='包含单独冻结的 I22 Goal 入口；不要覆盖现有详细实验上下文')
     arguments = parser.parse_args()
     print(json.dumps(stage(arguments.context, Path(__file__).resolve().parents[1], goal_runtime=arguments.goal_runtime)))
 

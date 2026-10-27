@@ -1,4 +1,4 @@
-"""Summarize raw Docker measurements; unknown model prices stay unknown."""
+"""汇总 Docker 原始测量；未知的模型价格仍记为未知。"""
 from __future__ import annotations
 
 import re
@@ -8,7 +8,7 @@ import statistics
 def memory_bytes(value: str) -> float:
     match = re.fullmatch(r'([\d.]+)\s*(B|KiB|MiB|GiB|kB|MB|GB)', value.strip())
     if not match:
-        raise ValueError('Unknown Docker memory unit')
+        raise ValueError('未知 Docker 内存单位')
     multipliers = {'B': 1, 'KiB': 1024, 'MiB': 1024**2, 'GiB': 1024**3,
                    'kB': 1000, 'MB': 1000**2, 'GB': 1000**3}
     return float(match[1]) * multipliers[match[2]]
@@ -29,4 +29,4 @@ def summarize(samples: list[dict]) -> dict:
                                  'peak': max(t[key] for t in totals)}
                           for key in ('memory_bytes', 'cpu_percent', 'pids', 'container_count')} if totals else {},
             'model_cost_usd': None, 'price_source': None,
-            'note': 'Docker CPU is percent of one CPU; PIDs includes threads. No candidate result is inferred.'}
+            'note': 'Docker CPU 百分比以单核为基准；PIDs 包含线程。不据此推断候选框架任务结果。'}

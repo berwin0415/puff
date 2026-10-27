@@ -1,4 +1,4 @@
-# Same fixed Python 3.12 Linux arm64 base used by the shared experiment.
+# 与公共实验使用相同的固定 Python 3.12 Linux arm64 基础镜像。
 ARG PYTHON_IMAGE=python:3.12.13-slim-bookworm@sha256:3f9c7f75b916e8279e24136d7a57769aba9e193715be52570417698c52d6eed0
 FROM ${PYTHON_IMAGE}
 
@@ -17,8 +17,8 @@ COPY SOURCE_MANIFEST.json /opt/materials/
 COPY harness-lab/verify_source.py /opt/materials/source-verifier/verify_source.py
 COPY harness-lab/pyproject.toml harness-lab/uv.lock /opt/materials/harness-lab/
 WORKDIR /opt/materials/harness-lab
-# Resolve nothing at image install: registry wheels and build backend first,
-# then the immutable wheel from the exact hash-verified local source archive.
+# 镜像安装时不重新解析依赖：先安装 registry wheel 和构建后端，
+# 再从已核验确切哈希的本地源码归档构建不可变 wheel。
 RUN --mount=type=cache,id=harness-lab-openai-agents-uv-linux-arm64,target=/root/.cache/uv,sharing=locked \
     python /opt/materials/source-verifier/verify_source.py --source-only \
     && uv sync --frozen --no-dev --no-install-local --no-build \

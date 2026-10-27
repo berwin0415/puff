@@ -1,8 +1,7 @@
-"""Append an offline review after correcting I22 DSH durable-Goal grading.
+"""纠正 I22 DSH 持久化 Goal 判定后，追加离线复核。
 
-Runs in the pinned bench image. It never alters the original verdict, controls,
-state, tools audit or ledger and never calls a candidate, service or model.
-"""
+在固定 bench 镜像中运行。不修改原判定、控制、状态、工具审计或账本，
+也不调用候选框架、服务或模型。"""
 from __future__ import annotations
 
 import argparse
@@ -43,7 +42,7 @@ def main():
     if pins is not None and pins['variant'] == 'requested-pause':
         original = paths.run / 'verdict.json'
         provenance = {'schema': 'harness-lab-pause-review-provenance/1',
-            'reason': 'Pinned JSONL formatter materializes delegationDepth=0; original grader compared in-memory and restored headers without the official default.',
+            'reason': '固定 JSONL 格式器会显式写入 delegationDepth=0；原判定器比较内存头与恢复头时未应用官方默认值。',
             'original_verdict_sha256': pause.sha(pause.regular(original)),
             'original_ledger_sha256': pause.sha(pause.regular(paths.run / 'trusted/final-ledger.json')),
             'grader_sha256': pause.sha(Path(pause.__file__).read_bytes()),
@@ -77,7 +76,7 @@ def main():
     original = paths.run / 'verdict.json'
     verdict = {'schema': 'harness-lab-pause-baseline-review/1', 'chain_id': args.chain_id,
         'candidate': args.candidate, 'seed': args.seed, 'review_id': args.review_id,
-        'reason': 'Original grader confused persisted GoalSpec with GoalView; activation is process-local and not in the durable event.',
+        'reason': '原判定器混淆了持久化 GoalSpec 与 GoalView；激活状态属于进程本地，不在持久化事件中。',
         'original_verdict_sha256': hashlib.sha256(pause.regular(original)).hexdigest(),
         'grader_sha256': hashlib.sha256(Path(pause.__file__).read_bytes()).hexdigest(),
         'durable_goal_grader_sha256': hashlib.sha256(Path(dsh_goal.__file__).read_bytes()).hexdigest(),

@@ -1,11 +1,11 @@
-/** Business observations in public native Session events/projections, not a driver. */
+/** 业务观测保存在公开原生 Session 事件和投影中，不另建驱动器。 */
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { isDeepStrictEqual } from 'node:util'
 import { sameScope } from './detailed-options.mjs'
 
-// External required event types are not reloadable in the fixed upstream.
-// The real tool scheduler owns this built-in event; never append one here.
+// 固定上游版本不支持重新加载外部必需事件类型。
+// 此内置事件由真实工具调度器管理；此处不得追加此类事件。
 export const BUSINESS_EVENT = 'tool/result'
 export const BUSINESS_META_KIND = 'harness-lab/business-state/v1'
 export const BUSINESS_STATE_POINTER = '/data/meta/business_state'
@@ -29,11 +29,11 @@ function matchingReceipt(receipt, operation, scope) {
     && Object.keys(scope).every(key => receipt[key] === scope[key])
 }
 
-/** Only real successful write/receipt bodies introduce an operation identity. */
+/** 只有真实成功的写入或回执响应体才能引入操作身份。 */
 export function observeBusinessState(previous, scope, tool, arguments_, status, payload, source) {
   const operation = arguments_?.operation_id
   if (!['write', 'receipt'].includes(tool) || typeof operation !== 'string' || !operationId.test(operation)) return previous
-  if (previous.scope !== null && !sameScope(previous.scope, scope)) throw new Error('Native business state has a different trusted scope')
+  if (previous.scope !== null && !sameScope(previous.scope, scope)) throw new Error('原生业务状态的可信作用域不匹配')
   const result = payload?.result
   let observation
   if (status === 200 && result && typeof result === 'object') {
@@ -50,7 +50,7 @@ export function observeBusinessState(previous, scope, tool, arguments_, status, 
     }
   }
   if (!observation) {
-    // A failed request never invents a new operation or confirms a receipt.
+    // 请求失败时，不伪造新操作或确认回执。
     if (tool !== 'write' || !Object.hasOwn(previous.operations, operation)) return previous
     observation = { ...previous.operations[operation], receipt_confirmed: false, last_observation: 'write_result_unknown' }
   }
@@ -62,7 +62,7 @@ export function observeBusinessState(previous, scope, tool, arguments_, status, 
   return next
 }
 
-/** Repeating a write invalidates a previous confirmation before forwarding. */
+/** 重复写入时，在转发前使先前的确认失效。 */
 export function beginBusinessWrite(previous, arguments_, source) {
   const operation = arguments_?.operation_id
   if (typeof operation !== 'string' || !Object.hasOwn(previous.operations, operation)) return previous
@@ -75,12 +75,12 @@ export function beginBusinessWrite(previous, arguments_, source) {
 }
 
 export async function mountBusinessExtension(ctx, { scope, quantityLimit, append, save, writeNativeRecord }) {
-  if (quantityLimit !== 3) throw new Error('Expected the frozen extension quantity limit')
+  if (quantityLimit !== 3) throw new Error('必须使用冻结的扩展数量上限')
   const registry = ctx.get('sessionProjections')
   const agent = ctx.agent
-  if (!registry || !agent) throw new Error('Business extension requires the public session projection registry and actual Agent scope')
-  // Resolve the already locked public Zod dependency of the official package.
-  // This function runs only in the candidate container, never in pure checks.
+  if (!registry || !agent) throw new Error('业务扩展需要公开会话投影注册表和实际 Agent 作用域')
+  // 解析官方包已锁定的公开 Zod 依赖。
+  // 此函数仅在候选容器中执行，不用于纯校验。
   const { z } = createRequire(new URL('../sources/main/packages/session/session-projection/package.json', import.meta.url))('zod')
   const scopeSchema = z.object({ experiment_id: z.string(), variant: z.string(), user_id: z.string(), session_id: z.string() }).strict()
   const entrySchema = z.object({ operation_id: z.string().regex(operationId), receipt_confirmed: z.boolean(),
@@ -97,14 +97,14 @@ export async function mountBusinessExtension(ctx, { scope, quantityLimit, append
     if (value.operation_id === null) return value.receipt_confirmed === false && Object.keys(value.operations).length === 0
     const entry = Object.hasOwn(value.operations, value.operation_id) ? value.operations[value.operation_id] : undefined
     return value.scope !== null && entry !== undefined && value.receipt_confirmed === entry.receipt_confirmed
-  }, 'Business current operation and scope must match the complete native state')
+  }, '当前业务操作和作用域必须与完整原生状态一致')
   registry.register({
     key: BUSINESS_PROJECTION, stateVersion: 2, stateSchema,
     init: header => emptyBusinessState(header.id),
     apply: (state, event) => {
       if (event.type === 'tool/call' && event.data.name === 'write') {
-        // Invalidate a prior confirmation at the REAL native call boundary.
-        // Retain its previous observation source until a new result settles.
+        // 在真实原生调用边界使先前确认失效。
+        // 在新结果确定前保留先前观测来源。
         let args
         try { args = JSON.parse(event.data.arguments) } catch { return state }
         const operation = args?.operation_id
@@ -114,15 +114,15 @@ export async function mountBusinessExtension(ctx, { scope, quantityLimit, append
       }
       if (event.type !== BUSINESS_EVENT || event.data.meta?.kind !== BUSINESS_META_KIND) return state
       const next = stateSchema.parse(event.data.meta.business_state)
-      if (next.session_id !== state.session_id) throw new Error('Native business event has a different session identity')
+      if (next.session_id !== state.session_id) throw new Error('原生业务事件的会话身份不匹配')
       return next
     },
   })
   const readState = (session = agent.session) => {
     const state = registry.stateOf(session, BUSINESS_PROJECTION)
-    if (state === undefined) throw new Error('Business projection is absent')
+    if (state === undefined) throw new Error('业务投影不存在')
     const checked = stateSchema.parse(state)
-    if (checked.session_id !== scope.session_id || (checked.scope !== null && !sameScope(checked.scope, scope))) throw new Error('Restored native business state does not match the trusted scope')
+    if (checked.session_id !== scope.session_id || (checked.scope !== null && !sameScope(checked.scope, scope))) throw new Error('恢复后的原生业务状态与可信作用域不匹配')
     return checked
   }
   ctx.tools.guard(exec => {
@@ -144,16 +144,16 @@ export async function mountBusinessExtension(ctx, { scope, quantityLimit, append
     scope,
     async beforeForward(tool, arguments_, source) {
       if (tool !== 'write') return
-      // tool/call already exists. Flush its in-flight invalidation BEFORE
-      // forwarding a write; no fabricated event or external state store.
+      // tool/call 已存在；先刷盘其在途失效状态，
+      // 在转发写入前完成刷盘；不伪造事件，也不使用外部状态存储。
       readState()
-      if (!await ctx.sessions.flush(agent.session)) throw new Error('Native tool call has no persistence listener')
+      if (!await ctx.sessions.flush(agent.session)) throw new Error('原生工具调用没有持久化监听器')
     },
     async observe(tool, arguments_, status, payload, source) {
       const previous = readState()
-      // This snapshot becomes part of the tool's canonical output. The pure
-      // presentationMeta projection below carries it to the scheduler's real
-      // tool/result; only that committed event changes the public projection.
+      // 此快照会成为工具规范输出的一部分；下方的纯
+      // presentationMeta 投影将其传递给调度器的真实
+      // tool/result；只有该事件提交后才改变公开投影。
       return stateSchema.parse(observeBusinessState(previous, scope, tool, arguments_, status, payload, source))
     },
     presentationMeta(_arguments, value) {
@@ -180,18 +180,18 @@ export async function mountBusinessExtension(ctx, { scope, quantityLimit, append
         if (reconnected) save('business-state-reconnected.json', missing)
         return
       }
-      // Copy one actual stored record verbatim, never serialize a replacement
-      // log. The external grader follows /data/meta/business_state and hashes
-      // the complete native record, including its real call/result identity.
+      // 原样复制一条实际保存的记录，不序列化生成替代日志；
+      // 外部验收器沿 /data/meta/business_state 定位并计算哈希，
+      // 覆盖完整原生记录，包括真实调用和结果身份。
       const lines = rawArtifact.content.split('\n')
       const index = lines.findIndex(line => {
         if (!line) return false
         const record = JSON.parse(line)
         return record.type === BUSINESS_EVENT && record.seq === nativeEvent.seq
       })
-      if (index < 0 || index === lines.length - 1) throw new Error('Native business event has no complete stored JSONL record')
+      if (index < 0 || index === lines.length - 1) throw new Error('原生业务事件缺少完整保存的 JSONL 记录')
       const record = JSON.parse(lines[index])
-      if (!isDeepStrictEqual(record.data, nativeEvent.data) || !isDeepStrictEqual(record.data.meta?.business_state, state)) throw new Error('Stored native business metadata differs from the public projection')
+      if (!isDeepStrictEqual(record.data, nativeEvent.data) || !isDeepStrictEqual(record.data.meta?.business_state, state)) throw new Error('保存的原生业务元数据与公开投影不一致')
       const exactRecord = lines[index] + '\n'
       const filename = 'native-business-state-record.jsonl'
       writeNativeRecord(filename, exactRecord)
@@ -201,7 +201,7 @@ export async function mountBusinessExtension(ctx, { scope, quantityLimit, append
           physical_sha256: artifactEvidence.physical_sha256,
           decoded_artifact_sha256: artifactEvidence.decoded_artifact_sha256,
           session_id: String(session.id), event_seq: nativeEvent.seq },
-        read_api: reconnected ? 'native agents.resume + sessionProjections.stateOf' : 'native Session + sessionProjections.stateOf' }
+        read_api: reconnected ? '原生 agents.resume + sessionProjections.stateOf' : '原生 Session + sessionProjections.stateOf' }
       save('business-state.json', evidence)
       if (reconnected) save('business-state-reconnected.json', evidence)
     },

@@ -1,8 +1,7 @@
-"""Negative calibration of detailed orchestration and evidence interpretation.
+"""详细编排与证据解读的反例校准。
 
-Only synthetic data and a Docker transport double are used here. These tests
-do not launch Docker, a candidate, a browser, a service or a model request, and
-their passing results are not candidate capability evidence.
+仅使用合成数据和 Docker 传输替身，不启动 Docker、候选、浏览器、
+服务或模型请求；通过不能作为候选能力证据。
 """
 from argparse import Namespace
 from copy import deepcopy
@@ -125,7 +124,7 @@ def test_extension_uses_same_base_task_with_explicit_state_query_and_fixed_rule(
 
 
 def cancel_evidence(scope):
-    """Synthetic values with the actual scoped DSH control event fields."""
+    """具有真实作用域 DSH 控制事件字段的合成值。"""
     reason = {"kind": "aborted", "reason": {"kind": "hook", "reason": "experiment_cancel"}}
     raw = [{"params": {"sessionId": "main", "event": {"type": "turn/start", "data": {"turn": 1}}}},
            {"params": {"sessionId": "main", "event": {"type": "turn/end", "data": {"turn": 1, "reason": reason}}}}]
@@ -243,7 +242,7 @@ def test_cancel_rejects_broken_native_source_chain(tmp_path, monkeypatch, corrup
 
 
 def sdk_cancel_evidence(scope):
-    """Actual SDK bridge schema; every projection has separate copied values."""
+    """采用实际 SDK 工具桥结构；各投影持有独立副本。"""
     identity = {"run_id": scope["variant"], "session_id": scope["session_id"], "scope": scope}
     terminal = {"is_complete": True, "current_turn": 1, "interruptions": [], "final_output_present": False,
                 "agent_end_events": 0, "response_count": 0, "run_loop_exception": None}
@@ -297,8 +296,8 @@ def save_sdk_cancel_evidence(paths, raw, controls, host, original, *, bind=True)
         for row in controls:
             for name in ("source", "activity_source"):
                 bind_reference(row.get(name))
-        # Reordered acyclic references still receive correct byte hashes, so
-        # order/phase negatives cannot pass merely due to a stale test hash.
+        # 调整顺序后的无环引用仍有正确字节哈希，
+        # 顺序或阶段反例不能仅因测试哈希过期而通过。
         for _ in range(len(controls) + 1):
             for row in controls:
                 for name in ("request_source", "api_source"):
@@ -510,7 +509,7 @@ def test_extension_state_and_alias_evidence_reject_missing_query_or_native_tampe
     write_jsonl(paths.run / "candidate/http-tool-events.jsonl", [])
     assert not grade()["passed"]
     native.write_text(json.dumps({"context": {"business": {**state, "receipt_confirmed": False}}}))
-    with pytest.raises(ValueError, match="hash"):
+    with pytest.raises(ValueError, match='哈希'):
         detailed.business_projection(paths.run / "candidate", scope)
 
 
@@ -697,7 +696,7 @@ class FakeDetailedLab(DetailedLab):
         tail = args[len(self.prefix):] if args[:len(self.prefix)] == self.prefix else None
         output = ""
         if tail and tail[:3] == ["--profile", "model", "--profile"] and tail[4:] == ["config", "--format", "json"]:
-            # This must be true before resolving a required-variable override.
+            # 解析必需变量覆盖值之前，该条件必须成立。
             assert all(self.env.get(name) for name in ("LAB_FIXTURE_HOST", "LAB_EVIDENCE_HOST", "LAB_STATE_HOST"))
             service = tail[3]
             output = json.dumps({"services": {"model-proxy": {"environment": {
@@ -716,8 +715,8 @@ class FakeDetailedLab(DetailedLab):
                            "state": {"Status": "exited", "Pid": 0, "ExitCode": 0, "Error": "",
                                      "Running": False, "Paused": False, "Restarting": False, "Dead": False, "OOMKilled": False}}
         elif tail and "runner.detailed" in tail and "grade" in tail:
-            # Other task grading is outside this transport double; exercise
-            # the real protected-host process reader against retained records.
+            # 其他任务评分不属于此传输替身；这里使用保留记录
+            # 测试真实的受保护宿主进程读取器。
             grading_args = Namespace(**{key.replace("-", "_"): tail[tail.index("--" + key) + 1]
                                        for key in ("run-id", "candidate", "case")})
             report = detailed.process_validation(grading_args, Namespace(run=Path(self.env["LAB_EVIDENCE_HOST"])))
@@ -810,7 +809,7 @@ def test_browser_orchestration_has_no_business_http_service_and_never_logs_resol
     report = json.loads((evidence / "process-validation.json").read_text())
     assert execution["worker_expectation"]["container_id"] == observation["containers"][0]["id"]
     assert execution["worker_expectation"]["image_id"] == "sha256:" + "b" * 64
-    assert "not a pre-start ID pin" in report["identity_pin_provenance"]["container_id"]
+    assert '不是启动前 ID 固定证据' in report["identity_pin_provenance"]["container_id"]
     assert report["passed"] and len(report["sources"]["worker_observation"]["sha256"]) == 64
     image_inspect = next(i for i, command in enumerate(lab.commands) if command[:3] == ("docker", "image", "inspect"))
     candidate_launch = next(i for i, command in enumerate(lab.commands) if "--name" in command)
@@ -837,9 +836,9 @@ def test_host_docker_fault_cannot_be_masked_by_successful_compose_exit(tmp_path,
 
 def test_unsupported_cases_do_not_launch_any_docker_command(tmp_path):
     lab = FakeDetailedLab(tmp_path)
-    with pytest.raises(ValueError, match="not connected"):
+    with pytest.raises(ValueError, match='尚未接通'):
         lab.run_detailed("pi_agent_core", "browser", 101, "unsupported-unit")
-    with pytest.raises(ValueError, match="not connected"):
+    with pytest.raises(ValueError, match='尚未接通'):
         lab.run_detailed("codex_sdk", "browser", 101, "unsupported-unit")
     assert lab.commands == []
 
@@ -851,11 +850,11 @@ def test_evidence_io_failure_still_stops_paid_execution_and_cleans_all_browser_s
     def fail_write(path, content, *args, **kwargs):
         if path.name == "orchestration-status.json":
             lab.commands.append(("injected_disk_error",))
-            raise OSError("Synthetic evidence storage failure")
+            raise OSError("模拟证据存储故障")
         return original(path, content, *args, **kwargs)
 
     monkeypatch.setattr(Path, "write_text", fail_write)
-    with pytest.raises(OSError, match="Synthetic evidence storage failure"):
+    with pytest.raises(OSError, match="模拟证据存储故障"):
         lab.run_detailed("deepseek_harness", "browser", 101, "io-failure-unit")
     failure = lab.commands.index(("injected_disk_error",))
     assert ("docker", "kill", "harness-lab-detailed-dsh-io-failure-unit") in lab.commands[:failure]

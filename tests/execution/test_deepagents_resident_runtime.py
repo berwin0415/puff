@@ -1,9 +1,8 @@
-"""I25 binding/projection calibration, not a real-candidate lifecycle test.
+"""I25 绑定与状态投影校准，不是候选真实生命周期测试。
 
-Only the stdlib adapter module and explicit boundary doubles are loaded here.
-No model client, DeepAgents factory or native SQLite saver is instantiated.
-These tests must still be run in the frozen Docker bench image; passing them
-cannot prove native history creation, framework residency, cost or isolation.
+这里只加载标准库适配模块和显式边界替身，不构造模型客户端、
+DeepAgents 工厂或原生 SQLite 保存器。测试仍须在固定 Docker
+验收镜像中运行，通过不证明原生历史、框架常驻、成本或隔离。
 """
 from collections import namedtuple
 from copy import deepcopy
@@ -102,14 +101,14 @@ def test_startup_material_change_is_refused_before_native_construction(material,
     monkeypatch.setattr(RUNTIME, "_read_file", lambda filename, **kwargs: content[filename])
     assert runtime._material("/config/frozen") == content["/config/frozen"]
     content["/config/frozen"] = b"changed synthetic material"
-    with pytest.raises(ValueError, match="material changed"):
+    with pytest.raises(ValueError, match='材料发生变化'):
         runtime._material("/config/frozen")
 
 
 def test_readonly_configuration_is_enforced_on_the_actual_mount(tmp_path):
     path = tmp_path / "mutable-config"
     path.write_text("synthetic")
-    with pytest.raises(ValueError, match="mounted read-only"):
+    with pytest.raises(ValueError, match='只读方式挂载'):
         RUNTIME._read_file(str(path.resolve()), readonly=True)
 
 
@@ -124,9 +123,9 @@ def test_duplicate_scoped_credentials_fail_before_any_factory(material, monkeypa
             if "prompt_file" in entry:
                 content[entry["prompt_file"]] = b"synthetic prompt"
         monkeypatch.setattr(RUNTIME, "_read_file", lambda filename, **kwargs: content[filename])
-        factory = AsyncMock(side_effect=AssertionError("Native factory must not be reached"))
+        factory = AsyncMock(side_effect=AssertionError("不得到达原生工厂"))
         monkeypatch.setattr(runtime, "_build", factory)
-        with pytest.raises(ValueError, match="distinct scoped"):
+        with pytest.raises(ValueError, match='独立且限定作用域'):
             await runtime.open()
         factory.assert_not_called()
     asyncio.run(scenario())
@@ -141,7 +140,7 @@ class HumanMessageDouble:
 
 
 class PreparationGraphDouble:
-    """Models only public boundary values; never executes native nodes."""
+    """只模拟公开边界值，不执行原生节点。"""
     def __init__(self, session_id, *, existing=False):
         self.config = {"configurable": {"thread_id": session_id, "checkpoint_id": "synthetic-checkpoint-id"}}
         self.values = {"messages": [HumanMessageDouble(content="existing synthetic state", id="existing")]} if existing else {}
@@ -160,11 +159,11 @@ class PreparationGraphDouble:
         elif as_node == "__end__" and values is None:
             self.pending = ()
         else:
-            raise AssertionError("Unexpected preparation update")
+            raise AssertionError("非预期准备更新")
         return deepcopy(self.config)
 
     def astream(self, *args, **kwargs):
-        raise AssertionError("History preparation must not execute a task")
+        raise AssertionError("历史准备不得执行任务")
 
 
 def preparation_fixture(material, monkeypatch, *, existing=False):
@@ -208,7 +207,7 @@ def test_preparation_refuses_existing_business_history_without_clearing_anything
     async def scenario():
         runtime, graph = preparation_fixture(material, monkeypatch, existing=True)
         before = deepcopy(graph.values)
-        with pytest.raises(ValueError, match="new empty"):
+        with pytest.raises(ValueError, match='新的空'):
             await runtime.prepare_history()
         assert not any(call[0] == "aupdate_state" for call in graph.calls)
         assert graph.values["messages"][0].content == before["messages"][0].content
@@ -219,9 +218,9 @@ def test_preparation_refuses_existing_business_history_without_clearing_anything
 def test_foreign_task_cannot_read_another_native_store(material, monkeypatch):
     async def scenario():
         runtime, graph = preparation_fixture(material, monkeypatch)
-        factory = AsyncMock(side_effect=AssertionError("Foreign task cannot reach a factory"))
+        factory = AsyncMock(side_effect=AssertionError("他人任务不得到达工厂"))
         monkeypatch.setattr(runtime, "_build", factory)
-        with pytest.raises(ValueError, match="immutable owner"):
+        with pytest.raises(ValueError, match='不可变所有者'):
             await runtime.state("business-b")
         factory.assert_not_called()
         assert graph.calls == []
@@ -234,7 +233,7 @@ def test_same_task_result_is_never_overwritten_by_a_new_request(material, monkey
         output = Path(material["tasks"][0]["output_dir"]) / "result.json"
         output.write_bytes(b'{"original":"synthetic-original-result"}\n')
         before = output.read_bytes()
-        with pytest.raises(ValueError, match="never overwritten"):
+        with pytest.raises(ValueError, match='不得覆盖旧结果'):
             await runtime.run_task(material["tasks"][0]["task_id"])
         assert output.read_bytes() == before
     asyncio.run(scenario())
@@ -244,13 +243,13 @@ def test_busy_or_poisoned_worker_never_starts_another_task(material, monkeypatch
     async def scenario():
         runtime, _ = preparation_fixture(material, monkeypatch)
         runtime._operation = "already-running"
-        with pytest.raises(ValueError, match="operation is active"):
+        with pytest.raises(ValueError, match='操作正在执行'):
             await runtime.run_task(material["tasks"][0]["task_id"])
-        with pytest.raises(ValueError, match="Cannot recycle"):
+        with pytest.raises(ValueError, match='不能回收'):
             await runtime.close()
         runtime._operation = None
         runtime.poisoned = True
-        with pytest.raises(ValueError, match="must be recycled"):
+        with pytest.raises(ValueError, match='必须回收'):
             await runtime.state(material["history"]["task_id"])
         original = runtime.history
         await runtime.close()
@@ -266,7 +265,7 @@ def test_completed_business_state_reads_the_same_retained_real_object_boundary(m
         retained = SimpleNamespace(binding=binding)
         runtime.retained_task = retained
         snapshot = AsyncMock(return_value=(None, {"checkpoint_id": "same-original-business-checkpoint"}))
-        factory = AsyncMock(side_effect=AssertionError("Retained graph must not be reconstructed"))
+        factory = AsyncMock(side_effect=AssertionError("不得重建保留的图"))
         monkeypatch.setattr(runtime, "_snapshot", snapshot)
         monkeypatch.setattr(runtime, "_build", factory)
         result = await runtime.state(binding["task_id"])

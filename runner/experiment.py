@@ -1,4 +1,4 @@
-"""Container-side preparation and independent grading of candidate tool runs."""
+"""在容器内准备候选框架工具运行，并独立判定。"""
 from __future__ import annotations
 
 import argparse
@@ -76,7 +76,7 @@ def grade(args):
     events = [json.loads(line) for line in event_file.read_text().splitlines()] if event_file.exists() else []
     result = grade_tools(args.seed, scope, paths.workspace, ledger, events)
     result.update({'run_id': args.run_id, 'candidate': args.candidate, 'case': 'tools',
-                   'scope': 'one screening run, not the detailed multi-seed comparison'})
+                   'scope': '仅一次初筛运行，尚非详细多种子比较'})
     database = paths.budget / 'calls.sqlite'
     if database.exists():
         with sqlite3.connect(f'file:{database}?mode=ro', uri=True) as db:
@@ -91,12 +91,12 @@ def grade(args):
             'real_upstream_success': any(c['outcome'] == 'forwarded' and 200 <= (c['upstream_status'] or 0) < 300 for c in calls),
             'model_cap_matches_config': saved_cap == (config.budget.max_model_calls,),
         }
-        result['checks'].extend({'name': name, 'passed': passed, 'detail': 'Independent persistent proxy ledger'}
+        result['checks'].extend({'name': name, 'passed': passed, 'detail': '独立持久化代理账本'}
                                 for name, passed in model_checks.items())
         result['passed'] = result['passed'] and all(model_checks.values())
     else:
         result['passed'] = False
-        result['checks'].append({'name': 'model_counter_exists', 'passed': False, 'detail': 'No model budget database was created'})
+        result['checks'].append({'name': 'model_counter_exists', 'passed': False, 'detail': '未创建模型预算数据库'})
     result['metrics'].update({'model_cost_usd': None, 'price_source': None})
     save(paths.run / 'verdict.json', result)
     print(json.dumps(result))

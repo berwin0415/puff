@@ -1,8 +1,7 @@
-"""I22 bench draft tests; authored only, not imported or executed.
+"""I22 验收测试初稿，最初只编写源码，未导入或执行。
 
-Run after applying/reviewing inside the new pinned bench image. These exercise
-fail-closed evidence interpretation with synthetic material, never an Agent or
-a real model. Synthetic passes are not I22 capability results.
+复核应用后在新固定验收镜像中运行。使用合成材料测试证据不足
+时拒绝通过的规则，不运行 Agent 或真实模型。合成通过不算 I22 能力结果。
 """
 from __future__ import annotations
 
@@ -212,7 +211,7 @@ class TriggerTests(Fixture):
             trigger = self.causal_fixture(candidate)
             path = self.paths.run / 'tool-events.jsonl'
             write = json.loads(path.read_bytes())
-            write['time'] = stamp(20.002)  # The real failure was about 2 ms ahead.
+            write['time'] = stamp(20.002)  # 真实失败时间早约2毫秒。
             put_lines(path, [write])
             trigger['write_source'].update(line_sha256=p.sha(path.read_bytes()), observed_prefix_sha256=p.sha(path.read_bytes()))
             p.validate_trigger(self.paths.run, SCOPE, candidate, trigger)
@@ -441,7 +440,7 @@ class ProxyReplacementTests(Fixture):
 
 
 class DshGoalProjectionTests(Fixture):
-    """Real official wire shape: snapshot plus sibling counters, no activation."""
+    """官方真实传输结构：snapshot 与同级计数器，不执行激活。"""
     def changes(self):
         goal = {'id': 'goal-original', 'revision': 1, 'objective': 'original', 'phase': 'active', 'maxGoalRounds': p.CAP}
         create = {'kind': 'goal/change', 'version': 1, 'operation': 'create', 'goal': goal,
@@ -522,7 +521,7 @@ class DshGoalProjectionTests(Fixture):
         put(directory / 'result.json', result)
         self.expect_failure('native_live_goal_view_not_complete_disarmed',
             lambda: p.final_native(self.paths, SCOPE, {'candidate': 'deepseek_harness'}, 'worker-a'))
-        # Physical completion alone cannot certify an unobserved runtime view.
+        # 仅有物理完成不能证明未被观察的运行时视图。
         result['native_result'] = {}
         put(directory / 'result.json', result)
         self.expect_failure('native_live_goal_view_not_complete_disarmed',

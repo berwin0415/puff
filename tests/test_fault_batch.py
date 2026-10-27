@@ -1,7 +1,7 @@
-"""Host batch boundaries using synthetic files and subprocess/Docker doubles.
+"""使用合成文件及子进程、Docker 替身校准宿主批次边界。
 
-No candidate, model or Docker operation is performed by these tests. They do
-not establish recovery capability; real I23 calibration and chains remain due.
+测试不执行候选、模型或 Docker 操作，不证明恢复能力；
+真实 I23 校准和实验链仍需单独运行。
 """
 from argparse import Namespace
 from copy import deepcopy
@@ -106,7 +106,7 @@ def state(code):
 
 
 def evidence(batch, item, *, passed=True, gap=False):
-    """Synthesize the host reader's input, without running any grader code."""
+    """构造宿主读取器输入，不运行评分代码。"""
     paths = batch.paths(item)
     directory = paths.run
     scope = {"experiment_id": "fault-recovery", "variant": item["chain_id"], "user_id": "alice", "session_id": "main"}
@@ -279,7 +279,7 @@ def test_exit1_requires_independent_native_and_resource_bindings_and_never_impli
     def recheck(run, fixture, scope, pins, candidate, attempt, actual, *, state):
         calls.append((run, candidate, attempt, actual, state))
         if change == 'helper_rejects' or actual['state']['OOMKilled']:
-            raise ValueError('invalid bound native failure')
+            raise ValueError('绑定的原生失败证据无效')
         return {**facts, 'result_sha256': '0' * 64} if change == 'sources_changed' else facts
     monkeypatch.setattr(host, 'controlled_failure', recheck)
     if change is not None:

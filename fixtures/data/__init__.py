@@ -1,4 +1,4 @@
-"""Versioned input generation; expected answers are computed separately."""
+"""带版本的数据生成；预期答案单独计算。"""
 
 from .generate import GENERATOR_VERSION, items_for
 

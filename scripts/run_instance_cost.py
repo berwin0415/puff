@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Host Docker driver for the explicitly limited I25 initial-idle subtrial.
+"""宿主 Docker 驱动，仅用于范围明确的 I25 初始空闲子实验。
 
-No Agent SDK/model is executed on the host. No images are built or downloaded.
-Every native runtime runs from an exact prebuilt image, with network=none and
-only its own data/config mounts. Active-task/wake/fault phases are NOT supplied.
+不在宿主执行 Agent SDK 或模型，不构建或下载镜像。每个原生运行时均使用确切的预构建镜像，network=none，且仅挂载自己的数据和配置。不提供活跃任务、唤醒或故障阶段。
 """
 from __future__ import annotations
 
@@ -50,7 +48,7 @@ class IdleDockerLab:
             return []
         data = json.loads(self.call(["docker", "inspect", *ids]).stdout)
         if not allow_foreign and any(item["Config"].get("Labels", {}).get("org.harness-lab.instance-cost-trial") != self.plan["trial_id"] for item in data):
-            raise RuntimeError("Another harness-lab trial exists; this driver cannot touch or exclude it")
+            raise RuntimeError('另一个 harness-lab 实验已存在；本驱动不能操作或排除它')
         return [{"id": item["Id"], "name": item["Name"], "image_id": item["Image"], "state": item["State"],
             "role": item["Config"].get("Labels", {}).get("org.harness-lab.role"),
             "memory_limit": item["HostConfig"]["Memory"], "cpu_nano": item["HostConfig"]["NanoCpus"],
@@ -60,11 +58,11 @@ class IdleDockerLab:
 
     def preflight(self):
         if self.observations(allow_foreign=True):
-            raise RuntimeError("Existing harness-lab containers must settle before this subtrial")
+            raise RuntimeError('本子实验开始前，现有 harness-lab 容器必须先结束')
         for key in ("candidate_image_id", "bench_image_id"):
             actual = self.call(["docker", "image", "inspect", "--format", "{{.Id}}", self.plan[key]]).stdout.strip()
             if actual != self.plan[key]:
-                raise RuntimeError("Pinned local image identity differs")
+                raise RuntimeError('固定的本地镜像身份不同')
 
     def bench(self, action):
         name = "hl-ic-" + self.plan["trial_id"] + "-" + action
@@ -80,7 +78,7 @@ class IdleDockerLab:
         selected = [item for item in observed if item["name"] == "/" + name]
         exclusive(self.root / "protected" / (action + "-container.json"), selected)
         if len(selected) != 1 or not self.healthy_exit(selected[0]) or result.returncode != 0:
-            raise RuntimeError("Docker bench action failed; original evidence is retained")
+            raise RuntimeError('Docker bench 操作失败；已保留原始证据')
         self.call(["docker", "rm", selected[0]["id"]])
 
     @staticmethod
@@ -96,7 +94,7 @@ class IdleDockerLab:
         started = time.monotonic()
         observations = self.observations()
         if {row["id"] for row in observations} != set(expected_ids):
-            raise RuntimeError("Complete owned-container inventory changed during idle")
+            raise RuntimeError('空闲期间完整的自有容器清单发生变化')
         running = [row["id"] for row in observations if row["state"]["Running"]]
         stats, processes = [], []
         if running:
@@ -106,7 +104,7 @@ class IdleDockerLab:
                 top = self.call(["docker", "top", identifier, "-eo", "pid,ppid,args"], timeout=5).stdout
                 rows = top.splitlines()
                 if len(rows) < 2:
-                    raise RuntimeError("A real resident process was not observed")
+                    raise RuntimeError('未观察到真实常驻进程')
                 processes.append({"container_id": identifier, "raw_docker_top": top, "process_count": len(rows) - 1,
                     "kind": "actual_process_listing_not_Docker_mixed_PIDs_metric"})
         return {"time": now(), "host_started_monotonic": started, "host_finished_monotonic": time.monotonic(),
@@ -230,7 +228,7 @@ class NativeWorker:
                 or created[0]["memory_limit"] != CAPS["worker"][0] or created[0]["cpu_nano"] != CAPS["worker"][1]
                 or created[0]["network_mode"] != network or actual_mounts != expected_mounts
                 or {"MODEL_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY"}.intersection(created[0]["environment_names"])):
-            raise RuntimeError("Created resident Worker does not match exact planned image/caps/network")
+            raise RuntimeError('创建的常驻 Worker 与计划的确切镜像、配额或网络不匹配')
         exclusive(lab.root / "protected" / (self.name + "-created.json"), created[0])
         self.console = (lab.root / "protected" / (self.name + "-stdout.jsonl")).open("x")
         self.stderr = (lab.root / "protected" / (self.name + "-stderr.log")).open("x")
@@ -250,15 +248,15 @@ class NativeWorker:
         lab.attached_workers.append(self)
         ready = self.receive()
         if ready.get("phase") != "ready" or ready.get("owner") != user["owner"]:
-            raise RuntimeError("A real bound resident runtime did not become ready")
+            raise RuntimeError('真实且已绑定的常驻运行时未就绪')
 
     def receive(self, *, timeout=60):
         line = self.events.get(timeout=timeout)
         if line is None:
-            raise RuntimeError("Resident entry exited before its native response")
+            raise RuntimeError('常驻入口在返回原生响应前退出')
         value = json.loads(line)
         if not isinstance(value, dict):
-            raise RuntimeError("Resident entry returned a non-object")
+            raise RuntimeError('常驻入口返回的不是对象')
         return value
 
     def command(self, action, *, task_id=None):
@@ -270,15 +268,15 @@ class NativeWorker:
         self.process.stdin.flush()
         response = self.receive(timeout=320 if action == "run_task" else 60)
         if response.get("command_id") != command_id or response.get("status") == "rejected_or_failed":
-            raise RuntimeError("Bound native command failed; no successful result is synthesized")
+            raise RuntimeError('已绑定的原生命令失败；不合成成功结果')
         return response
 
     def close(self):
         if self.closed:
-            raise RuntimeError("Worker already closed")
+            raise RuntimeError('Worker 已关闭')
         acknowledgement = self.command("close")
         if acknowledgement.get("status") != "closed":
-            raise RuntimeError("Native close acknowledgement missing")
+            raise RuntimeError('缺少原生关闭确认')
         self.process.stdin.close()
         exit_code = self.process.wait(timeout=60)
         self.reader.join(timeout=5)
@@ -286,12 +284,12 @@ class NativeWorker:
         self.stderr.close()
         after = [item for item in self.lab.observations() if item["id"] == self.id]
         if len(after) != 1:
-            raise RuntimeError("Closed Worker identity is missing")
+            raise RuntimeError('缺少已关闭 Worker 的身份')
         healthy = exit_code == 0 and self.lab.healthy_exit(after[0])
         result = {"id": self.id, "owner": self.user["owner"], "healthy_closed": healthy, "after_exit": after[0]}
         exclusive(self.lab.root / "protected" / (self.name + "-closed.json"), result)
         if not healthy:
-            raise RuntimeError("Resident Worker did not exit normally")
+            raise RuntimeError('常驻 Worker 未正常退出')
         self.lab.call(["docker", "rm", self.id])
         self.closed = True
         return result
@@ -317,7 +315,7 @@ def main():
     root = args.output_root
     if (root is None or not root.is_absolute() or any(part in {"old", ".."} for part in root.parts)
             or root.exists() or any(item.is_symlink() for item in root.parents) or "," in str(root)):
-        raise ValueError("Use a new absolute current-trial output directory")
+        raise ValueError('请使用新的当前实验输出目录，且必须为绝对路径')
     (root / "protected").mkdir(parents=True, exist_ok=False)
     exclusive(root / "protected/plan.json", plan)
     if not plan["full_fixed_allocation_allowed"]:
@@ -338,7 +336,7 @@ def main():
         failures = lab.cleanup()
         exclusive(root / "protected/cleanup.json", {"unconfirmed_container_names": failures})
         if failures:
-            print("Cleanup could not confirm removal of: " + ", ".join(failures), file=sys.stderr)
+            print('清理时未确认以下对象已删除：' + ", ".join(failures), file=sys.stderr)
 
 
 if __name__ == "__main__":

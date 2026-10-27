@@ -1,5 +1,5 @@
-# I22-only Goal variant. Apply after the existing scoped-runtime overlays.
-# Do not load this overlay from the normal detailed entry.
+# 仅供 I22 使用的 Goal 变体，应用在已有 scoped-runtime 覆盖配置之后。
+# 普通详细验证入口不得加载此覆盖配置。
 - id: sessions
   config:
     root: !!js process.env.HARNESS_GOAL_SESSION_ROOT

@@ -1,8 +1,8 @@
-"""I24 product boundary for two independent Docker Workers, without Docker access.
+"""I24 双独立 Docker Worker 的产品边界服务，本进程不访问 Docker。
 
-Task/owner/attempt/endpoint/credential bindings come only from read-only trusted
-materials. Public callers cannot start Workers, replace routes or submit a
-resume prompt. Host orchestration separately creates/replaces containers.
+任务、所有者、尝试、接口和凭证的绑定只来自只读可信材料。
+公开调用方不能启动 Worker、替换路由或提交续跑提示。
+宿主编排单独负责创建与替换容器。
 """
 from __future__ import annotations
 
@@ -35,10 +35,10 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class ContainerWorkerRegistry(TaskSupervisor):
-    """Read actual durable files; route controls only to registered worker URLs.
+    """读取实际持久文件，只向已登记的 Worker 地址转发控制。
 
-    No Popen belongs to this process. An observed past exit may authorize the
-    replacement, but is never returned as a live process-status cache.
+    本进程不创建 Popen。观察到的历史退出可以授权替换，
+    但不能作为实时进程状态缓存返回。
     """
     def __init__(self, tasks, routes, journal, *, opener=None):
         super().__init__(tasks, journal, max_active=2)
@@ -111,7 +111,7 @@ class ContainerWorkerRegistry(TaskSupervisor):
                 if response.status != (200 if payload is None else 202):
                     raise BoundaryError("worker_response_status_mismatch")
         except HTTPError as error:
-            # No upstream error bodies or URL/token values enter public output.
+            # 不把上游错误正文、地址或凭证值写入公开输出。
             raise BoundaryError("worker_rejected_control", 409 if error.code < 500 else 503) from None
         except (URLError, TimeoutError, socket.timeout, ConnectionError):
             raise BoundaryError("worker_endpoint_unavailable", 503) from None
@@ -131,8 +131,8 @@ class ContainerWorkerRegistry(TaskSupervisor):
         try:
             result = self._request(task_id, attempt, "start", request_id=request_id)
         except BoundaryError:
-            # A lost response can follow an actual start. Never retry a start
-            # automatically or relabel this uncertainty as not-started.
+            # 响应丢失时任务可能已真正启动，不能自动重试启动，
+            # 也不能把这种不确定状态标成尚未启动。
             self._record("worker_start_result_unknown", self.tasks[task_id], attempt_id=attempt, request_id=request_id)
             raise
         if result.get("status") != "child_started" or result.get("native_resume_completed") is not False:
@@ -143,7 +143,7 @@ class ContainerWorkerRegistry(TaskSupervisor):
         return result
 
     def start_task(self, task_id):
-        """Trusted startup only; deliberately absent from the public HTTP API."""
+        """仅供可信启动使用，刻意不暴露为公开 HTTP 接口。"""
         with self.lock:
             if task_id not in self.tasks:
                 raise BoundaryError("task_not_found", 404)
@@ -203,8 +203,8 @@ class ContainerWorkerRegistry(TaskSupervisor):
                 if attempt_id not in task.attempts:
                     raise BoundaryError("unregistered_event_attempt", 400)
                 attempt, spec = attempt_id, task.attempts[attempt_id]
-            # _rows reads the registered file only; this is an evidence holder,
-            # not a fabricated process object or native live-state projection.
+            # _rows 只读取已登记文件；这里持有的是证据，
+            # 不能伪造进程对象或原生实时状态投影。
             rows, sample = self._rows(task, SimpleNamespace(spec=spec), spec.events_file)
             if after > len(rows):
                 raise BoundaryError("cursor_beyond_observed_events", 400)
@@ -296,7 +296,7 @@ class ControlBackendServer(ThreadingHTTPServer):
 
 
 class ControlBackendHandler(BaseHTTPRequestHandler):
-    """Persistent product HTTP; actual peer EOF is distinct from close requests."""
+    """持久产品 HTTP 连接；对端实际 EOF 与主动关闭请求分别记录。"""
     protocol_version = "HTTP/1.1"
 
     def setup(self):
@@ -341,7 +341,7 @@ class ControlBackendHandler(BaseHTTPRequestHandler):
             status, value = error.status, {"error": {"code": error.code}}
         except (OSError, ValueError, KeyError, TypeError):
             status, value = 409, {"error": {"code": "control_material_unavailable"}}
-        # An unread denied body cannot become the next request on this socket.
+        # 被拒绝但未读取的请求体不能成为当前连接的下一条请求。
         if not body_read:
             self.close_connection = True
         backend.record("response", request_id=request_id, connection_id=self.connection_id, status=status, body=value)

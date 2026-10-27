@@ -1,1 +1,1 @@
-"""Tool and browser execution components for the Docker experiment."""
+"""Docker 实验使用的工具与浏览器执行组件。"""

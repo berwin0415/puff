@@ -1,9 +1,8 @@
-"""I25 fixed allocation plan and Docker-bench idle-subtrial materials/checks.
+"""I25 固定分配方案及 Docker bench 空闲子实验材料与检查。
 
-Only the history preparation + initial 60-second idle subset is implemented.
-No synthetic active tasks, overlap, wake result, fault recovery or savings ratio
-is generated. The full matrix remains explicit in the plan's remaining work.
-"""
+目前仅实现历史准备和最初 60 秒空闲的子集。
+不合成活跃任务、重叠、唤醒结果、故障恢复或节省比例。
+完整矩阵仍明确列在计划的剩余工作中。"""
 from __future__ import annotations
 
 import argparse
@@ -28,26 +27,26 @@ CAPS = {"worker": (2 * GIB, 750_000_000), "tools": (256 * 1024 ** 2, 250_000_000
     "backend": (256 * 1024 ** 2, 250_000_000), "bench": (512 * 1024 ** 2, 500_000_000)}
 IMAGE = re.compile(r"sha256:[0-9a-f]{64}\Z")
 ID = re.compile(r"[a-z][a-z0-9-]{0,39}\Z")
-REMAINING = ["I24 required authorization/isolation evidence and new-quota single-task baseline",
-    "two actual overlapping successful tools tasks with at least two overlap samples",
-    "normal completion/recycle plus another 60-second observation",
-    "second new-task wake with original user history retained and fresh scope/budget",
-    "independent single-Worker fault subtrial and unaffected-user evidence",
-    "complete shared backend/Fixture/tool/proxy inventory and comparative grading",
-    "DeepSeek Harness resident entry and all its I25 measurements"]
+REMAINING = ["I24 必需鉴权/隔离证据，以及新配额单任务基线",
+    "两个真实重叠且成功的工具任务，至少采集两个重叠采样点",
+    "正常完成、回收，再观测 60 秒",
+    "第二次新任务唤醒，保留原用户历史，使用新作用域和预算",
+    "独立单 Worker 故障子实验，以及其他用户未受影响的证据",
+    "完整共享后端、Fixture、工具和代理清单，以及对比判定",
+    "DeepSeek Harness 常驻入口及其全部 I25 测量"]
 INACTIVE_WAKE_KIND = "inactive-wake"
 INACTIVE_WAKE_USERS = ("user-003", "user-004")
 
 
 def rotation_users(plan):
-    """Opt-in frozen pair; an old plan has no additional business wave."""
+    """显式启用的冻结配对；旧计划不包含额外业务波次。"""
     rotation = plan.get("inactive_user_rotation")
     if rotation is None:
         return []
     if (plan.get("users") not in {5, 10} or plan.get("active_users") != ["user-001", "user-002"]
             or rotation != {"kind": INACTIVE_WAKE_KIND, "users": list(INACTIVE_WAKE_USERS), "after": "wake"}
             or plan.get("flow_variant") != "inactive-user-rotation"):
-        raise ValueError("Invalid frozen inactive-user rotation")
+        raise ValueError("冻结的非活跃用户轮换配置无效")
     return list(INACTIVE_WAKE_USERS)
 
 
@@ -63,7 +62,7 @@ def exclusive(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if any(item.is_symlink() for item in (path, *path.parents)):
-        raise ValueError("Linked instance-cost material is forbidden")
+        raise ValueError("实例成本材料不得使用链接")
     with path.open("xb") as stream:
         stream.write(canonical(value) + b"\n")
 
@@ -71,16 +70,16 @@ def exclusive(path, value):
 def read(path):
     path = Path(path)
     if any(item.is_symlink() for item in (path, *path.parents)):
-        raise ValueError("Linked instance-cost evidence is forbidden")
+        raise ValueError("实例成本证据不得使用链接")
     info = path.stat()
     if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > 64 * 1024 ** 2:
-        raise ValueError("Instance-cost evidence must be a bounded regular file")
+        raise ValueError("实例成本证据必须是有大小限制的普通文件")
     return json.loads(path.read_bytes())
 
 
 def fixed_allocation(strategy, users, *, phase):
     if strategy not in {"resident", "on-demand"} or users not in {2, 5, 10} or phase not in {"idle", "active"}:
-        raise ValueError("Unknown frozen instance-cost strategy/count/phase")
+        raise ValueError("未知冻结实例成本策略、数量或阶段")
     counts = {"worker": users if strategy == "resident" else (2 if phase == "active" else 0),
         "fixtures": 1, "backend": 1, "tools": 2 if phase == "active" else 0,
         "model-proxy": 2 if phase == "active" else 0}
@@ -94,13 +93,13 @@ def fixed_allocation(strategy, users, *, phase):
 def make_plan(*, trial_id, pair_id, strategy, users, candidate_image, bench_image, model_name,
               rotate_inactive_users=False):
     if not ID.fullmatch(trial_id) or not ID.fullmatch(pair_id):
-        raise ValueError("Use a short lowercase trial/pair ID")
+        raise ValueError("使用简短的小写 trial/pair ID")
     if not IMAGE.fullmatch(candidate_image) or not IMAGE.fullmatch(bench_image):
-        raise ValueError("Use exact local Docker image IDs")
+        raise ValueError("使用精确的本地 Docker 镜像 ID")
     if not isinstance(model_name, str) or not 0 < len(model_name) <= 256 or any(c in model_name for c in "\r\n\0"):
-        raise ValueError("A frozen selected model name is required even for no-model preparation")
+        raise ValueError("即使准备阶段不调用模型，也必须冻结所选模型名")
     if type(rotate_inactive_users) is not bool or (rotate_inactive_users and users not in {5, 10}):
-        raise ValueError("Inactive-user rotation requires an explicit five- or ten-user variant")
+        raise ValueError("非活跃用户轮换必须明确选择五用户或十用户变体")
     phases = [fixed_allocation(strategy, users, phase=phase) for phase in ("idle", "active")]
     plan = {"schema": SCHEMA, "trial_id": trial_id, "pair_id": pair_id, "candidate": "deepagents_langgraph",
         "candidate_image_id": candidate_image, "bench_image_id": bench_image, "model_name": model_name,
@@ -108,10 +107,10 @@ def make_plan(*, trial_id, pair_id, strategy, users, candidate_image, bench_imag
         "idle_seconds": 60, "sampling_interval_seconds": 2, "max_active_tasks": 2,
         "memory_limit": MEMORY, "cpu_limit": CPU, "fixed_allocations": phases,
         "full_fixed_allocation_allowed": all(item["allowed"] for item in phases),
-        "scope_policy": "new task has new variant/session/store/tool-token/model-token/ledger/budget; original history retained",
-        "full_network_policy": "I24 hl-mu-<trial>-a/-b; owner-only tools/model-proxy aliases; shared fixtures/backend",
-        "implemented_subset": "application-prepared native histories + initial 60-second idle only",
-        "subset_service_policy": "network none; no shared backend/Fixture/tools/proxy in either idle subset; no vendor key or model requests",
+        "scope_policy": "新任务使用新 variant/session/store/tool-token/model-token/ledger/budget；保留原始历史",
+        "full_network_policy": "I24 hl-mu-<trial>-a/-b；工具和模型代理别名仅供所有者使用；共享 Fixture 和后端",
+        "implemented_subset": "仅覆盖应用准备的原生历史及最初 60 秒空闲",
+        "subset_service_policy": "使用 network none；两个空闲子集均不包含共享后端、Fixture、工具或代理；不传模型供应商密钥，不调用模型",
         "business_tasks_bound": 0, "i24_authorization_verified": False, "i25_complete": False,
         "remaining_work": list(REMAINING),
         "refusal_reason": None if all(item["allowed"] for item in phases) else "fixed_planned_allocation_exceeds_total_before_start"}
@@ -122,13 +121,13 @@ def make_plan(*, trial_id, pair_id, strategy, users, candidate_image, bench_imag
 
 
 def prepare_idle_materials(root):
-    """Run in frozen bench, not on host; export its actual tool definitions."""
+    """在冻结 bench 中运行，不在宿主机运行；导出其实际工具定义。"""
     from execution.tools.server import TOOLS
     import execution.tools.server as tool_module
     root = Path(root)
     plan = read(root / "protected/plan.json")
     if plan.get("schema") != SCHEMA:
-        raise ValueError("Wrong instance-cost plan")
+        raise ValueError("实例成本计划不匹配")
     schema = {"tools": TOOLS}
     records = []
     for number in range(1, plan["users"] + 1):
@@ -163,15 +162,15 @@ def prepare_idle_materials(root):
 
 
 def verify_native_projection(root, user, response):
-    """Bind a host-observed public API response to original nonempty data."""
+    """将宿主机观测的公共 API 响应与原始非空数据绑定。"""
     source = response.get("source", {})
     relative = source.get("path")
     if not isinstance(relative, str) or Path(relative).name != relative or not relative.startswith("native-state-"):
-        raise ValueError("Unexpected original-state projection path")
+        raise ValueError("非预期原始状态投影路径")
     path = Path(root) / "users" / user["owner"] / "evidence/history" / relative
     data = path.read_bytes()
     if sha(data) != source.get("sha256") or source.get("public_api") != "CompiledStateGraph.aget_state":
-        raise ValueError("Original-state projection hash/API mismatch")
+        raise ValueError("原始状态投影哈希或 API 不匹配")
     value = read(path)
     expected = "prepared-history-" + user["history_task_id"]
     messages = value.get("values", {}).get("messages", [])
@@ -179,7 +178,7 @@ def verify_native_projection(root, user, response):
             or value.get("config", {}).get("configurable", {}).get("thread_id") != user["scope"]["session_id"]
             or value.get("next") or value.get("tasks") or value.get("interrupts")
             or not any(message.get("id") == expected and message.get("content") == user["sentinel"] for message in messages if isinstance(message, dict))):
-        raise ValueError("History lacks the exact original sentinel or is not native idle state")
+        raise ValueError("历史缺少精确原始哨兵标记，或不是原生空闲状态")
     return {"path": path.relative_to(root).as_posix(), "sha256": sha(data),
         "native_checkpoint_id": response["checkpoint_id"], "scope": user["scope"],
         "trust_limit": "source_verified_candidate_public_API_projection; no_I24_adversarial_boundary_claim"}
@@ -269,8 +268,8 @@ def grade_idle(root):
         "scope": plan["implemented_subset"], "i25_complete": False, "business_tasks_run": 0,
         "concurrency_verified": False, "scope_isolation_verified": False, "savings_percent": None,
         "failure_blast_radius": None, "wake_latency": None, "remaining_work": plan["remaining_work"],
-        "no_model_network_policy": "every measured/preparation Worker had Docker network none; no vendor key was passed",
-        "limitation": "does not measure shared services, two active tasks, recycle/wake/fault or production savings"}
+        "no_model_network_policy": "所有被测和准备 Worker 均使用 Docker network none，未传入模型供应商密钥",
+        "limitation": "未测量共享服务、双活跃任务、回收、唤醒、故障或生产成本节省"}
     exclusive(root / "protected/idle-verdict.json", verdict)
     return verdict
 

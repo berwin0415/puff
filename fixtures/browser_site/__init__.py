@@ -1,1 +1,1 @@
-"""Local browser business task fixture."""
+"""本地浏览器业务测试站点。"""

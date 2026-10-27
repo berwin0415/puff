@@ -1,4 +1,4 @@
-"""Run the fixed public Agent/Runner and Chat Completions provider inside Docker."""
+"""在 Docker 内运行固定的公开 Agent/Runner 和 Chat Completions 模型服务接口。"""
 
 import argparse
 import asyncio
@@ -23,26 +23,26 @@ SECRETS: list[str] = []
 
 def trusted_path(value, *, directory=False) -> Path:
     if not isinstance(value, str) or not value.startswith("/") or any(part == ".." or part.lower() == "old" for part in value.split("/")):
-        raise ValueError("Invalid trusted run path")
+        raise ValueError("可信运行路径无效")
     path, current = Path(value), Path("/")
     for part in path.parts[1:]:
         current /= part
         if current.is_symlink():
-            raise ValueError("Trusted run paths must not follow symbolic links")
+            raise ValueError("可信运行路径不得跟随符号链接")
     if directory:
         path.mkdir(parents=True, exist_ok=True)
     if path.resolve(strict=True) != path:
-        raise ValueError("Trusted run path resolution changed")
+        raise ValueError("可信运行路径解析结果发生变化")
     return path
 
 
 def read_token(value) -> str:
     path = trusted_path(value)
     if not path.is_file() or path.stat().st_size > 8192:
-        raise ValueError("Expected a bounded local token file")
+        raise ValueError("必须提供大小受限的本地令牌文件")
     token = path.read_text().strip()
     if not token or re.search(r"\s", token):
-        raise ValueError("Expected a nonempty local token")
+        raise ValueError("本地令牌不能为空")
     SECRETS.append(token)
     return token
 
@@ -65,8 +65,8 @@ def native_json(value):
     if isinstance(value, BaseException):
         return {"exception_type": type(value).__name__, "message": str(value)}
     if type(value).__module__ == "agents.agent" and hasattr(value, "name"):
-        # Agent definitions retain live Python callables and the model client.
-        # Events need their identity, not a dump of clients/credentials.
+        # Agent 定义保留实时 Python 可调用对象和模型客户端。
+        # 事件只需记录身份，不转储客户端或凭证。
         return {"agent_name": value.name}
     if is_dataclass(value):
         return {item.name: getattr(value, item.name) for item in fields(value) if not item.name.startswith("_")}
@@ -87,25 +87,25 @@ def read_request():
     request = json.loads(trusted_path(args.request).read_bytes())
     keys = {"run_id", "session_id", "prompt", "workspace", "state_dir", "output_dir", "tools_url", "tool_token_file", "max_output_tokens", "timeout_seconds", "max_retries"}
     if not isinstance(request, dict) or not keys <= set(request) or set(request) - keys - {"candidate_options"}:
-        raise ValueError("Invalid trusted run request fields")
+        raise ValueError("可信运行请求字段无效")
     for name in ("run_id", "session_id"):
         if not isinstance(request[name], str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", request[name]) or request[name].lower() == "old":
-            raise ValueError("Invalid run/session identifier")
+            raise ValueError("运行或会话标识无效")
     if not isinstance(request["prompt"], str) or not 0 < len(request["prompt"]) <= 65536:
-        raise ValueError("Expected a bounded task prompt")
+        raise ValueError("必须提供长度受限的任务提示词")
     for name, minimum, maximum in (("max_output_tokens", 1, 16384), ("timeout_seconds", 1, 3600), ("max_retries", 0, 2)):
         if type(request[name]) is not int or not minimum <= request[name] <= maximum:
-            raise ValueError("Invalid run budget")
+            raise ValueError("运行预算无效")
     paths = [trusted_path(request[name], directory=True) for name in ("workspace", "state_dir", "output_dir")]
     if any(a.is_relative_to(b) or b.is_relative_to(a) for index, a in enumerate(paths) for b in paths[index + 1:]):
-        raise ValueError("State, workspace and evidence must use separate directory trees")
+        raise ValueError("状态、工作区和证据必须使用相互独立的目录树")
     trusted_path(request["tool_token_file"])
     if request["tools_url"] != "http://tools:8081":
-        raise ValueError("Expected the scoped experiment tools service")
+        raise ValueError("必须使用限定作用域的实验工具服务")
     if "candidate_options" in request:
         validate_options(request["candidate_options"])
     if args.restore_business_state_only and request.get("candidate_options", {}).get("case") != "extension":
-        raise ValueError("Business state restoration is only available for the extension case")
+        raise ValueError("仅扩展用例支持业务状态恢复")
     return request, args.validate_only, args.restore_business_state_only
 
 
@@ -113,7 +113,7 @@ async def stop_native(result, emit) -> None:
     if result is None:
         return
     result.cancel(mode="immediate")
-    # The public cancellation contract requires consuming the stream afterwards.
+    # 公开取消约定要求随后继续消费流。
     try:
         async with asyncio.timeout(5):
             async for event in result.stream_events():
@@ -123,17 +123,17 @@ async def stop_native(result, emit) -> None:
 
 
 def make_agent(definitions, model, request, browser_case=False):
-    """One public Agent definition shared by running and offline restoration."""
+    """运行与离线恢复共用同一份公开 Agent 定义。"""
     from agents import Agent, ModelSettings
 
     settings = ModelSettings(max_tokens=request["max_output_tokens"], include_usage=True, preserve_raw_usage=True)
-    instructions = ("Use the provided browser primitives to carry out the user's task. Do not disclose authentication credentials."
-        if browser_case else "Use the provided experiment tools to carry out the user's task. Tool definitions and their returned data are authoritative.")
+    instructions = ("使用提供的浏览器基础操作工具完成用户任务。不得泄露认证凭证。"
+        if browser_case else "使用提供的实验工具完成用户任务，以工具定义及其返回数据为准。")
     return Agent(name="harness-lab-agent", instructions=instructions, model=model, model_settings=settings, tools=definitions)
 
 
 async def inspect_business_state(request, scope, extension, provenance, model_name, token):
-    """Rebuild static tools and native RunState with no discovery, model or session I/O."""
+    """重建静态工具和原生 RunState，不执行工具发现、模型或会话 I/O。"""
     from agents import OpenAIChatCompletionsModel
     from openai import AsyncOpenAI
     import httpx2
@@ -143,7 +143,7 @@ async def inspect_business_state(request, scope, extension, provenance, model_na
 
     output, state = Path(request["output_dir"]), Path(request["state_dir"])
     if any(output.iterdir()):
-        raise ValueError("Business state inspection requires a fresh empty evidence directory")
+        raise ValueError("业务状态检查必须使用全新的空证据目录")
     started = time.monotonic()
     path = trusted_path(str(state / "run-state.json"))
     serialized = read_bounded(path, 16 * 1024 * 1024)
@@ -154,7 +154,7 @@ async def inspect_business_state(request, scope, extension, provenance, model_na
     expected = {"run_id": request["run_id"], "session_id": request["session_id"], "scope": scope,
         "tool_definition_cache": binding}
     if set(native_context) != set(expected) | {"business_state"} or any(native_context.get(key) != value for key, value in expected.items()):
-        raise ValueError("Native SDK context has a different trusted run identity")
+        raise ValueError("原生 SDK 上下文的可信运行身份不匹配")
     definitions, cache_source = load_authenticated_definitions(state, expected, provenance, binding)
 
     class RejectNetwork(httpx2.AsyncBaseTransport):
@@ -163,7 +163,7 @@ async def inspect_business_state(request, scope, extension, provenance, model_na
 
         async def handle_async_request(self, outgoing):
             self.attempts.append({"method": outgoing.method, "path": outgoing.url.path})
-            raise RuntimeError("Offline native state inspection attempted a model HTTP request")
+            raise RuntimeError("离线原生状态检查尝试发起模型 HTTP 请求")
 
     transport = RejectNetwork()
     http_client = httpx2.AsyncClient(transport=transport, trust_env=False, follow_redirects=False)
@@ -178,21 +178,21 @@ async def inspect_business_state(request, scope, extension, provenance, model_na
             model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
             agent = make_agent(provided, model, request)
             (output / "entrypoint.json").write_text(encoded({"run_id": request["run_id"], "session_id": request["session_id"],
-                "scope": scope, "provenance": provenance, "factory": "agents.Agent + RunState.from_json; Runner not started",
+                "scope": scope, "provenance": provenance, "factory": "agents.Agent + RunState.from_json；未启动 Runner",
                 "tool_names": [tool.name for tool in provided], "tool_definition_cache": cache_source,
-                "model": model_name, "model_transport": "reject every request", "mcp_servers": [],
-                "session": "SQLiteSession not constructed; original state is read only"}, pretty=True))
+                "model": model_name, "model_transport": "拒绝所有请求", "mcp_servers": [],
+                "session": "未构造 SQLiteSession；原始状态为只读"}, pretty=True))
             restored, reconstructed = await restore_business_state(agent, native_state, scope)
             if reconstructed != original_business:
-                raise ValueError("Restored native business context changed")
+                raise ValueError("恢复后的原生业务上下文发生变化")
             if restored.to_json(strict_context=True, include_tracing_api_key=False)["context"]["context"].get("tool_definition_cache") != binding:
-                raise ValueError("Restored native context lost its authenticated tool definition binding")
+                raise ValueError("恢复后的原生上下文丢失了已认证的工具定义绑定")
             if transport.attempts:
-                raise ValueError("Native deserialization attempted model HTTP")
+                raise ValueError("原生反序列化尝试发起模型 HTTP 请求")
             if read_bounded(path, 16 * 1024 * 1024) != serialized:
-                raise ValueError("Original native RunState changed during inspection")
-            # Re-read cache bindings too. Neither file is a replacement for the
-            # original native RunState; they contain tool definitions only.
+                raise ValueError("原始原生 RunState 在检查期间发生变化")
+            # 同时重新读取缓存绑定；这两个文件都不能替代
+            # 原始原生 RunState；它们仅包含工具定义。
             load_authenticated_definitions(state, expected, provenance, binding)
             (output / "native-state-reconnected.json").write_bytes(serialized)
             source = {"path": "native-state-reconnected.json", "sha256": hashlib.sha256(serialized).hexdigest(),
@@ -222,9 +222,9 @@ async def main() -> int:
     request, validate_only, restore_business_only = read_request()
     model_name = os.environ.get("MODEL_NAME", "")
     if os.environ.get("MODEL_API_BASE_URL") != "http://model-proxy:8082/v1" or not model_name or len(model_name) > 512 or re.search(r"\s", model_name):
-        raise ValueError("Candidate requires the fixed counting proxy and exact selected model")
+        raise ValueError("候选必须使用固定计量代理和完全匹配的选定模型")
     if os.environ.get("MODEL_API_KEY") or os.environ.get("OPENAI_API_KEY"):
-        raise ValueError("Candidate must receive only a local model run token file")
+        raise ValueError("候选只能接收本地模型运行令牌文件")
     token = read_token(os.environ.get("MODEL_RUN_TOKEN_FILE"))
     options = request.get("candidate_options")
     scope = read_scope(options["trusted_scope_file"], request["session_id"]) if options else None
@@ -235,7 +235,7 @@ async def main() -> int:
         SECRETS.append(credentials["password"])
         existing_path(options["browser"]["artifacts_dir"])
     tool_token = None if browser_case else read_token(request["tool_token_file"])
-    # Set before SDK import; also disable tracing globally and per-run below.
+    # 在导入 SDK 前设置；下方还会全局及按次运行禁用追踪。
     os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
     from agents import OpenAIChatCompletionsModel, RunConfig, RunHooks, Runner, SQLiteSession, set_tracing_disabled
     from openai import AsyncOpenAI
@@ -326,28 +326,28 @@ async def main() -> int:
             definitions = await tools.load() if browser_case else await tools.load(state_dir=state, provenance=provenance)
             session = SQLiteSession(request["session_id"], db_path=state / "sessions.sqlite")
             if await session.get_items():
-                raise ValueError("This screening entry accepts new sessions only; resume is not implemented")
+                raise ValueError("此初筛入口仅接受新会话；尚未实现恢复")
             model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
             agent = make_agent(definitions, model, request, browser_case)
             (output / "entrypoint.json").write_text(encoded({
                 **identity, "provenance": provenance, "started_at": datetime.now(timezone.utc).isoformat(),
                 "factory": "agents.Agent + agents.Runner.run_streamed",
                 "model": model_name, "provider": "OpenAIChatCompletionsModel + AsyncOpenAI",
-                "tool_names": [tool.name for tool in definitions], "tool_schema_policy": "original schema; strict rewriting disabled; validation by MCP server" if browser_case else "original schema; strict rewriting disabled; validation by shared HTTP service",
+                "tool_names": [tool.name for tool in definitions], "tool_schema_policy": "使用原始结构，禁用严格模式重写，由 MCP 服务端校验" if browser_case else "使用原始结构，禁用严格模式重写，由共享 HTTP 服务校验",
                 "detailed_case": options["case"] if options else None,
                 "business_extension": {**extension, "added_tool": "query_order_status -> receipt",
-                    "state": "public mapping RunContextWrapper.context -> native RunState JSON context.context.business_state",
-                    "quantity_guard": "candidate tool execution before HTTP write; no application retries or automatic receipt query"} if extension else None,
-                "browser": {"transport": "official mcp.ClientSession / streamable HTTP", "business_http_tools": False,
-                    "script_tools": False, "credentials": "separate trusted file delivered to actual model input; saved evidence redacted",
-                    "artifact_source": "read-only /browser-artifacts; export only from actual completed download event"} if browser_case else None,
+                    "state": "公开映射 RunContextWrapper.context → 原生 RunState JSON 的 context.context.business_state",
+                    "quantity_guard": "候选在 HTTP 写入前执行工具；应用层不重试，也不自动查询回执"} if extension else None,
+                "browser": {"transport": "官方 mcp.ClientSession / 流式 HTTP", "business_http_tools": False,
+                    "script_tools": False, "credentials": "独立可信文件注入实际模型输入；保存的证据已脱敏",
+                    "artifact_source": "只读 /browser-artifacts；仅从真实已完成的下载事件导出"} if browser_case else None,
                 "retry_policy": {"provider_max_retries": request["max_retries"], "runner_model_retry": "not_enabled", "transport_retries": 0, "application_tool_retries": 0},
-                "session": {"class": "agents.SQLiteSession", "database": "sessions.sqlite", "purpose": "native durable conversation history"},
-                "tracing": "disabled before import, globally, and per run; no OpenAI account or key",
-                "controls": {"pause": "not_implemented_by_this_entry", "resume": "RunState serialization material only; not executed or verified",
-                    "cancel": "detailed SIGUSR1 -> public RunResultStreaming.cancel(mode=immediate) during a live official hook; consume original stream",
-                    "cancel_native_terminal": "is_complete is not natural success; SDK has no DSH idle/aborted event"},
-                "instance_boundary": "one application process for initial screening; SDK objects do not imply one container per user",
+                "session": {"class": "agents.SQLiteSession", "database": "sessions.sqlite", "purpose": "原生持久化对话历史"},
+                "tracing": "在导入前、全局和每次运行中禁用；不使用 OpenAI 账号或密钥",
+                "controls": {"pause": "not_implemented_by_this_entry", "resume": "仅为 RunState 序列化材料；尚未执行或验证",
+                    "cancel": "详细验证中，SIGUSR1 在官方钩子活跃时调用公开 RunResultStreaming.cancel(mode=immediate)，随后消费原始流",
+                    "cancel_native_terminal": "is_complete 不代表自然成功；SDK 没有 DSH 的 idle/aborted 事件"},
+                "instance_boundary": "初筛使用单个应用进程；SDK 对象不代表每个用户必须独占容器",
             }, pretty=True))
             if validate_only:
                 summary.update({"status": "validated", "stop_reason": "validation_only_no_model_request"})
@@ -355,7 +355,7 @@ async def main() -> int:
                 task_input = request["prompt"]
                 if browser_case:
                     task_input = [{"role": "user", "content": request["prompt"]},
-                        {"role": "user", "content": "Trusted test login credentials (keep confidential): " + json.dumps(credentials, ensure_ascii=False)}]
+                        {"role": "user", "content": "可信测试登录凭证（请保密）：" + json.dumps(credentials, ensure_ascii=False)}]
                 result = Runner.run_streamed(agent, task_input, context=identity, session=session, hooks=hooks, max_turns=20, run_config=RunConfig(model=model, tracing_disabled=True))
                 cancel_control.input_submitted = True
                 async for event in result.stream_events():
@@ -373,7 +373,7 @@ async def main() -> int:
                     "stream_exhausted": True,
                     "experiment_cancel": {"requested": cancel_control.request_record is not None,
                         "api_executed": cancel_control.api_executed, "confirmed": settlement["confirmed"],
-                        "source": settlement["control_source"], "native_status_enum": "SDK does not provide a cancelled status enum"},
+                        "source": settlement["control_source"], "native_status_enum": "SDK 未提供 cancelled 状态枚举"},
                     "native_responses": result.raw_responses, "native_items": result.new_items,
                 })
     except asyncio.CancelledError:
@@ -393,19 +393,19 @@ async def main() -> int:
                 data = encoded(native_state, pretty=True)
                 (state / "run-state.json").write_text(data)
                 (output / "native-state.json").write_text(data)
-                summary["state_snapshot"] = "native RunState JSON; diagnostic material, resume not verified"
+                summary["state_snapshot"] = "原生 RunState JSON；仅为诊断材料，恢复尚未验证"
                 if extension:
                     from business_extension import read_business_state, restore_business_state
                     business = read_business_state(native_state, scope)
                     source = {"path": "native-state.json", "sha256": hashlib.sha256(data.encode()).hexdigest(),
                               "json_pointer": "/context/context/business_state"}
                     evidence.save("business-state.json", {"scope": scope, "source": source,
-                        "business_state": business, "kind": "read-only diagnostic projection of native RunState; not a checkpoint"})
+                        "business_state": business, "kind": "原生 RunState 的只读诊断投影，不是检查点"})
                     summary["business_state_source"] = source
                     try:
                         _, reconstructed = await restore_business_state(agent, native_state, scope)
                         if reconstructed != business:
-                            raise ValueError("Public SDK restoration changed business context")
+                            raise ValueError("公开 SDK 恢复接口改变了业务上下文")
                         evidence.save("business-state-roundtrip.json", {"scope": scope, "source": source,
                             "public_api": "RunState.from_json + RunState.to_json(strict_context=True)",
                             "business_state": reconstructed, "same_process_only": True,

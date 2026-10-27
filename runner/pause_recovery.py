@@ -1,10 +1,8 @@
-"""Docker-bench I22: original task pause, delete, idle, replacement.
+"""Docker bench I22：原任务暂停、删除、空闲和替换。
 
-Calibration and individual live chains are recorded in pause-recovery.md.
-The host owns Docker; this module owns controls and independent evidence checks.
-It never instantiates an Agent or calls a model. All runtime code belongs in the
-pinned bench image; candidate-writable labels cannot certify a safe pause.
-"""
+校准及各条真实链记录在 pause-recovery.md。宿主机负责 Docker；
+此模块负责控制和独立证据检查，不实例化 Agent 或调用模型。
+所有运行时代码必须放在固定 bench 镜像中；候选框架可写标签不能证明暂停安全。"""
 from __future__ import annotations
 
 import argparse
@@ -74,7 +72,7 @@ def decode(data):
 
 
 def regular(path, limit=MAX_FILE):
-    """Bounded, stable regular-file read, including ancestor/link checks."""
+    """读取有大小限制且稳定的普通文件，同时检查祖先目录和链接。"""
     path = Path(path)
     require(path.is_absolute() and ".." not in path.parts, "absolute_path_required")
     require(not any(p.is_symlink() for p in (path, *path.parents)), "symlink_evidence")
@@ -97,7 +95,7 @@ def read(path):
 
 
 def create(path, value):
-    """Exclusive outputs: a failed chain cannot silently become a fresh chain."""
+    """独占输出：失败链不能悄悄变成一条新链。"""
     path = Path(path)
     require(not any(p.is_symlink() for p in (path, *path.parents)), "linked_output")
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -151,7 +149,7 @@ def reference(root, ref, *, required_hash=False):
 
 
 def inventory(state, workspace):
-    """Independent whole-tree DSH inventory, including empty directories."""
+    """独立盘点 DSH 整棵目录树，包含空目录。"""
     files, directories, total = [], [], 0
     for label, root in (("state", state), ("workspace", workspace)):
         root = Path(root)
@@ -307,7 +305,7 @@ def observed_prefix(run, ref, *, empty=False):
 
 
 def validate_handler_observation(run, candidate, trigger, request_ref):
-    """Compare file causality on the controller clock, never host/VM UTC."""
+    """在控制器时钟上比较文件因果关系，不使用宿主机/VM UTC。"""
     if trigger.get('observation_clock') != 'host_monotonic_prefix/1':
         return False
     ref = trigger.get('control_source', {})
@@ -346,7 +344,7 @@ def validate_trigger(run, scope, candidate, trigger):
                 and times[2] - times[0] <= 5 and times[3] - times[2] <= 10,
                 'trigger_host_observation_order_invalid')
         observed_prefix(run, trigger['write_source'])
-        instant(write['time'])  # Keep the native timestamp; it is a different clock.
+        instant(write['time'])  # 保留原生时间戳，它属于不同的时钟。
         control = trigger.get('control_source', {})
         name = 'control-events.jsonl' if candidate == 'deepagents_langgraph' else 'pause-events.jsonl'
         require(control.get('path') == 'attempts/worker-a/candidate/' + name, 'trigger_control_source_substitution')
@@ -423,9 +421,9 @@ def clean_da_snapshot(value, scope, checkpoint):
     require(isinstance(value, dict), "native_checkpoint_projection_missing")
     config = value.get("config", {}).get("configurable", {})
     tasks = value.get("tasks")
-    # The pinned StateSnapshot projection uses JSON arrays for PregelTask
-    # NamedTuples: id, name, path, error, interrupts, state, result.
-    # JSON's native tuple handling runs before the serializer's default hook.
+    # 固定 StateSnapshot 投影将 PregelTask NamedTuple 序列化为 JSON 数组：
+    # id、name、path、error、interrupts、state、result。
+    # JSON 自带元组处理先于序列化器 default 钩子执行。
     def clean_task(task):
         return (isinstance(task, list) and len(task) == 7
             and isinstance(task[0], str) and bool(task[0])
@@ -517,7 +515,7 @@ def native_dsh(row):
 
 
 def expand_dsh_provenance(event):
-    """Mirror only the documented lossless JSONL sourceEventSeqs encoding."""
+    """仅复现文档规定的无损 JSONL sourceEventSeqs 编码。"""
     if "sourceEventSeqs" not in event:
         return event
     stored, decoded, had_range = event["sourceEventSeqs"], [], False
@@ -537,12 +535,10 @@ def expand_dsh_provenance(event):
 
 
 def dsh_storage(paths, candidate, scope, *, stage="after-flush"):
-    """Read the original plaintext, unpacked JSONL configured by this variant.
+    """读取此变体配置的原始明文、未打包 JSONL。
 
-    Only header/Goal/end projections are returned. No Session contents are
-    printed or placed into public reports. The whole physical hash remains
-    bound to the protected index. This is independent of a copied JSON view.
-    """
+    仅返回 header/Goal/end 投影，不打印 Session 内容，也不放入公开报告。
+    完整物理哈希仍绑定受保护索引；此检查独立于复制的 JSON 视图。"""
     artifact = read(candidate / ("session-artifact-" + stage + ".json"))
     location = Path(artifact.get("native_location", {}).get("path", ""))
     require(location.is_absolute() and location.is_relative_to("/state") and ".." not in location.parts
@@ -803,7 +799,7 @@ def monitoring_projection(paths, scope):
 
 
 def wait_monitor(args, config, paths, scope):
-    # This action deliberately needs no fixture or native-state mount.
+    # 此动作特意不需要 Fixture 或原生状态挂载。
     paused = read(paths.run / "pause-validated.json")
     require(paused.get("passed") is True and paused.get("candidate") == args.candidate
             and paused.get("chain_id") == args.chain_id and paused.get("scope") == scope, "unvalidated_pause")
@@ -951,20 +947,20 @@ def bind_resume(args, config, paths, scope):
 
 
 def clean_da_final_snapshot(snapshot):
-    # A completed pinned StateSnapshot has no next tasks. PregelTask values
-    # serialize as seven-element arrays, so never treat them as dictionaries;
-    # any remaining task is unfinished even when its error field is empty.
+    # 完成的固定 StateSnapshot 不应再有 next 任务。PregelTask
+    # 序列化为七元素数组，绝不能当成字典；
+    # 任何残留任务都算未完成，即使其 error 字段为空。
     require(isinstance(snapshot, dict) and snapshot.get("next") == []
             and snapshot.get("interrupts") == [] and snapshot.get("tasks") == [],
             "native_da_final_checkpoint_unfinished")
 
 
 def restored_dsh_header(original, restored):
-    # Pinned session-persistence-jsonl/src/format.ts toHeaderLine writes
-    # delegationDepth ?? 0 and fromHeaderLine reads that concrete number.
-    # All other header fields must remain identical. Do not ignore headers or
-    # accept arbitrary metadata changes when comparing an in-memory A view
-    # with the session reloaded by the official persistence backend in B.
+    # 固定 session-persistence-jsonl/src/format.ts 的 toHeaderLine 写入
+    # delegationDepth ?? 0，fromHeaderLine 读取这个具体数值。
+    # 其他所有头字段必须相同。比较内存中的 A 视图
+    # 与 B 经官方持久化后端重新加载的会话时，不能忽略头信息，
+    # 也不能接受任意元数据变化。
     require(isinstance(original, dict) and isinstance(restored, dict),
             "native_dsh_restored_header_invalid")
     depth = original.get("delegationDepth", 0)
@@ -1003,17 +999,17 @@ def final_native(paths, scope, pins, attempt, paused=None):
         require(goal.get("phase") == "complete" and goal.get("maxGoalRounds") == CAP
                 and type(goal.get("roundsStarted")) is int and 1 <= goal["roundsStarted"] <= CAP
                 and persisted["goal_change"]["data"]["operation"] == "complete", "native_original_goal_not_complete")
-        # Worker B emits only live events. Replay the FULL physical session,
-        # then bind its live suffix; do not fold B's suffix as a fresh Goal.
+        # Worker B 只发出运行中事件。先重放完整物理会话，
+        # 再绑定运行中后缀；不能把 B 后缀当成全新 Goal 折叠。
         require(changes and {"seq": changes[-1].get("seq"), "data": changes[-1].get("data")}
                 == persisted["goal_change_events"][-1]
                 and all({"seq": event.get("seq"), "data": event.get("data")} in persisted["goal_change_events"] for event in changes)
                 and persisted["turn_end"]["data"] == endings[-1]["data"]
                 and persisted["turn_end"]["seq"] == endings[-1]["seq"], "final_goal_not_original_physical_session")
-        # Activation is NEVER stored in goal/change or foldGoal. The public
-        # live view must agree with the durable fold; official goals.complete
-        # disarms that live runtime. This is source-correlated live evidence,
-        # not a claim that persisted phase reconstructs process activation.
+        # 激活状态绝不存入 goal/change 或 foldGoal。公共
+        # 运行中视图必须与持久化折叠相符；官方 goals.complete
+        # 会解除该运行时的激活。这是有源码关联的运行中证据，
+        # 不表示持久化 phase 能重建进程激活状态。
         outcome = result.get("native_result", {}).get("lifecycleOutcome", {})
         require(outcome.get("kind") == "completed" and matches_live_view(outcome.get("goal"), goal, "disarmed"),
                 "native_live_goal_view_not_complete_disarmed")
@@ -1029,8 +1025,8 @@ def final_native(paths, scope, pins, attempt, paused=None):
             original_view = read(paths.run / "attempts/worker-a/candidate/session-after-idle.json")
             restored_dsh_header(original_view.get("header"), restored.get("header"))
             restored_events = restored.get("events", [])
-            # The native Session constructor legally appends a single marker
-            # when accepting restored seed. It is not a replayed user input.
+            # 原生 Session 构造器接受恢复种子时，可合法追加一个
+            # 标记；它不是重放的用户输入。
             require(restored.get("first_live_seq") == original["session"]["next_seq"]
                     and restored.get("next_seq") == original["session"]["next_seq"] + 1
                     and restored_events[:-1] == original_view.get("events") and restored_events
@@ -1049,7 +1045,7 @@ def final_native(paths, scope, pins, attempt, paused=None):
 
 
 def grade(args, config, paths, scope, *, review_output=None):
-    """Retain failures; exceptions become a failed verdict, never a new task."""
+    """保留失败；异常转为失败判定，不能变成新任务。"""
     output = paths.run
     if review_output is not None:
         output = Path(review_output)
@@ -1112,8 +1108,8 @@ def grade(args, config, paths, scope, *, review_output=None):
                 ledger = ledger_request(paths, "GET", "/admin/ledger", params={"experiment_id": "pause-recovery", "variant": args.chain_id})
                 create(paths.run / "trusted/final-ledger.json", ledger)
             else:
-                # Offline review reads the frozen original ledger. It cannot
-                # contact a service, modify the original evidence or run work.
+                # 离线复核只读取冻结的原始账本，不能
+                # 联系服务、修改原始证据或执行任务。
                 ledger = read(paths.run / "trusted/final-ledger.json")
             rows = [row for _, _, row in jsonl(paths.run / "tool-events.jsonl")]
             task, _ = detailed.task_definition("tools")
@@ -1126,7 +1122,7 @@ def grade(args, config, paths, scope, *, review_output=None):
     verdict = {"schema": "harness-lab-pause-verdict/1", "candidate": args.candidate,
                "chain_id": args.chain_id, "seed": args.seed, "passed": bool(checks) and all(row["passed"] for row in checks),
                "checks": checks, "metrics": metrics,
-               "scope_of_claim": "One local Docker chain only; three-seed comparison and shared-worker economics remain separate evaluations."}
+               "scope_of_claim": "仅覆盖一条本地 Docker 链；三种子比较及共享 Worker 成本须单独评估。"}
     create(output / "verdict.json", verdict)
     return verdict["passed"]
 

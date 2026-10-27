@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage fixed OpenAI Agents SDK image materials, without importing the SDK."""
+"""准备固定版本的 OpenAI Agents SDK 镜像材料，不导入 SDK。"""
 
 import argparse
 import hashlib
@@ -20,22 +20,22 @@ def digest(data: bytes) -> str:
 def stage(context: Path, repository: Path, *, prepare_lock=False) -> dict:
     context = context.resolve()
     if "old" in context.parts:
-        raise ValueError("Cannot stage into archived materials")
+        raise ValueError('不能向归档材料目录准备文件')
     source_bytes = (context / "SOURCE_MANIFEST.json").read_bytes()
     source = json.loads(source_bytes)
     if source.get("schema") != "harness-lab-source-manifest/1" or source.get("candidate") != "openai_agents_sdk":
-        raise ValueError("Expected the current OpenAI Agents SDK context")
+        raise ValueError('需要当前 OpenAI Agents SDK 上下文')
     sources = source.get("sources", [])
     if len(sources) != 1:
-        raise ValueError("Wrong source inventory")
+        raise ValueError('源码清单不匹配')
     record = sources[0]
     if record.get("id") != "main" or record.get("kind") != "archive" or record.get("commit") != COMMIT or record.get("sha256") != ARCHIVE_HASH or record.get("observed_archive_sha256") != ARCHIVE_HASH or record.get("dirty") is not None:
-        raise ValueError("Unverified OpenAI Agents SDK source archive")
+        raise ValueError('OpenAI Agents SDK 源码归档未经核验')
     destination = context / "harness-lab"
     marker = context / "LAB_LOCK_PREPARATION.json"
     if destination.exists():
         if destination.is_symlink() or not ((context / "LAB_ADAPTER_MANIFEST.json").is_file() or marker.is_file()):
-            raise ValueError("Refusing to replace unstaged adapter material")
+            raise ValueError('拒绝替换未经准备登记的适配材料')
         shutil.rmtree(destination)
     destination.mkdir()
     inventory = []

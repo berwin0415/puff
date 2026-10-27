@@ -1,7 +1,7 @@
-"""Calibrate independent verdicts with real fixture data and deliberately bad artifacts.
+"""使用真实模拟业务数据和刻意错误的产物校准独立判定。
 
-Synthetic browser/policy/control evidence below tests the verdict rules only;
-it is not a candidate capability or browser execution result.
+下方合成浏览器、规则和控制证据只测试判定规则，
+不代表候选能力或真实浏览器执行结果。
 """
 
 from copy import deepcopy
@@ -26,7 +26,7 @@ def scope_of(prepared):
 
 @contextmanager
 def live_tools(process, prepared, workspace, events_path):
-    """Use actual execution tooling to calibrate its real start/finish audit shape."""
+    """通过实际执行工具校准真实 start/finish 审计结构。"""
     binding = {"fixture_url": process.base_url, "fixture_token": prepared["token"],
                "workspace": str(workspace), "scope": scope_of(prepared), "events_path": str(events_path)}
     server = ToolsHTTPServer(("127.0.0.1", 0), binding)
@@ -60,7 +60,7 @@ def completed_tools(process, tmp_path, seed=101, write_mode="idempotent"):
             result = call("list_items", page=page, page_size=5)
             catalogue.extend(result["items"])
             page = result["next_page"]
-        # Build the answer from the actual paged API, independently of the seed grader.
+        # 从实际分页 API 生成答案，独立于种子验收器。
         selected = sorted((row for row in catalogue if row["category"] in {"office", "garden"}
                            and row["unit_price_cents"] <= 3500 and row["available_quantity"] >= 2),
                           key=lambda row: (row["unit_price_cents"], row["item_id"]))[:3]
@@ -206,7 +206,7 @@ def test_browser_receipt_top_operation_and_foreign_ledger_are_checked(fixture_pr
     path = evidence["workspace"] / "result.csv"
     rows = list(csv.DictReader(io.StringIO(path.read_text())))
     receipt = json.loads(rows[0]["receipt_json"])
-    # Real FixtureStore.receipts fields, with only its top-level id corrupted.
+    # 使用真实 FixtureStore.receipts 字段，只破坏顶层 id。
     assert set(receipt) == {"operation_id", "write_count", "receipts"}
     receipt["operation_id"] = "different-operation"
     output = io.StringIO()

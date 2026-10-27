@@ -1,4 +1,4 @@
-"""I23 DSH data-only counterexamples; real candidate recovery still needs Docker."""
+"""I23 DSH 纯数据反例；真实候选恢复仍需 Docker 实验。"""
 from copy import deepcopy
 import json
 from types import SimpleNamespace
@@ -179,7 +179,7 @@ def test_surface_freeze_refuses_changed_material_or_post_start_pin_mutation(natu
         save(natural.run / 'trusted/tool-surface.json', {'different': True})
     else:
         save(natural.run / 'trusted/worker-a-binding.json', {})
-    with pytest.raises(RuntimeError, match='before any Worker binding'):
+    with pytest.raises(RuntimeError, match='绑定任何 Worker 前'):
         lab.freeze_calibrated_surface_pins()
     assert json.loads((natural.run / 'trusted/pins.json').read_text()) == PINS
 
@@ -197,8 +197,8 @@ def resumed_evidence(natural, monkeypatch):
             if key not in {'roundsStarted', 'createdAt', 'updatedAt'}},
         'roundsStarted': durable['roundsStarted'], 'createdAt': durable['createdAt'], 'updatedAt': 201}}
     final = restored + [resumed]
-    # Append only native repair fixture rows and B events after original bytes;
-    # the acceptance function must independently correlate all of them.
+    # 只在原始字节之后追加原生修复测试行与 B 事件；
+    # 验收函数必须独立关联这些记录。
     with natural.physical.open('ab') as stream:
         stream.write(b''.join(json.dumps(row).encode() + b'\n' for row in final[len(audit['events']):]))
     directory = natural.run / 'attempts/worker-b/candidate'

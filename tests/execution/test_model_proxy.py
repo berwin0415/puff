@@ -1,4 +1,4 @@
-"""Local HTTP upstream proves model budget enforcement and byte-preserving relay."""
+"""通过本地 HTTP 上游证明模型预算拦截与字节原样转发。"""
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -91,7 +91,7 @@ def post(url, body=None, *, token=TOKEN, path="/v1/chat/completions"):
 
 @contextmanager
 def running_cli(tmp_path: Path, upstream_url: str):
-    """Launch the real module entrypoint; all network traffic stays on loopback."""
+    """启动真实模块入口，所有网络流量均留在回环地址。"""
     token_file = tmp_path / "run-token"
     token_file.write_text(TOKEN)
     with socket.socket() as reservation:
@@ -114,14 +114,14 @@ def running_cli(tmp_path: Path, upstream_url: str):
         with httpx.Client(trust_env=False, timeout=0.2) as client:
             while True:
                 if process.poll() is not None:
-                    raise AssertionError("Model proxy CLI exited before listening")
+                    raise AssertionError("模型代理 CLI 在监听前退出")
                 try:
                     if client.get(url + "/health").status_code == 200:
                         break
                 except httpx.HTTPError:
                     pass
                 if time.monotonic() >= deadline:
-                    raise AssertionError("Model proxy CLI did not become ready")
+                    raise AssertionError("模型代理 CLI 未就绪")
                 time.sleep(0.02)
         yield url, process
     finally:
@@ -138,7 +138,7 @@ def test_real_cli_process_restart_preserves_budget(tmp_path, upstream):
     upstream_url, requests = upstream
     with running_cli(tmp_path, upstream_url) as (url, first):
         assert post(url).status_code == 200
-    assert first.returncode is not None  # Process terminated, not just a new in-memory server.
+    assert first.returncode is not None  # 进程已终止，并非只新建内存中的服务对象。
     with running_cli(tmp_path, upstream_url) as (url, second):
         assert second.pid != first.pid
         assert post(url).status_code == 200
@@ -205,7 +205,7 @@ def test_bad_token_and_unapproved_path_never_reach_upstream(tmp_path, upstream):
             health = client.get(url + "/health")
         assert health.json() == {"status": "ok"}
         assert UPSTREAM_KEY not in health.text and TOKEN not in health.text
-        assert post(url).status_code == 200  # Rejections did not consume the valid budget.
+        assert post(url).status_code == 200  # 被拒绝的请求没有消耗有效预算。
     assert len(requests) == 1
 
 
@@ -228,9 +228,9 @@ def test_run_binding_and_cap_cannot_be_changed_on_restart(tmp_path, upstream):
     settings = config(tmp_path, upstream_url, cap=2)
     server = create_server(settings, "127.0.0.1", 0)
     server.server_close()
-    with pytest.raises(ValueError, match="different run or call limit"):
+    with pytest.raises(ValueError, match='其他运行或调用上限'):
         create_server(replace(settings, run_token="other-run"), "127.0.0.1", 0)
-    with pytest.raises(ValueError, match="different run or call limit"):
+    with pytest.raises(ValueError, match='其他运行或调用上限'):
         create_server(replace(settings, cap=20), "127.0.0.1", 0)
 
 

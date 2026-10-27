@@ -1,14 +1,13 @@
-"""Host-only triggers for native controls; never execute or grade an Agent."""
+"""宿主侧原生控制触发器；不执行或评分 Agent。"""
 from datetime import datetime, timezone
 import hashlib
 import json
 
 
 def cancel_on_deepagents_activity(lab, name, run, stop, run_id, scope):
-    """Send one SIGUSR1 after observing an active native model/tools task.
+    """观察到原生模型或工具任务正在执行后，发送一次 SIGUSR1。
 
-    The candidate rechecks liveness at signal receipt. Host and candidate may
-    legitimately observe different tasks as the graph progresses.
+    候选收到信号后会再次检查任务是否活跃。随着图继续推进，宿主与候选观察到不同任务属于正常情况。
     """
     raw = run / "candidate/raw-events.jsonl"
     while not stop.wait(0.1):

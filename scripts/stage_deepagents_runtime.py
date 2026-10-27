@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Stage a new DA runtime variant without changing any existing context.
+"""准备新的 DA 运行时变体，不改变任何现有上下文。
 
-Source export and SOURCE_MANIFEST must already exist. This only prepares image
-materials on the host; it never imports a candidate, starts Docker or runs work.
+源码导出和 SOURCE_MANIFEST 必须已存在。此脚本仅在宿主准备镜像材料，不导入候选、启动 Docker 或执行任务。
 """
 from __future__ import annotations
 
@@ -40,11 +39,11 @@ def stage(context, repository, variant):
     allowed = repository / 'external/build-context'
     if (variant not in OVERLAYS or not context.is_relative_to(allowed)
             or context == allowed or 'old' in context.parts):
-        raise ValueError('A new current runtime context and known variant are required')
+        raise ValueError('需要新的当前运行时上下文和已知变体')
     protected = ('harness-lab', 'Dockerfile', 'LAB_ADAPTER_MANIFEST.json', 'LAB_RUNTIME_MANIFEST.json')
     if any((context / name).exists() or (context / name).is_symlink() for name in protected):
-        raise ValueError('Runtime staging cannot overwrite existing image materials')
-    # Read all new bytes before invoking a stager that mutates the new context.
+        raise ValueError('准备运行时不能覆盖现有镜像材料')
+    # 调用会修改新上下文的准备脚本前，先读取全部新文件内容。
     payloads = {name: (repository / origin).read_bytes() for name, origin in OVERLAYS[variant].items()}
     base_stage(context, repository)
     manifest_file = context / 'LAB_ADAPTER_MANIFEST.json'

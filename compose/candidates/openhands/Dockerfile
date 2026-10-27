@@ -1,4 +1,4 @@
-# Same fixed Linux arm64 Python base as the current Python candidate.
+# 与当前 Python 候选使用相同的固定 Linux arm64 Python 基础镜像。
 ARG PYTHON_IMAGE=python:3.12.13-slim-bookworm@sha256:3f9c7f75b916e8279e24136d7a57769aba9e193715be52570417698c52d6eed0
 FROM ${PYTHON_IMAGE}
 
@@ -28,8 +28,8 @@ RUN --mount=type=cache,id=harness-lab-openhands-uv-linux-arm64,target=/root/.cac
     && uv pip freeze --system > /opt/materials/INSTALLED_DISTRIBUTIONS.txt \
     && dpkg-query -W > /opt/materials/SYSTEM_PACKAGES.txt
 
-# tiktoken's pinned wheel verifies the official encoding downloads against its
-# embedded SHA256 pins. Populate both standard encodings before runtime.
+# tiktoken 固定 wheel 使用内置 SHA256 固定值核验官方编码下载。
+# 在运行前准备两种标准编码。
 RUN python -c 'import tiktoken; tiktoken.get_encoding("cl100k_base"); tiktoken.get_encoding("o200k_base")' \
     && python -c 'import hashlib,json,pathlib; p=pathlib.Path("/opt/tiktoken-cache"); print(json.dumps({x.name:hashlib.sha256(x.read_bytes()).hexdigest() for x in sorted(p.iterdir())},sort_keys=True))' > /opt/materials/TOKENIZER_CACHE_SHA256.json
 

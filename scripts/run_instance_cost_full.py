@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""I25 trusted Docker-only DA cost-flow driver; authoring is not execution.
+"""I25 可信 Docker 内 DA 成本流程驱动；编写代码不代表执行。
 
-Prebuilt exact images only. The host controls containers, stdin and observation
-files; material preparation, task expectations and all grading stay in Docker.
-The real observer is measured but does not impersonate an I24 product backend.
+仅使用确切的预构建镜像。宿主控制容器、标准输入和观察文件；材料准备、任务预期与全部评分均在 Docker 内完成。真实观察器的开销会被测量，但它不冒充 I24 产品后端。
 """
 from __future__ import annotations
 
@@ -36,23 +34,23 @@ HOST_REASON_CODES = {
     "host_rotation_sampler_incomplete",
 }
 HOST_RUNTIME_REASONS = {
-    "Pinned local services image changed": "host_services_image_pin_changed",
-    "Docker must expose the frozen 6 GiB / 3 CPU budget": "host_docker_capacity_invalid",
-    "Remote model environment differs from frozen material": "host_model_configuration_changed",
-    "Refusing next container before exceeding frozen total allocation": "host_next_allocation_refused",
-    "New container differs from its explicit image/quota pin": "host_created_container_pin_changed",
-    "Only a business grade may allow expected exit 1": "host_bench_exit_policy_invalid",
-    "No bench may run with candidate Workers": "host_bench_worker_overlap_refused",
-    "Pinned Docker bench process integrity failed; original evidence retained": "host_bench_process_integrity_failed",
-    "Pinned Docker bench failed; original evidence retained": "host_bench_execution_failed",
-    "Cannot retire an unowned exact container": "host_retirement_identity_unproven",
-    "Complete observed cost inventory differs from explicit creation pins": "host_inventory_pin_set_changed",
-    "Resource sampler failed to stop; do not start bench": "host_sampler_did_not_stop",
+    '固定的本地服务镜像已变化': "host_services_image_pin_changed",
+    'Docker 必须提供冻结的 6 GiB / 3 CPU 资源预算': "host_docker_capacity_invalid",
+    '远程模型环境与冻结材料不同': "host_model_configuration_changed",
+    '拒绝启动下一容器，以免超过冻结的总分配': "host_next_allocation_refused",
+    '新容器与明确固定的镜像或配额不同': "host_created_container_pin_changed",
+    '仅业务评分允许预期的退出 1': "host_bench_exit_policy_invalid",
+    'bench 不能与候选 Worker 同时运行': "host_bench_worker_overlap_refused",
+    '固定 Docker bench 的进程完整性失败；保留原始证据': "host_bench_process_integrity_failed",
+    '固定 Docker bench 执行失败；保留原始证据': "host_bench_execution_failed",
+    '不能回收非本实验拥有的确切容器': "host_retirement_identity_unproven",
+    '完整成本观察清单与明确的创建固定值不同': "host_inventory_pin_set_changed",
+    '资源采样器未能停止；不能启动 bench': "host_sampler_did_not_stop",
 }
 
 
 def host_failure_reason(error):
-    """Classify known failures without serializing exception text or credentials."""
+    """分类已知失败，不序列化异常文本或凭证。"""
     reason = error.args[0] if error.args and isinstance(error.args[0], str) else None
     if reason in HOST_REASON_CODES:
         return reason
@@ -70,7 +68,7 @@ def host_failure_reason(error):
 
 
 def validate_data_root(output_root):
-    """Require the explicit host root before creating evidence or Docker objects."""
+    """创建证据或 Docker 对象前必须明确指定宿主根目录。"""
     value = os.environ.get("HARNESS_LAB_DATA_ROOT")
     if value is None or not value.strip():
         raise ValueError("host_data_root_missing")
@@ -99,7 +97,7 @@ def validate_data_root(output_root):
 
 
 def bench_process_integrity(observed, *, identity, name, image, cli_exit, expected_exit):
-    """A written verdict never substitutes for a healthy pinned grader exit."""
+    """已写入的判定不能替代固定评分器的健康退出。"""
     state = observed.get("state", {})
     checks = {
         "exact_container_identity": (re.fullmatch(r"[0-9a-f]{64}", identity or "") is not None
@@ -119,7 +117,7 @@ def bench_process_integrity(observed, *, identity, name, image, cli_exit, expect
     }
     return {"passed": all(checks.values()), "checks": checks,
         "cli_exit": cli_exit, "expected_exit": expected_exit,
-        "trust_limit": "process integrity only; business verdict stays in the original Docker evidence"}
+        "trust_limit": '仅证明进程完整性；业务判定留在原始 Docker 证据中'}
 
 
 class CostFlowLab(IdleDockerLab):
@@ -138,7 +136,7 @@ class CostFlowLab(IdleDockerLab):
         self.rotation_history_reads, self.rotation_start = [], None
         self.sampling_status = None
         self.fault = {"injected": False, "recovery_attempted": False,
-            "native_recovery_gap": "No restart prompt, None replay or replacement budget is submitted by this cost entry"}
+            "native_recovery_gap": '本成本入口不提交重启提示词、None 重放或替换预算'}
         self.lifecycle = None
         if rotation_users(plan):
             from scripts.instance_cost_lifecycle import RotationLifecycle
@@ -152,7 +150,7 @@ class CostFlowLab(IdleDockerLab):
             self.phase, self.kind = phase, kind
 
     def publish_control(self, phase, kind, *, nonce=None):
-        """Publish a complete control once; published basenames are never reused."""
+        """一次发布完整控制消息；已发布的文件名不复用。"""
         guard = self.lifecycle.control_lock if self.lifecycle is not None else self.lock
         with guard:
             sequence = self.control_sequence + 1
@@ -176,19 +174,19 @@ class CostFlowLab(IdleDockerLab):
         super().preflight()
         identity = self.call(["docker", "image", "inspect", "--format", "{{.Id}}", self.plan["services_image_id"]]).stdout.strip()
         if identity != self.plan["services_image_id"]:
-            raise RuntimeError("Pinned local services image changed")
+            raise RuntimeError('固定的本地服务镜像已变化')
         info = json.loads(self.call(["docker", "info", "--format", "{{json .}}"], timeout=15).stdout)
         if info["OSType"] != "linux" or info["MemTotal"] < MEMORY or info["NCPU"] < 3:
-            raise RuntimeError("Docker must expose the frozen 6 GiB / 3 CPU budget")
-        # Compose parses .env; secret values are never printed or placed on argv.
+            raise RuntimeError('Docker 必须提供冻结的 6 GiB / 3 CPU 资源预算')
+        # Compose 解析 .env；密钥值不打印，也不放入 argv。
         resolved = json.loads(self.call(["docker", "compose", "--project-name", "harness-lab", "-f",
             str(ROOT / "compose/docker-compose.yml"), "--profile", "model", "config", "--format", "json"]).stdout)
         proxy_env = resolved["services"]["model-proxy"]["environment"]
         if proxy_env.get("MODEL_NAME") != self.plan["model_name"] or any(not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", key)
                 or not isinstance(value, str) or any(c in value for c in "\n\r\0") for key, value in proxy_env.items()):
-            raise ValueError("Remote model environment differs from frozen material")
-        # Only Docker receives this env file. It must not be below /trial,
-        # which the trusted observer/bench mount to inspect run evidence.
+            raise ValueError('远程模型环境与冻结材料不同')
+        # 仅 Docker 接收此 env 文件。它不能位于 /trial 下，
+        # 因为可信 observer 和 bench 会挂载 /trial 检查运行证据。
         self.proxy_secret_dir = tempfile.TemporaryDirectory(prefix="harness-lab-i25-proxy-")
         self.proxy_environment = Path(self.proxy_secret_dir.name) / "proxy.env"
         descriptor = os.open(self.proxy_environment, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -216,7 +214,7 @@ class CostFlowLab(IdleDockerLab):
         memory, cpu = self.caps(role)
         if (sum(row["memory_limit"] for row in current) + memory > MEMORY
                 or sum(row["cpu_nano"] for row in current) + cpu > CPU):
-            raise RuntimeError("Refusing next container before exceeding frozen total allocation")
+            raise RuntimeError('拒绝启动下一容器，以免超过冻结的总分配')
 
     def pin(self, identity, role, image, *, running=False):
         memory, cpu = self.caps(role)
@@ -225,7 +223,7 @@ class CostFlowLab(IdleDockerLab):
         observed = [row for row in self.observations() if row["id"] == identity]
         if (len(observed) != 1 or observed[0]["image_id"] != image
                 or observed[0]["memory_limit"] != memory or observed[0]["cpu_nano"] != cpu):
-            raise RuntimeError("New container differs from its explicit image/quota pin")
+            raise RuntimeError('新容器与明确固定的镜像或配额不同')
         self.sequence += 1
         exclusive(self.root / "protected" / ("lifecycle-" + str(self.sequence) + ".json"), {
             "time": now(), "phase": self.phase, "pin": self.registered[identity], "observed": observed[0]})
@@ -265,12 +263,12 @@ class CostFlowLab(IdleDockerLab):
         self.call(["docker", "exec", identity, "python", "-c", code], timeout=30)
 
     def bench(self, action, *, check=True):
-        # The offline bench is never concurrent with any candidate Worker.
+        # 离线 bench 不与任何候选 Worker 并发运行。
         with self.lock:
             if check is False and action != "grade":
-                raise ValueError("Only a business grade may allow expected exit 1")
+                raise ValueError('仅业务评分允许预期的退出 1')
             if any(row["role"] == "worker" and row["state"]["Running"] for row in self.observations()):
-                raise RuntimeError("No bench may run with candidate Workers")
+                raise RuntimeError('bench 不能与候选 Worker 同时运行')
             self.reserve("bench")
             self.sequence += 1
             name = "hl-ic-" + self.plan["trial_id"] + "-bench-" + str(self.sequence)
@@ -300,8 +298,8 @@ class CostFlowLab(IdleDockerLab):
                         expected_exit = 0 if verdict["cost_subset_passed"] else 1
                         verdict_source = {"path": "protected/" + filename, "sha256": sha(verdict_path.read_bytes())}
                 except (OSError, ValueError, TypeError):
-                    # Keep all original output/container records. A missing or
-                    # malformed verdict is an integrity failure, not exit 1.
+                    # 保留全部原始输出和容器记录。判定缺失或格式错误
+                    # 属于完整性失败，不能仅当作退出 1。
                     pass
             integrity = bench_process_integrity(final, identity=identity, name=name,
                 image=self.plan["bench_image_id"], cli_exit=reply.returncode, expected_exit=expected_exit)
@@ -311,11 +309,11 @@ class CostFlowLab(IdleDockerLab):
             integrity["verdict_source"] = verdict_source
             exclusive(self.root / "protected" / (action + "-flow-process-integrity.json"), integrity)
             if not integrity["passed"]:
-                raise RuntimeError("Pinned Docker bench process integrity failed; original evidence retained")
+                raise RuntimeError('固定 Docker bench 的进程完整性失败；保留原始证据')
             self.call(["docker", "rm", identity])
             self.registered.pop(identity)
             if check and reply.returncode != 0:
-                raise RuntimeError("Pinned Docker bench failed; original evidence retained")
+                raise RuntimeError('固定 Docker bench 执行失败；保留原始证据')
             return reply.returncode
 
     def worker(self, user, stage, *, online=False):
@@ -343,7 +341,7 @@ class CostFlowLab(IdleDockerLab):
         with self.lock:
             before = [row for row in self.observations() if row["id"] == identity]
             if len(before) != 1 or identity not in self.registered:
-                raise RuntimeError("Cannot retire an unowned exact container")
+                raise RuntimeError('不能回收非本实验拥有的确切容器')
             self.call(["docker", "stop", "--time", "10", identity], check=False, timeout=15)
             final = [row for row in self.observations() if row["id"] == identity][0]
             self.sequence += 1
@@ -385,7 +383,7 @@ class CostFlowLab(IdleDockerLab):
             before = self.probe()
             observed = self.observations()
             if set(self.registered) != {row["id"] for row in observed}:
-                raise RuntimeError("Complete observed cost inventory differs from explicit creation pins")
+                raise RuntimeError('完整成本观察清单与明确的创建固定值不同')
             planned = [dict(self.registered[row["id"]]) for row in observed]
             sample = self.sample([row["id"] for row in observed])
             after = self.probe()
@@ -516,7 +514,7 @@ class CostFlowLab(IdleDockerLab):
                                 unaffected_id=other.id, before_observer=before, after_kill=after,
                                 after_observer=after_probe, recovery_attempted=False,
                                 original_state_retained=True, original_model_budget_retained=True)
-                # No kill window means this trial remains an explicit miss.
+                # 未命中强杀窗口时，本实验明确记为未命中。
             records = [future.result(timeout=330) for future in futures.values()]
         self.phase_to("closing-" + kind)
         if kind == INACTIVE_WAKE_KIND:
@@ -527,7 +525,7 @@ class CostFlowLab(IdleDockerLab):
                 docker_request_observation=request_probe, docker_ready_observation=ready_probe,
                 measured_request_to_ready_seconds=ready - requested, queue_latency_seconds=None,
                 first_effective_action_latency_seconds=None,
-                latency_limit="trusted orchestration receipt, not a product API or scheduler; Docker markers bracket startup")
+                latency_limit='可信编排回执，不是产品 API 或调度器；Docker 标记界定启动边界')
         self.task_timings.extend(records)
         if kind == "fault" and self.fault["injected"]:
             victim = self.workers.pop("user-001")
@@ -550,7 +548,7 @@ class CostFlowLab(IdleDockerLab):
         return records
 
     def read_rotation_history(self, worker, stage):
-        """Read the original user's native history; never inject a new sentinel."""
+        """读取原用户的原生历史；不注入新的哨兵值。"""
         record = {"owner": worker.user["owner"], "worker_id": worker.id, "stage": stage,
             "started_monotonic": time.monotonic(), "task_id": worker.user["history_task_id"]}
         try:
@@ -570,8 +568,8 @@ class CostFlowLab(IdleDockerLab):
             except (OSError, ValueError, KeyError, TypeError) as error:
                 if kind == "active":
                     raise
-                # Keep failed business evidence and the independent history
-                # reads; do not retry the business task or invent a checkpoint.
+                # 保留失败业务证据与独立历史读取；
+                # 不重试业务任务，也不编造 checkpoint。
                 self.cold_reads.append({"owner": owner, "kind": kind,
                     "read_succeeded": False, "error_type": type(error).__name__})
                 continue
@@ -642,7 +640,7 @@ class CostFlowLab(IdleDockerLab):
         self.stop_sampling.set()
         self.sampler.join(timeout=30)
         if self.sampler.is_alive():
-            raise RuntimeError("Resource sampler failed to stop; do not start bench")
+            raise RuntimeError('资源采样器未能停止；不能启动 bench')
         if rotation_users(self.plan):
             exclusive(self.root / "protected/rotation-sampler-status.json", self.sampling_status)
             if not self.sampling_status or self.sampling_status.get("completed") is not True:
@@ -693,7 +691,7 @@ def main():
     parser.add_argument("--model-name", required=True)
     parser.add_argument("--seed", required=True, type=int, choices=(101, 202, 303))
     parser.add_argument("--rotate-inactive-users", action="store_true",
-        help="Separate 5/10-user variant: cold wake fixed users 003/004 after the original pair's wake")
+        help='独立的 5/10 用户变体：原用户对唤醒后，再冷唤醒固定用户 003/004')
     parser.add_argument("--output-root", type=Path)
     args = parser.parse_args()
     plan = make_flow_plan(trial_id=args.trial_id, pair_id=args.pair_id, strategy=args.strategy, users=args.users,
@@ -728,7 +726,7 @@ def main():
         failures = lab.cleanup()
         exclusive(root / "protected/flow-cleanup.json", {"unconfirmed_resources": failures})
         if failures:
-            print("Cleanup could not confirm: " + ", ".join(failures), file=sys.stderr)
+            print('清理时未确认：' + ", ".join(failures), file=sys.stderr)
 
 
 if __name__ == "__main__":

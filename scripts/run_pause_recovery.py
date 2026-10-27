@@ -1,7 +1,6 @@
-"""Host-only Docker controls for the I22 pause/replacement experiment.
+"""I22 暂停及替换实验的宿主 Docker 控制。
 
-No candidate imports,
-model calls, business setup or grading execute in this host process.
+宿主进程不导入候选、不调用模型、不准备业务，也不评分。
 """
 from __future__ import annotations
 
@@ -60,10 +59,10 @@ class PauseLab(Lab):
             if re.fullmatch(r'(?:error(?: response from daemon)?:\s*)?no such (?:object|container):\s*'
                     + re.escape(identity), reply.stderr.strip(), flags=re.IGNORECASE) and reply.stdout.strip() == '[]':
                 return None
-            raise RuntimeError('Docker identity inspection failed; absence is unproven')
+            raise RuntimeError('Docker 身份检查失败；尚未证明对象不存在')
         data = json.loads(reply.stdout)
         if len(data) != 1:
-            raise RuntimeError('Ambiguous Docker identity')
+            raise RuntimeError('Docker 身份不唯一')
         c = data[0]
         return {'id': c['Id'], 'name': c['Name'], 'image_id': c['Image'],
             'image_tag': c['Config']['Image'], 'state': c['State'],
@@ -86,14 +85,13 @@ class PauseLab(Lab):
             ' try:\n'
             f'  r=httpx.get("http://{health_host}:{port}/health",timeout=1,trust_env=False); r.raise_for_status(); break\n'
             ' except httpx.HTTPError: time.sleep(0.3)\n'
-            'else: raise SystemExit("Service readiness timed out")\n')
+            'else: raise SystemExit("服务就绪检查超时")\n')
         self.call(['docker', 'exec', container or 'harness-lab-' + service + '-1', 'python', '-c', code], capture=True, timeout=30)
 
     def replace_idle_proxy(self, expected_old_id):
-        """Warm a replacement while sampling; only removal uses the short lock.
+        """采样期间预热替换代理；仅删除操作使用短锁。
 
-        No Worker exists in this phase. Both proxies share the original budget
-        DB and cap. Their transient allocations remain visible to the sampler.
+        本阶段没有 Worker。两个代理共享原预算数据库和上限；其临时资源分配仍由采样器记录。
         """
         original = 'harness-lab-model-proxy-1'
         before = self.snapshot(original)
@@ -101,27 +99,27 @@ class PauseLab(Lab):
                 or before['memory_limit'] != 256 * 1024**2 or before['cpu_nano'] != 250000000
                 or before['state'].get('Running') is not True
                 or before['mounts'] != [{'Source': str(self.paths.budget), 'Destination': '/budget', 'RW': True}]):
-            raise RuntimeError('Original proxy differs from pinned image, budget mount or caps')
+            raise RuntimeError('原代理与固定镜像、预算挂载或配额不同')
         worker_ids = self.call(['docker', 'ps', '-q', '--no-trunc',
             '--filter', 'label=com.docker.compose.project=harness-lab',
             '--filter', 'label=org.harness-lab.role=worker'], capture=True, timeout=5).stdout.split()
         if worker_ids:
-            raise RuntimeError('Proxy replacement requires a Worker-free interval')
+            raise RuntimeError('代理替换需要没有 Worker 的时间窗口')
         name = 'harness-lab-proxy-replacement-' + self.args.chain_id
         self.names.append(name)
-        # Carry the existing proxy environment privately without displaying it
-        # or expanding the user's .env through a different parser.
+        # 私下传递已有代理环境，不显示其内容，
+        # 也不使用其他解析器展开用户 .env。
         env_reply = self.call(['docker', 'inspect', '--format', '{{json .Config.Env}}', before['id']], capture=True)
         values = json.loads(env_reply.stdout)
         if not isinstance(values, list) or any(not isinstance(v, str) or '\n' in v or '\r' in v for v in values):
-            raise RuntimeError('Proxy environment cannot be transferred exactly')
+            raise RuntimeError('无法原样传递代理环境')
         environment_sha = hashlib.sha256(json.dumps(sorted(values), separators=(',', ':')).encode()).hexdigest()
         expected_command = ['-m', 'execution.model_proxy', '--database', '/budget/calls.sqlite',
             '--run-token-file', '/budget/run.token', '--cap', '20', '--port', '8082']
         actual_command = json.loads(self.call(['docker', 'inspect', '--format', '{{json .Config.Cmd}}',
             before['id']], capture=True).stdout)
         if actual_command != expected_command:
-            raise RuntimeError('Original proxy command differs from frozen budget configuration')
+            raise RuntimeError('原代理命令与冻结预算配置不同')
         private_env = self.paths.fixture / 'proxy-replacement.env'
         try:
             descriptor = os.open(private_env, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -139,37 +137,37 @@ class PauseLab(Lab):
                 self.service_images['model-proxy'], *expected_command]
             identity = self.call(command, capture=True, timeout=30).stdout.strip()
             if not re.fullmatch('[0-9a-f]{64}', identity):
-                raise RuntimeError('Proxy creation did not return an exact container ID')
+                raise RuntimeError('代理创建未返回确切容器 ID')
             self.names.append(identity)
         finally:
             private_env.unlink(missing_ok=True)
         created = self.snapshot(identity)
         if (created is None or created['image_id'] != before['image_id'] or created['mounts'] != before['mounts']
                 or created['memory_limit'] != before['memory_limit'] or created['cpu_nano'] != before['cpu_nano']):
-            raise RuntimeError('Replacement proxy differs from the original execution pins')
+            raise RuntimeError('替换代理与原执行固定值不同')
         replacement_env = json.loads(self.call(['docker', 'inspect', '--format', '{{json .Config.Env}}', identity], capture=True).stdout)
         replacement_sha = hashlib.sha256(json.dumps(sorted(replacement_env), separators=(',', ':')).encode()).hexdigest()
         del replacement_env
         replacement_command = json.loads(self.call(['docker', 'inspect', '--format', '{{json .Config.Cmd}}', identity], capture=True).stdout)
         if replacement_sha != environment_sha or replacement_command != expected_command:
-            raise RuntimeError('Replacement proxy environment or command changed')
+            raise RuntimeError('替换代理环境或命令已变化')
         self.call(['docker', 'start', identity], capture=True, timeout=20)
         self.wait_health('model-proxy', 8082, container=identity)
         with self.sampling_lock:
             started = time.monotonic()
-            # There are no calls to interrupt. Keep startup/health outside this
-            # lock, so a service recreation cannot hide a long sampling gap.
+            # 此时没有待中断调用。启动和健康检查留在锁外，
+            # 避免服务重建掩盖长时间采样缺口。
             self.call(['docker', 'stop', '--time', '1', before['id']], capture=True, timeout=10)
             stopped = self.snapshot(before['id'])
             if (stopped is None or stopped['id'] != before['id']
                     or stopped['state'].get('Status') != 'exited' or stopped['state'].get('Pid') != 0
                     or stopped['state'].get('Running') is not False or stopped['state'].get('OOMKilled') is not False
                     or stopped['state'].get('Error') or stopped['state'].get('ExitCode') not in (0, 137, 143)):
-                raise RuntimeError('Old proxy did not reach the expected externally stopped state')
+                raise RuntimeError('旧代理未达到预期的外部停止状态')
             self.call(['docker', 'rm', before['id']], capture=True, timeout=10)
             removed = self.snapshot(before['id']) is None
             if not removed:
-                raise RuntimeError('Old proxy removal was not independently observed')
+                raise RuntimeError('未独立观察到旧代理已删除')
             self.call(['docker', 'rename', identity, original], capture=True, timeout=10)
             self.names.append(original)
             lock_seconds = time.monotonic() - started
@@ -185,7 +183,7 @@ class PauseLab(Lab):
     def bench(self, action, *, host_record=None, extra=(), check=True):
         name = 'harness-lab-pause-bench-' + self.args.chain_id + '-' + action
         self.names.append(name)
-        # Retain even a short-lived bench exit for exact-ID sampling inspection.
+        # 即使 bench 很快退出，也保留确切 ID，供采样检查。
         command = self.bench_command()
         command.remove('--rm')
         command[2:2] = ['--name', name]
@@ -199,7 +197,7 @@ class PauseLab(Lab):
         with (log_root / ('bench-' + action + '.log')).open('x') as log:
             log.write(result.stdout + result.stderr)
         if check and result.returncode:
-            raise RuntimeError('Independent bench rejected ' + action + '; retained log contains diagnostics')
+            raise RuntimeError('独立 bench 拒绝了 ' + action + '；保留日志包含诊断信息')
         return result
 
     def sample(self, event, samples, evidence):
@@ -216,15 +214,15 @@ class PauseLab(Lab):
                     stat_rows = [json.loads(line) for line in stats.splitlines()]
                     by_name = {row['Name']: row for row in stat_rows}
                     if len(by_name) != len(stat_rows) or set(by_name) - {r['name'].removeprefix('/') for r in records}:
-                        raise RuntimeError('Docker stats contain duplicate or unretained containers')
+                        raise RuntimeError('Docker stats 包含重复或未保留的容器')
                     active, exited_ids = [], set()
                     for record in records:
                         if record['name'].removeprefix('/') in by_name:
                             active.append(record)
                             continue
-                        # A normal exit may occur after the initial running
-                        # inventory and before stats. Inspect the exact ID;
-                        # missing, unhealthy or still-running is never zero usage.
+                        # 正常退出可能发生在首次活跃容器清单之后、
+                        # stats 之前。检查确切 ID；缺失、不健康或仍在运行
+                        # 都不能当作零消耗。
                         after = self.snapshot(record['id'])
                         state = after['state'] if after else {}
                         if (not after or after['id'] != record['id'] or after['image_id'] != record['image_id']
@@ -232,7 +230,7 @@ class PauseLab(Lab):
                                 or state.get('Pid') != 0 or state.get('ExitCode') != 0
                                 or any(state.get(key) is not False for key in ('Running', 'OOMKilled', 'Dead', 'Paused', 'Restarting'))
                                 or state.get('Error') != ''):
-                            raise RuntimeError('Missing stats without independently proven healthy exact-ID exit')
+                            raise RuntimeError('stats 缺失，且未独立证明确切 ID 已健康退出')
                         sample['lifecycle'].append({'event': 'exited_during_sample', 'id': record['id'],
                             'before': record, 'after': after})
                         exited_ids.add(record['id'])
@@ -245,11 +243,11 @@ class PauseLab(Lab):
                     role_ids = self.call(['docker', 'ps', '-q', '--no-trunc', '--filter', 'label=com.docker.compose.project=harness-lab',
                         '--filter', 'label=org.harness-lab.role=worker'], capture=True, timeout=5).stdout.split()
                     if exited_ids & set(role_ids):
-                        raise RuntimeError('A supposedly exited Worker became running during sampling')
+                        raise RuntimeError('采样时发现已认定退出的 Worker 又在运行')
                     sample['worker_ids'] = sorted(set(role_ids) | {r['id'] for r in records if r['image_id'] in self.candidate_image_ids
                         or r['name'].removeprefix('/') in self.pins['worker_names'].values()})
                 except Exception:
-                    sample['error'] = 'Docker resource sampling failed'
+                    sample['error'] = 'Docker 资源采样失败'
                     sample['worker_ids'] = None
                 samples.append(sample)
                 with (evidence / 'resource-samples.jsonl').open('a') as stream:
@@ -281,14 +279,14 @@ class PauseLab(Lab):
                     if self.args.restart_proxy and elapsed >= 300 and not restarts:
                         replacement = self.replace_idle_proxy(proxy_before)
                         if replacement['before_id'] != proxy_before:
-                            raise RuntimeError('Original proxy identity changed before replacement')
+                            raise RuntimeError('替换前原代理身份已变化')
                         restarts.append(replacement)
                     if elapsed > 660:
-                        raise TimeoutError('Bounded wait monitor did not settle')
+                        raise TimeoutError('受限等待监控器未结束')
                     time.sleep(0.5)
                 if monitor.returncode:
-                    raise RuntimeError('Independent wait monitor rejected the paused interval')
-                # Cover a full600 seconds from the first retained wait sample.
+                    raise RuntimeError('独立等待监控器拒绝了暂停区间')
+                # 从首份保留的等待样本起，覆盖完整 600 秒。
                 while time.monotonic() - tick < 604:
                     time.sleep(0.5)
             finally:
@@ -296,7 +294,7 @@ class PauseLab(Lab):
                     self.call(['docker', 'rm', '-f', monitor_name], capture=True, check=False, timeout=10)
                     monitor.terminate()
                     monitor.wait(timeout=10)
-        # Close the sampling phase after a completed collection; no pending wait sample is lost.
+        # 完成一次采集后再闭合采样阶段，不丢失待处理等待样本。
         with self.sampling_lock:
             self.sampling_phase = 'after_wait'
         record = {'schema': 'harness-lab-pause-wait-host/1', 'candidate': self.args.candidate,
@@ -363,7 +361,7 @@ class PauseLab(Lab):
         if (before['image_id'] != self.pins['candidate_image_id'] or result.returncode != 0
                 or record['process_exit'] != 0 or record['oom_killed']
                 or record['model_call_count_before'] != 0 or record['model_call_count_after'] != 0):
-            raise RuntimeError('Native no-model tool-surface calibration failed')
+            raise RuntimeError('无模型原生工具面校准失败')
         surface_bytes = (output / 'goal-tool-surface.json').read_bytes()
         self.pins['tool_surface_sha256'] = hashlib.sha256(surface_bytes).hexdigest()
         with (self.paths.run / 'trusted/tool-surface.json').open('xb') as stream:
@@ -436,7 +434,7 @@ class PauseLab(Lab):
                     continue
                 control_records = [json.loads(line) for line in control_bytes.splitlines()]
                 if any(row.get('phase') == 'requested' for row in control_records):
-                    raise ValueError('A pause request already exists before this controller signal')
+                    raise ValueError('本控制器发信号前已存在暂停请求')
                 observation_finished = time.monotonic()
                 number, line, _ = max(activity)
                 write_number, write_line, _ = writes[0]
@@ -499,7 +497,7 @@ class PauseLab(Lab):
             spec += ['--entrypoint', 'node']
         for source, destination, readonly in mounts:
             if not source.exists() or source.is_symlink():
-                raise RuntimeError('Missing or unsafe explicit Worker mount')
+                raise RuntimeError('显式 Worker 挂载缺失或不安全')
             spec += ['--mount', f'type=bind,src={source},dst={destination}' + (',readonly' if readonly else '')]
         spec.append(self.pins['candidate_image_id'])
         if self.args.candidate == 'deepseek_harness':
@@ -513,12 +511,12 @@ class PauseLab(Lab):
                 or before['image_id'] != self.pins['candidate_image_id']
                 or before['state']['Status'] != 'created' or before['state']['Running']
                 or before['memory_limit'] != 2 * 1024 ** 3 or before['cpu_nano'] != 10 ** 9):
-            raise RuntimeError('Created Worker differs from the trusted start pins')
+            raise RuntimeError('创建的 Worker 与可信启动固定值不同')
         actual_mounts = {m['Destination']: m for m in before['mounts']}
         if set(actual_mounts) != {destination for _, destination, _ in mounts} or any(
                 actual_mounts[destination]['Source'] != str(source)
                 or actual_mounts[destination]['RW'] is readonly for source, destination, readonly in mounts):
-            raise RuntimeError('Created Worker mounts differ from the trusted start pins')
+            raise RuntimeError('创建的 Worker 挂载与可信启动固定值不同')
         record = {**self.identity(attempt), 'before_start': before, 'started_at': started}
         save(self.paths.run / 'trusted' / (attempt + '-created.json'), record)
         stop = threading.Event()
@@ -526,7 +524,7 @@ class PauseLab(Lab):
         timed_out = False
         available = remaining - (time.monotonic() - tick)
         if available <= 0:
-            raise TimeoutError('Cumulative active budget exhausted before Worker start')
+            raise TimeoutError('Worker 启动前累计活跃预算已用尽')
         self.sampling_phase = attempt + '_active'
         try:
             with (directory / 'candidate.log').open('x') as log:
@@ -546,7 +544,7 @@ class PauseLab(Lab):
             if control:
                 control.join(timeout=12)
                 if control.is_alive():
-                    raise RuntimeError('Pause trigger did not settle')
+                    raise RuntimeError('暂停触发器未结束')
         after = self.snapshot(identifier_)
         record.update({'after_exit': after, 'process_exit': after['state']['ExitCode'],
             'finished_at': now(), 'active_seconds': time.monotonic() - tick,
@@ -559,12 +557,12 @@ class PauseLab(Lab):
     def run_chain(self, args):
         self.args = args
         if self.containers():
-            raise RuntimeError('Current experiment containers remain; finish cleanup first')
+            raise RuntimeError('当前实验容器仍存在；请先完成清理')
         self.config.initialize_layout()
         self.paths = self.config.paths_for('pause-recovery', args.chain_id, args.candidate,
             'alice', 'main', args.chain_id, case='tools')
         if any(path.exists() or path.is_symlink() for path in vars(self.paths).values()):
-            raise RuntimeError('Chain ID is already used; no evidence may be overwritten')
+            raise RuntimeError('链 ID 已使用；不能覆盖任何证据')
         self.day = self.paths.run.parent.parent.parent.name
         self.scope = {'experiment_id': 'pause-recovery', 'variant': args.chain_id,
             'user_id': 'alice', 'session_id': 'main'}
@@ -579,11 +577,11 @@ class PauseLab(Lab):
         image_tag = args.image_tag
         del resolved
         if not isinstance(model_name, str) or not model_name:
-            raise RuntimeError('Selected model name is missing')
+            raise RuntimeError('缺少所选模型名称')
         self.env['LAB_MODEL_NAME'] = model_name
         context = args.materials_context.resolve()
         if 'old' in context.parts or not context.is_relative_to(ROOT / 'external/build-context'):
-            raise RuntimeError('Lifecycle materials must belong to the current build contexts')
+            raise RuntimeError('生命周期材料必须属于当前构建上下文')
         source = json.loads((context / 'SOURCE_MANIFEST.json').read_text())
         adapter = json.loads((context / 'LAB_ADAPTER_MANIFEST.json').read_text())
         image_id = self.call(['docker', 'image', 'inspect', '--format', '{{.Id}}', image_tag], capture=True).stdout.strip()
@@ -604,7 +602,7 @@ class PauseLab(Lab):
             if reply.returncode == 0:
                 self.candidate_image_ids.add(reply.stdout.strip())
         self.paths.fixture.mkdir(parents=True, exist_ok=False)
-        # Compose services also execute pinned IDs, including proxy recreation.
+        # Compose 服务也使用固定 ID 执行，包括代理重建。
         service_images = {}
         for name in ('fixtures', 'tools', 'model-proxy'):
             service_images[name] = self.call(['docker', 'image', 'inspect', '--format', '{{.Id}}',
@@ -629,7 +627,7 @@ class PauseLab(Lab):
             (self.paths.run / 'trusted/host-program.py').write_bytes(host_source)
             save(self.paths.run / 'trusted/host-program.json', {
                 'sha256': hashlib.sha256(host_source).hexdigest(), 'path': str(Path(__file__).resolve()),
-                'purpose': 'host Docker orchestration only; no candidate or grader executed on host'})
+                'purpose': '宿主仅编排 Docker；候选和评分器均未在宿主执行'})
             save(self.paths.run / 'trusted/pins.json', self.pins)
             save(self.paths.run / 'trusted/service-images.json', self.service_images)
             self.compose('up', '-d', '--no-build', 'tools', 'model-proxy')
@@ -644,8 +642,8 @@ class PauseLab(Lab):
             sampler.start()
             a = self.worker('worker-a', 300, args.variant == 'requested-pause')
             if args.variant == 'requested-pause':
-                # Do not delete an object between the sampler's inventory and
-                # exact-ID exit inspection. The deletion itself is retained.
+                # 不在采样器读取清单与检查确切 ID 退出状态之间
+                # 删除对象；删除本身也要留证。
                 with self.sampling_lock:
                     self.call(['docker', 'rm', a['after_exit']['id']], capture=True, timeout=20)
                     a['deleted'] = {'id_absent': self.snapshot(a['after_exit']['id']) is None,
@@ -656,7 +654,7 @@ class PauseLab(Lab):
                 self.bench('bind-resume', host_record=self.paths.run / 'trusted/wait.json')
                 remaining = math.floor(300 - self.used_active)
                 if remaining < 1:
-                    raise RuntimeError('Cumulative active budget is exhausted')
+                    raise RuntimeError('累计活跃预算已用尽')
                 b = self.worker('worker-b', remaining, False)
                 self.halt(names=self.names, services=('model-proxy',))
                 result = self.bench('grade', host_record=self.paths.run / 'trusted/worker-b.json', check=False)
@@ -701,11 +699,11 @@ def main():
     parser.add_argument('--image-tag', required=True)
     parser.add_argument('--materials-context', type=Path, required=True)
     args = parser.parse_args()
-    # The existing batch lock serializes this against all detailed batches.
+    # 现有批次锁使本实验与全部详细批次串行。
     lab = PauseLab()
     lock_path = lab.config.host_data_root / 'runs/.detailed-batch.lock'
     if lock_path.is_symlink():
-        raise RuntimeError('Serial execution lock may not follow a link')
+        raise RuntimeError('串行执行锁不能跟随链接')
     with lock_path.open('a') as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         return lab.run_chain(args)

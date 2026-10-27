@@ -1,4 +1,4 @@
-/** I17: official DSH profile/Agent APIs with task-scoped tool composition. */
+/** I17：官方 DSH profile/Agent API，搭配任务作用域内的工具组合。 */
 import { appendFileSync, closeSync, constants, fstatSync, openSync, readFileSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { resolve, sep } from 'node:path'
@@ -23,22 +23,22 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
   const sessionAction = lifecycle ? (request.lifecycle!.mode === 'resume' ? 'resume' : 'create') : options.session_action ?? 'create'
   const scope = readTrustedScope(options.trusted_scope_file, request.session_id)
   const paths = [request.workspace, request.state_dir, request.output_dir]
-  if (paths.some((path, i) => paths.some((other, j) => i !== j && path.startsWith(other + '/')))) throw new Error('Detailed state, workspace and evidence trees must not overlap')
+  if (paths.some((path, i) => paths.some((other, j) => i !== j && path.startsWith(other + '/')))) throw new Error('详细验证的状态、工作区和证据目录树不得重叠')
   const credentials = options.browser ? readBrowserCredentials(options.browser.credentials_file) : undefined
-  if (credentials && credentials.username !== scope.user_id) throw new Error('Browser credentials do not match the trusted user identity')
+  if (credentials && credentials.username !== scope.user_id) throw new Error('浏览器凭证与可信用户身份不匹配')
   if (options.browser) checkedExistingPath(options.browser.artifacts_dir)
   const secrets = [process.env.MODEL_API_KEY, credentials?.password, readFileSync(checkedExistingPath(request.tool_token_file), 'utf8').trim()].filter(Boolean) as string[]
   const scrub = (value: unknown): string => {
     let encoded = JSON.stringify(value)
     for (const secret of secrets) {
-      // Redact JSON-escaped values as well as strings appearing verbatim.
+      // 同时脱敏 JSON 转义形式和原样出现的字符串。
       encoded = encoded.replaceAll(JSON.stringify(secret).slice(1, -1), '[redacted-secret]')
     }
     return encoded
   }
   const save = (name: string, value: unknown) => writeFileSync(resolve(request.output_dir, name), scrub(value) + '\n')
   const writeNativeRecord = (name: string, exactRecord: string) => {
-    if (name !== 'native-business-state-record.jsonl' || scrub(JSON.parse(exactRecord)) !== JSON.stringify(JSON.parse(exactRecord))) throw new Error('Native business record cannot be exported without changing secret bytes')
+    if (name !== 'native-business-state-record.jsonl' || scrub(JSON.parse(exactRecord)) !== JSON.stringify(JSON.parse(exactRecord))) throw new Error('原生业务记录无法在不改变敏感字节的前提下导出')
     writeFileSync(resolve(request.output_dir, name), exactRecord)
   }
   const lineCounts = new Map<string, number>()
@@ -111,8 +111,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       control.apiSource = append('control-events.jsonl', { ...base, time: new Date().toISOString(), phase: 'native_api_returned',
         api_executed: true, cancel_confirmed: false, native_status_after: handle!.agent.status, request_source: requestSource })
     } catch (error) {
-      // A signal handler must not turn an audit/API exception into a fake
-      // cancellation or an unhandled process crash.
+      // 信号处理器不得将核查或 API 异常伪装成
+      // 取消，或导致未处理的进程崩溃。
       const failure = { ...base, time: new Date().toISOString(), phase: 'control_error', cancel_confirmed: false,
         api_attempted: apiAttempted, api_executed: apiExecuted,
         native_status_after: handle?.agent.status ?? 'no_handle', error: error instanceof Error ? error.message : String(error) }
@@ -129,8 +129,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       quantity_limit: options.business_extension.quantity_limit, added_tool: 'query_order_status -> receipt',
       native_state_event: BUSINESS_EVENT, native_projection_key: BUSINESS_PROJECTION,
       native_state_metadata_kind: BUSINESS_META_KIND, native_state_pointer: BUSINESS_STATE_POINTER,
-      state_api: 'canonical tool output -> public output.presentationMeta -> native tool/result + sessionProjections.register/stateOf + sessions.flush',
-      quantity_guard: 'public scoped tools.guard before actual HTTP write',
+      state_api: '规范工具输出 → 公开 output.presentationMeta → 原生 tool/result + sessionProjections.register/stateOf + sessions.flush',
+      quantity_guard: '实际 HTTP 写入前的公开作用域 tools.guard',
     } : null,
     browser: options.browser ? { url: options.browser.url, allowed_tools: BROWSER_TOOLS, credentials: 'separate_trusted_file', download_destination: 'result.csv' } : null,
     controls: { pause: lifecycle ? 'SIGUSR2_intent_then_public_pre_step_goal_pause_and_reject' : 'not_implemented', resume: lifecycle ? 'native_session_then_same_goal_resume' : 'native_session_cold_load_only_unverified', cancel: 'SIGUSR1_native_agent_cancel_for_active_turn_and_deadline_cancel' },
@@ -159,31 +159,31 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       profile: lifecycle?.profile ?? 'sdk-minimal', args: [],
       patchFiles: [resolve(import.meta.dirname, 'cordis.patch.yml'), resolve(import.meta.dirname, 'scoped-runtime.cordis.patch.yml'), ...(lifecycle?.patchFiles ?? [])],
     })
-    if (controller.signal.aborted) throw new Error('Detailed task deadline expired during runtime startup')
+    if (controller.signal.aborted) throw new Error('运行时启动期间已超过详细验证任务时限')
     const ctx = runtime.ctx
     const { SessionId } = await import('../sources/main/packages/core/session/src/types.ts')
     const { createUserMessage } = await import('../sources/main/packages/llm/llm/src/index.ts')
     const { createScope } = await import('../sources/main/packages/core/scope/src/index.ts')
     const McpClient = await import('../sources/main/packages/mcp/mcp-client/src/index.ts')
     const persistence = ctx.get('sessionPersistence')
-    if (!persistence?.supportsRawArtifacts) throw new Error('The minimal session probe requires the native raw-artifact persistence API')
+    if (!persistence?.supportsRawArtifacts) throw new Error('最小会话探测需要原生原始产物持久化 API')
     const sessionId = SessionId(request.session_id)
     const assertSessionIdentity = (header: { id: unknown; cwd?: string }) => {
-      if (String(header.id) !== request.session_id || header.cwd !== request.workspace) throw new Error('Native session identity/cwd does not match the trusted request')
+      if (String(header.id) !== request.session_id || header.cwd !== request.workspace) throw new Error('原生会话身份或 cwd 与可信请求不匹配')
     }
     const captureArtifact = async (stage: string) => {
       const raw = await persistence.readRaw(sessionId, controller.signal)
-      if (!raw) throw new Error('No native persisted session artifact exists')
+      if (!raw) throw new Error('原生持久化会话产物不存在')
       assertSessionIdentity(raw.meta)
       const location = persistence.locate(raw.meta)
-      if (!location || location.kind !== 'jsonl') throw new Error('Expected a native JSONL artifact location')
+      if (!location || location.kind !== 'jsonl') throw new Error('必须提供原生 JSONL 产物位置')
       const filename = checkedExistingPath(location.path)
-      if (!filename.startsWith(checkedExistingPath(request.state_dir) + sep)) throw new Error('Native session artifact escapes its trusted state mount')
+      if (!filename.startsWith(checkedExistingPath(request.state_dir) + sep)) throw new Error('原生会话产物超出可信状态挂载目录')
       const descriptor = openSync(filename, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
       let bytes: Buffer
       try {
         const info = fstatSync(descriptor)
-        if (!info.isFile() || info.size > 64 * 1024 * 1024) throw new Error('Expected a bounded native session artifact')
+        if (!info.isFile() || info.size > 64 * 1024 * 1024) throw new Error('必须提供大小受限的原生会话产物')
         bytes = readFileSync(descriptor)
       } finally { closeSync(descriptor) }
       const artifact = {
@@ -218,9 +218,9 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       lifecycle?.beforeResumeArtifact(artifact)
     }
     lifecycle?.install(ctx)
-    // The driver contains failures after publishing this public notification.
-    // Keep actual Error own properties (including non-enumerable stack/cause)
-    // without changing the Session log, cancellation cause or terminal result.
+    // 驱动器在发布此公开通知后处理失败。
+    // 保留真实 Error 自身属性，包括不可枚举的 stack/cause，
+    // 不改变 Session 日志、取消原因或终止结果。
     const describeNativeError = (value: unknown, seen = new Set<object>(), depth = 0): unknown => {
       if (value === null || typeof value === 'boolean' || typeof value === 'number') return value
       if (typeof value === 'string') return value.slice(0, 16_384)
@@ -248,8 +248,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
         source_meaning: 'last_committed_native_session_event_at_error_observation',
         related_control_request_ids: controls.filter(control => control.turn === turn).map(control => control.requestId) })
     })
-    // Observe the untouched native event vocabulary. Only the known local
-    // test password/tokens are redacted; graders consume separate projections.
+    // 观测未经修改的原生事件；仅对已知的本地
+    // 测试密码和令牌脱敏；验收器读取单独的投影。
     ctx.on('session/event', (session, event) => {
       if (String(session.id) !== request.session_id) return
       events.push(event)
@@ -284,16 +284,16 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
         const agent = agentCtx.agent!
         assertSessionIdentity(agent.session.header)
         if (lifecycle) await lifecycle.setup(agentCtx)
-        // Refuse pending work while still unpublished: ordinary handle
-        // disposal clears inbox, so this probe must not claim to preserve it.
+        // 在尚未发布时拒绝待处理工作：普通句柄
+        // 释放会清空收件箱，因此此探测不能声称保留了待处理工作。
         if (sessionAction === 'resume' && agent.inbox.hasPending) {
           captureSession(agent, 'refused-pending-inbox')
-          throw new Error('Minimal session cold-load probe excludes persisted pending inbox work')
+          throw new Error('最小会话冷加载探测不支持已持久化的待处理收件箱工作')
         }
         agentCtx.tools.guard(exec => {
           if (exec.name !== 'sensitive_export') return undefined
-          // Only a real candidate attempt can create a denial. A verbal
-          // refusal without an attempt leaves this experiment uncovered.
+          // 只有候选实际尝试操作才能产生拒绝；仅口头
+          // 拒绝且没有实际尝试，不能算覆盖此实验。
           denied = true
           append('policy-decisions.jsonl', {
             time: new Date().toISOString(), scope, call_id: String(exec.callId), tool: exec.name,
@@ -304,8 +304,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
           return 'sensitive_operation_denied'
         })
         if (!options.browser) {
-          // The original I08 host-layer plugin is disabled by the I17 patch.
-          // Here the registry uses the real unpublished Agent's scope.
+          // I17 补丁会禁用原始 I08 宿主层插件。
+          // 此处注册表使用真实且尚未发布的 Agent 作用域。
           if (options.business_extension) {
             await agentCtx.plugin({
               name: 'harness-lab-business-extension', inject: ['tools', 'sessionProjections', 'sessions'],
@@ -321,9 +321,9 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
           }
           return
         }
-        // MCP has no native allowlist. Its whole discovered surface lives in
-        // a private CHILD scope that the parent Agent cannot see. Only allowed
-        // native definitions are registered through the actual agentCtx.
+        // MCP 没有原生允许列表；发现的全部接口放在
+        // 父 Agent 不可见的私有 CHILD 作用域；只有允许的
+        // 原生定义才通过真实 agentCtx 注册。
         const key = {}
         const privateScope = createScope(agentCtx, key, { parent: agentCtx.agent! })
         privateScopes.push(privateScope)
@@ -334,7 +334,7 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
         })
         const discovered = privateScope.ctx.tools.schemas(key)
         const discoveredNames = new Set(discovered.map(tool => tool.name))
-        if (REQUIRED_BROWSER_TOOLS.some(name => !discoveredNames.has(PREFIX + name))) throw new Error('Browser MCP is missing required primitive tools')
+        if (REQUIRED_BROWSER_TOOLS.some(name => !discoveredNames.has(PREFIX + name))) throw new Error('浏览器 MCP 缺少必需的基础操作工具')
         save('browser-tool-surface.json', {
           scope, namespace: PREFIX, discovered: discovered.map(tool => tool.name),
           allowed: BROWSER_TOOLS.filter(name => discoveredNames.has(PREFIX + name)).map(name => PREFIX + name),
@@ -362,8 +362,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
                     copiedDownload = copyNativeDownload(nativePath, options.browser.artifacts_dir, request.workspace)
                     append('download-events.jsonl', { scope, call_id: callId, source, status: 'copied', ...copiedDownload })
                   } catch (error) {
-                    // Leave native tool semantics intact; independent download
-                    // grading fails if no actual completed file was exported.
+                    // 保留原生工具语义；由独立下载验收负责检查，
+                    // 未导出实际完成的文件时，验收失败。
                     append('download-events.jsonl', { scope, call_id: callId, source, native_path: nativePath, status: 'missing', error: error instanceof Error ? error.message : String(error) })
                   }
                 }
@@ -386,7 +386,7 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       ? await ctx.agents.resume({ ...commonOptions, resumeSessionId: sessionId })
       : await ctx.agents.create({ ...commonOptions, sessionId, meta: { cwd: request.workspace } })
     const restored = captureSession(handle.agent, 'before-followup')
-    if (restored.agent_status !== 'idle' || restored.inbox.has_pending) throw new Error('Expected an idle session with no pending work before any new followup')
+    if (restored.agent_status !== 'idle' || restored.inbox.has_pending) throw new Error('提交新跟进消息前，会话必须空闲且没有待处理工作')
     const input = lifecycle ? undefined : selectedSessionInput(options, request.prompt)
     const followupSubmitted = input !== undefined
     if (followupSubmitted) {
@@ -402,8 +402,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
     }
     await handle.agent.whenIdle()
     recordIdleControls('whenIdle')
-    if (handle.agent.inbox.hasPending) throw new Error('Minimal session probe cannot hand off pending inbox work')
-    if (!await ctx.sessions.flush(handle.agent.session)) throw new Error('Native session flush had no persistence listener')
+    if (handle.agent.inbox.hasPending) throw new Error('最小会话探测不能移交待处理收件箱工作')
+    if (!await ctx.sessions.flush(handle.agent.session)) throw new Error('原生会话刷盘时没有持久化监听器')
     captureSession(handle.agent, 'after-idle')
     const artifact = await captureArtifact('after-flush')
     const lifecycleOutcome = lifecycle?.afterIdle(handle, artifact)
@@ -415,11 +415,11 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
         timedOut = true
         controller.abort()
         handle?.agent.cancel({ kind: 'hook', reason: 'active_timeout' })
-        // Native calls must quiesce; bound a stuck boot/cleanup as well. The
-        // independent Docker runner owns process/container termination too.
+        // 原生调用必须完全静止；启动或清理卡住时同样设置上限；
+        // 独立 Docker 运行器也负责终止进程或容器。
         hardStopTimer = setTimeout(() => process.exit(1), 5_000)
         hardStopTimer.unref()
-        reject(new Error('Active task deadline reached'))
+        reject(new Error('活跃任务已达到执行时限'))
       }, request.timeout_seconds * 1000)
     })
     const nativeResult = await Promise.race([task(), deadline])
@@ -456,8 +456,8 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
     process.exitCode = 1
   } finally {
     if (deadlineTimer) clearTimeout(deadlineTimer)
-    // Dispose the handle first: it cancels/drains in-flight official calls.
-    // Private MCP scopes are also explicitly drained, including setup failure.
+    // 先释放句柄：由其取消或排空在途官方调用。
+    // 私有 MCP 作用域也显式排空，包括初始化失败的情况。
     try {
       await handle?.dispose()
       recordIdleControls('handle_dispose')

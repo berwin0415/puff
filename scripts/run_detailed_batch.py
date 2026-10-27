@@ -1,8 +1,6 @@
-"""Run detailed Docker cases serially and retain a frozen external batch index.
+"""串行运行 Docker 详细用例，并保留冻结的外部批次索引。
 
-This host scheduler starts the existing run_detailed.py entry with this Python
-interpreter. Agents, model requests, task setup and verdicts stay in Docker.
-Child output is private external evidence; stdout contains JSON summaries only.
+宿主调度器使用当前 Python 解释器启动已有的 run_detailed.py 入口。Agent、模型请求、任务准备和判定均留在 Docker 内。子进程输出作为私有外部证据；标准输出仅包含 JSON 摘要。
 """
 from __future__ import annotations
 
@@ -33,7 +31,7 @@ TASK_FILES = {"tools": "tools.yaml", "browser": "browser.yaml", "sensitive": "co
 
 
 class BatchStopped(RuntimeError):
-    """A public, credential-free integrity reason suitable for the batch index."""
+    """可写入批次索引的公开完整性原因，不含凭证。"""
 
 
 def now():
@@ -42,22 +40,22 @@ def now():
 
 def digest(path):
     if path.is_symlink() or not path.is_file():
-        raise BatchStopped("Required pinned material is not a regular file")
+        raise BatchStopped('必需的固定材料不是普通文件')
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def read_object(path):
     if path.is_symlink() or not path.is_file():
-        raise BatchStopped("Missing complete regular verdict or manifest")
+        raise BatchStopped('缺少完整且为普通文件的判定或清单')
     value = json.loads(path.read_text())
     if not isinstance(value, dict):
-        raise BatchStopped("Evidence record is not an object")
+        raise BatchStopped('证据记录不是对象')
     return value
 
 
 def save(path, record, *, first=False):
-    # The directory is freshly reserved and is never mounted into a candidate.
-    # A private file also keeps captured child output away from other users.
+    # 目录为新建预留，且从不挂载到候选。
+    # 私有文件也使捕获的子进程输出不被其他用户读取。
     if first:
         with path.open("x") as stream:
             path.chmod(0o600)
@@ -81,7 +79,7 @@ class DetailedBatch:
         self.cases = tuple(args.cases or (SMOKE_CASES if args.phase == "smoke" else FORMAL_CASES))
         self.seeds = tuple(args.seeds or ((101,) if args.phase == "smoke" else (101, 202, 303)))
         if len(set(self.cases)) != len(self.cases) or len(set(self.seeds)) != len(self.seeds):
-            raise BatchStopped("Duplicate cases or seeds would reuse evidence")
+            raise BatchStopped('重复用例或种子会复用证据')
         self.day = datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
         self.data_root = self.config.host_data_root
         self.index = self.config.paths_for("detailed", args.batch_id, args.candidate, "alice", "main",
@@ -105,10 +103,10 @@ class DetailedBatch:
         self.image_tags = {name: self.services[name]["image"] for name in sorted(names)}
 
     def assert_clean(self):
-        # Child returns only after its finally/cleanup. A failed removal must
-        # stop the batch even if the process produced a complete verdict.
+        # 子进程仅在 finally 和清理结束后返回。即使已生成完整判定，
+        # 删除失败也必须停止批次。
         if self.lab.containers():
-            raise BatchStopped("Current experiment containers remain; cleanup must complete before the next run")
+            raise BatchStopped('当前实验容器仍存在；必须清理完成后再开始下一轮')
 
     def image_ids(self):
         result = {}
@@ -117,7 +115,7 @@ class DetailedBatch:
                 capture=True, check=False, timeout=20)
             value = reply.stdout.strip()
             if reply.returncode or not value.startswith("sha256:") or len(value) != 71:
-                raise BatchStopped("A required local Docker image cannot be pinned")
+                raise BatchStopped('无法固定必需的本地 Docker 镜像')
             result[tag] = value
         return result
 
@@ -129,7 +127,7 @@ class DetailedBatch:
         if (any(TASK_FILES[case] not in tasks for case in self.cases)
                 or adapter_record.get("candidate") != self.args.candidate
                 or not isinstance(export, str) or len(export) != 64):
-            raise BatchStopped("Required frozen tasks or candidate adapter inventory are incomplete")
+            raise BatchStopped('必需的冻结任务或候选适配器清单不完整')
         return {"task_hashes": tasks,
             "adapter_manifest_path": str(adapter), "adapter_manifest_sha256": digest(adapter),
             "adapter_export_sha256": export,
@@ -139,29 +137,29 @@ class DetailedBatch:
 
     def assert_frozen(self):
         if self.image_ids() != self.record["image_ids"]:
-            raise BatchStopped("Docker image tags drifted from the batch pins")
+            raise BatchStopped('Docker 镜像标签偏离批次固定值')
         if self.material_hashes() != self.record["materials"]:
-            raise BatchStopped("Task, adapter manifest or scheduler material drifted during the batch")
+            raise BatchStopped('批次运行期间任务、适配器清单或调度材料发生变化')
 
     def assert_fresh_run(self, item):
         run_id = item["run_id"]
         paths = self.config.paths_for("detailed", run_id, self.args.candidate, "alice", "main", run_id,
             case=item["case"], date=self.day)
         if any(path.exists() or path.is_symlink() for path in vars(paths).values()):
-            raise BatchStopped("Planned run evidence or state already exists; use a fresh prefix")
+            raise BatchStopped('计划运行的证据或状态已存在；请使用新前缀')
         if any((self.data_root / "runs").glob(f"*/*/*/{run_id}")):
-            raise BatchStopped("Planned run ID already has external evidence on another date or case")
+            raise BatchStopped('计划运行 ID 在其他日期或用例下已有外部证据')
 
     def completed_evidence(self, item, process_exit):
         matches = list((self.data_root / "runs").glob(f"*/{self.args.candidate}/{item['case']}/{item['run_id']}"))
         if len(matches) != 1:
-            raise BatchStopped("The run did not produce exactly one external evidence directory")
+            raise BatchStopped('本轮未生成且仅生成一个外部证据目录')
         directory = matches[0]
         manifest_path = directory / "manifest.json"
         manifest, verdict = read_object(manifest_path), read_object(directory / "verdict.json")
         identity = {"run_id": item["run_id"], "candidate": self.args.candidate, "case": item["case"], "seed": item["seed"], "experiment_id": "detailed"}
         if any(record.get(key) != value for record in (manifest, verdict) for key, value in identity.items()):
-            raise BatchStopped("Manifest or verdict identity does not match the scheduled run")
+            raise BatchStopped('清单或判定身份与计划运行不一致')
         checks = verdict.get("checks")
         if (type(verdict.get("passed")) is not bool or not isinstance(verdict.get("metrics"), dict)
                 or not isinstance(checks, list) or not checks or any(not isinstance(check, dict)
@@ -170,21 +168,21 @@ class DetailedBatch:
                 or type(manifest.get("candidate_exit_code")) is not int
                 or manifest.get("grade_exit_code") != (0 if verdict["passed"] else 1)
                 or process_exit != (0 if verdict["passed"] else 1)):
-            raise BatchStopped("Verdict, process exit and manifest are incomplete or inconsistent")
+            raise BatchStopped('判定、进程退出和清单不完整或不一致')
         input_ = read_object(directory / "input.json")
         expected_task = self.record["materials"]["task_hashes"][TASK_FILES[item["case"]]]
         if input_.get("task_sha256") != expected_task:
-            raise BatchStopped("The actual prepared task differs from the batch's frozen YAML")
+            raise BatchStopped('实际准备的任务与批次冻结的 YAML 不同')
         containers = manifest.get("containers")
         if not isinstance(containers, list):
-            raise BatchStopped("Manifest has no retained Docker worker facts")
+            raise BatchStopped('清单未保留 Docker Worker 事实')
         tag = self.image_tags[self.worker_service]
         workers = [row for row in containers if row.get("image_tag") == tag]
         if len(workers) != 1 or workers[0].get("image_id") != self.record["candidate_image_id"]:
-            raise BatchStopped("The actual worker image differs from the candidate image pin")
+            raise BatchStopped('实际 Worker 镜像与候选固定镜像不同')
         for container in containers:
             if container.get("image_tag") in self.record["image_ids"] and container.get("image_id") != self.record["image_ids"][container["image_tag"]]:
-                raise BatchStopped("An actual service image differs from the batch image pins")
+                raise BatchStopped('实际服务镜像与批次固定镜像不同')
         return {"passed": verdict["passed"], "failed_checks": [check["name"] for check in checks if not check["passed"]],
             "metrics": verdict["metrics"], "exit": process_exit, "manifest": str(manifest_path),
             "candidate_exit_code": manifest["candidate_exit_code"], "grade_exit_code": manifest["grade_exit_code"],
@@ -192,7 +190,7 @@ class DetailedBatch:
 
     def run_locked(self):
         if any((self.data_root / "runs").glob(f"*/*/runtime/{self.args.batch_id}")):
-            raise BatchStopped("Batch ID already exists; batch evidence cannot be overwritten or resumed")
+            raise BatchStopped('批次 ID 已存在；不能覆盖或续写批次证据')
         for item in self.plan:
             self.assert_fresh_run(item)
         self.index.mkdir(parents=True, exist_ok=False)
@@ -226,8 +224,8 @@ class DetailedBatch:
                 evidence = list((self.data_root / "runs").glob(f"*/{self.args.candidate}/{item['case']}/{item['run_id']}"))
                 if len(evidence) == 1:
                     active["manifest"] = str(evidence[0] / "manifest.json")
-                # Never start another paid run until all prior cleanup, pins
-                # and actual evidence have been checked independently.
+                # 在独立核验前轮全部清理、固定材料
+                # 和实际证据之前，不启动下一轮付费运行。
                 self.assert_clean()
                 self.assert_frozen()
                 active.update(self.completed_evidence(item, reply.returncode))
@@ -240,7 +238,7 @@ class DetailedBatch:
             self.record["failed_checks"] = sorted({check for row in self.record["runs"] for check in row["failed_checks"]})
             return 0 if self.record["passed"] else 1
         except (Exception, KeyboardInterrupt) as error:
-            reason = str(error) if isinstance(error, BatchStopped) else "Batch orchestration stopped; inspect external batch evidence"
+            reason = str(error) if isinstance(error, BatchStopped) else '批次编排已停止；请检查外部批次证据'
             self.record.update({"status": "stopped", "passed": False, "stop_reason": reason, "failed_checks": ["batch_integrity"]})
             if active is not None:
                 active.update({"status": "integrity_stopped", "passed": False,
@@ -259,15 +257,15 @@ class DetailedBatch:
 
     def run(self):
         self.config.initialize_layout()
-        # Coordinate batches without holding any Docker resources ourselves.
+        # 协调批次，自身不占用任何 Docker 资源。
         lock_path = self.data_root / "runs/.detailed-batch.lock"
         if lock_path.is_symlink():
-            raise BatchStopped("Batch lock must not follow a symlink")
+            raise BatchStopped('批次锁不能跟随符号链接')
         with lock_path.open("a") as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                raise BatchStopped("Another detailed batch owns the serial execution lock") from None
+                raise BatchStopped('另一详细批次已持有串行执行锁') from None
             return self.run_locked()
 
 
@@ -283,8 +281,8 @@ def main():
     try:
         return DetailedBatch(args).run()
     except Exception:
-        # Raw subprocess errors can include captured service output. Keep
-        # bootstrap failures structured too; no credentials or raw log echo.
+        # 原始子进程错误可能包含捕获的服务输出。启动准备失败
+        # 也保持结构化，不回显凭证或原始日志。
         print(json.dumps({"batch_id": args.batch_id, "passed": False, "failed_checks": ["batch_preflight"],
             "metrics": {}, "exit": 1, "manifest": None}), flush=True)
         return 1

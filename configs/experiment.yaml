@@ -4,7 +4,7 @@ paths:
   data_root: /Users/hanbowen01/harness-lab-data
   container_data_root: /data
 
-# These are variable names only. Values are injected at runtime, never read here.
+# 此处仅保存变量名；值在运行时注入，不在这里读取。
 model:
   api_base_url_env: MODEL_API_BASE_URL
   api_key_env: MODEL_API_KEY
@@ -16,7 +16,7 @@ budget:
   max_retries: 2
   pause_wait_seconds: 600
   budget_usd_reference: 1.0
-  # Price information and an actual money limiter are not implemented yet.
+  # 尚未实现价格信息和实际金额限额。
   usd_limit_enforced: false
   price_source: null
 
@@ -29,7 +29,7 @@ concurrency:
   max_active_tasks: 2
   idle_user_counts: [2, 5, 10]
 
-# Total across the services in one experiment, not a per-container allowance.
+# 单次实验全部服务的总资源预算，不是每个容器的配额。
 resources:
   memory_bytes: 6442450944
   cpus: 3

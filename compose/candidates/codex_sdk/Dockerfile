@@ -6,8 +6,8 @@ ENV NODE_OPTIONS=--max-old-space-size=1024 \
     DO_NOT_TRACK=1 \
     OTEL_SDK_DISABLED=true
 
-# These are the complete official three-package Linux arm64 runtime closure.
-# No npm resolution, install scripts, source compilation, or model calls occur.
+# 此处包含官方 Linux arm64 运行时完整的三个包及依赖集合。
+# 不进行 npm 解析、不执行安装脚本、不编译源码，也不调用模型。
 COPY sources/main /opt/materials/sources/main
 COPY SOURCE_MANIFEST.json REGISTRY_MANIFEST.json LAB_ADAPTER_MANIFEST.json /opt/materials/
 COPY registry /opt/materials/registry

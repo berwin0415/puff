@@ -1,4 +1,4 @@
-/** Experiment control only: official HTTP disconnect and public terminal query. */
+/** 仅供实验控制：使用官方 HTTP 断开机制和公开终止状态查询。 */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 function rows(filename) {
   if (!existsSync(filename)) return []
   const text = readFileSync(filename, 'utf8')
-  if (text.length > 32 * 1024 * 1024) throw new Error('Unbounded native event evidence')
+  if (text.length > 32 * 1024 * 1024) throw new Error('原生事件证据超过大小上限')
   return text.slice(0, text.lastIndexOf('\n') + 1).split('\n').flatMap((line, index) => line ? [{ row: JSON.parse(line), source: { path: 'raw-events.jsonl', line: index + 1 } }] : [])
 }
 
@@ -17,13 +17,13 @@ function assistantTimestamp(row) {
   return Math.max(0, ...(row.event?.messages ?? []).filter(message => message.role === 'assistant').map(message => Number.isFinite(message.timestamp) ? message.timestamp : 0))
 }
 
-/** A timeout from agent.wait is an observation, never a terminal confirmation. */
+/** agent.wait 超时仅是观测结果，不代表已确认终止。 */
 export function isCancelledTerminal(value, runId) {
   return value?.runId === runId && value.status === 'error' && value.stopReason === 'aborted'
     && Number.isFinite(value.endedAt) && value.pendingError !== true && value.yielded !== true
 }
 
-/** Own only this HTTP client's signal; aborting it is a request, never confirmation. */
+/** 仅管理此 HTTP 客户端的信号；中止只是请求，不代表已确认取消。 */
 export function createHttpTaskTransport({ request, scope, sessionKey, encode, isDeadlineAborted }) {
   const controller = new AbortController()
   const transportId = request.run_id + ':http:1'
@@ -38,31 +38,31 @@ export function createHttpTaskTransport({ request, scope, sessionKey, encode, is
     signal: controller.signal,
     get snapshot() { return { state, runId, transportId, settled } },
     start() {
-      if (state !== 'unsubmitted') throw new Error('HTTP task has already been submitted')
+      if (state !== 'unsubmitted') throw new Error('HTTP 任务已经提交')
       state = 'submitted'
       requestSource = append({ phase: 'requested', method: 'POST', path: '/v1/chat/completions' })
     },
     receive(response) {
-      if (state !== 'submitted') throw new Error('Unexpected HTTP response state')
+      if (state !== 'submitted') throw new Error('HTTP 响应状态不符合预期')
       state = 'reading'
       responseSource = append({ phase: 'response_received', status: response.status, content_type: response.headers.get('content-type'), request_source: requestSource })
     },
     observeRun(value, rawSource) {
-      if (runId !== undefined && runId !== value) throw new Error('HTTP task run identity changed')
+      if (runId !== undefined && runId !== value) throw new Error('HTTP 任务运行身份发生变化')
       if (runId === undefined) {
         runId = value
         runSource = append({ phase: 'run_observed', run_id: runId, source: rawSource, response_source: responseSource })
       }
     },
     disconnect({ requestId, nativeRunId }) {
-      if (state !== 'reading' || disconnect || controller.signal.aborted || isDeadlineAborted() || runId !== nativeRunId) throw new Error('No matching live HTTP task to disconnect')
+      if (state !== 'reading' || disconnect || controller.signal.aborted || isDeadlineAborted() || runId !== nativeRunId) throw new Error('没有可断开的匹配活跃 HTTP 任务')
       const params = { method: 'POST', path: '/v1/chat/completions', transport_id: transportId, runId }
       const source = append({ phase: 'disconnect_requested', request_id: requestId, run_id: runId, params,
         run_source: runSource, signal_was_aborted: false })
       disconnect = { requestId, runId, source }
-      // The official Gateway watches premature HTTP connection close and passes
-      // its resulting abortSignal into the unchanged native Agent command.
-      controller.abort(new DOMException('Harness requested current HTTP client disconnect', 'AbortError'))
+      // 官方 Gateway 监听 HTTP 连接提前关闭，并将产生的
+      // abortSignal 传入未经修改的原生 Agent 命令。
+      controller.abort(new DOMException('Harness 已请求断开当前 HTTP 客户端', 'AbortError'))
       const result = { transport_id: transportId, runId, disconnect_requested: true, signal_aborted: controller.signal.aborted }
       const returnedSource = append({ phase: 'disconnect_returned', request_id: requestId, run_id: runId,
         request_source: source, result, terminal_confirmation: false })
@@ -96,15 +96,15 @@ export function createNativeCancelControl({ request, scope, sessionKey, encode, 
   const nativeHooks = () => rows(resolve(request.output_dir, 'raw-events.jsonl')).filter(({ row }) => row.context?.agentId === 'lab-a' && row.context?.sessionKey === sessionKey)
   const rpc = async (method, params) => {
     const source = append('gateway-control-events.jsonl', { scope, time: new Date().toISOString(), phase: 'requested', method, params })
-    // Official config-derived local CLI authentication reads the owner token
-    // from its existing environment/config; no token enters argv or evidence.
+    // 官方基于配置的本地 CLI 认证从已有环境或配置
+    // 读取所有者令牌；令牌不会进入 argv 或证据。
     const child = spawn(process.execPath, ['/opt/openclaw/openclaw.mjs', 'gateway', 'call', method, '--port', '18789', '--params', JSON.stringify(params), '--json', '--timeout', '20000'], {
       cwd: '/opt/openclaw', env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
     })
     let stdout = '', stderr = '', timer, killTimer, settleTimer
     let boundedError, outputTruncated = false
-    // These deadlines terminate only this one official CLI client. The Gateway
-    // is never killed as an implementation or confirmation of native cancel.
+    // 这些时限仅终止当前官方 CLI 客户端；不会杀死 Gateway
+    // 来实现或确认原生取消。
     const stopHelper = error => {
       boundedError ??= error
       if (child.exitCode !== null || child.signalCode !== null || killTimer) return
@@ -118,7 +118,7 @@ export function createNativeCancelControl({ request, scope, sessionKey, encode, 
       else stderr += text.slice(0, remaining)
       if (text.length > remaining) {
         outputTruncated = true
-        stopHelper(new Error('Unbounded official Gateway CLI control response'))
+        stopHelper(new Error('官方 Gateway CLI 控制响应超过大小上限'))
       }
     }
     child.stdout.on('data', chunk => collect('stdout', chunk))
@@ -128,20 +128,20 @@ export function createNativeCancelControl({ request, scope, sessionKey, encode, 
       outcome = await new Promise(resolveExit => {
         child.once('error', error => resolveExit({ code: null, signal: null, error: error.message }))
         child.once('close', (code, signal) => resolveExit({ code, signal }))
-        timer = setTimeout(() => stopHelper(new Error('Official Gateway CLI control deadline reached')), 25000)
+        timer = setTimeout(() => stopHelper(new Error('官方 Gateway CLI 控制已达到执行时限')), 25000)
         settleTimer = setTimeout(() => {
-          stopHelper(new Error('Official Gateway CLI client cleanup did not settle'))
-          resolveExit({ code: null, signal: null, error: 'CLI client close unconfirmed after bounded helper cleanup' })
+          stopHelper(new Error('官方 Gateway CLI 客户端清理尚未完成'))
+          resolveExit({ code: null, signal: null, error: '辅助清理在限定时间内完成后，仍未确认 CLI 客户端已关闭' })
         }, 27000)
       })
       let result
-      try { result = JSON.parse(stdout) } catch { /* Preserve actual malformed CLI output below. */ }
+      try { result = JSON.parse(stdout) } catch { /* 下方保留实际格式错误的 CLI 输出。 */ }
       const responseSource = append('gateway-control-events.jsonl', { scope, time: new Date().toISOString(), phase: 'returned', method, params,
         request_source: source, exit_code: outcome.code, exit_signal: outcome.signal,
         result: result ?? null, stdout, stderr, error: boundedError?.message ?? outcome.error ?? null, output_truncated: outputTruncated,
         evidence_kind: 'official_cli_stdout_json_not_websocket_wire' })
       if (boundedError) throw boundedError
-      if (outcome.code !== 0 || !result || typeof result !== 'object') throw new Error('Official Gateway CLI control failed; see gateway-control-events.jsonl')
+      if (outcome.code !== 0 || !result || typeof result !== 'object') throw new Error('官方 Gateway CLI 控制失败；请查看 gateway-control-events.jsonl')
       return { result, source: responseSource }
     } finally { clearTimeout(timer); clearTimeout(killTimer); clearTimeout(settleTimer) }
   }
@@ -163,7 +163,7 @@ export function createNativeCancelControl({ request, scope, sessionKey, encode, 
           api_executed: false, cancel_confirmed: false, native_status_before: null, native_status_after: null })
         return
       }
-      // Reserve immediately: subsequent signals never queue a future abort.
+      // 立即占用控制机会：后续信号不会排队触发未来中止。
       control = { base: { ...base, native_run_id: runId, source: start.source,
         observed_activity: 'native_llm_input_without_later_agent_end', native_status_api: 'agent.wait' }, apiExecuted: false }
       const current = control
@@ -176,8 +176,8 @@ export function createNativeCancelControl({ request, scope, sessionKey, encode, 
             native_status_after: before.result.status ?? null, native_before_result: before.result, native_before_source: before.source })
           return
         }
-        // The CLI query yields. Recheck actual hooks before acting on this HTTP
-        // client so a naturally ended run is never relabelled as cancelled.
+        // CLI 查询会让出执行；操作此 HTTP 客户端前重新检查实际钩子，
+        // 避免把自然结束的运行重新标为已取消。
         if (nativeHooks().some(({ row, source }) => row.type === 'agent_end' && hookRun(row) === runId && source.line > start.source.line)) {
           append('control-events.jsonl', { ...current.base, time: new Date().toISOString(), phase: 'not_cancelled',
             reason: 'native_agent_end_during_status_query', api_executed: false, cancel_confirmed: false })

@@ -1,7 +1,6 @@
-"""Read only an explicit, completed evidence inventory; never execute candidates.
+"""仅读取明确且已结束的证据清单；不执行候选。
 
-This is a bookkeeping tool, not a grader. It imports only the Python standard
-library and never reads credentials, candidate transcripts or model responses.
+这是记账工具，不是评分器。仅导入 Python 标准库，不读取凭证、候选对话记录或模型响应。
 """
 
 import argparse
@@ -22,8 +21,8 @@ FORMAL_BATCHES = (
     ("agents-sdk", "openai_agents_sdk/runtime/i20-agents-sdk-formal-batch-001/batch.json"),
 )
 
-# No directory discovery: an active/new chain cannot silently enter the total.
-# One chain has one budget. Offline reviews do not create another billed run.
+# 不发现新目录：活动或新链不能静默计入总量。
+# 每条链只有一份预算。离线复核不产生另一轮计费运行。
 I22_CHAINS = (
     ("deepagents_langgraph", "i22-deepagents-baseline-seed-101-001", "baseline", None),
     ("deepagents_langgraph", "i22-deepagents-baseline-seed-202-001", "baseline", None),
@@ -54,7 +53,7 @@ def digest(data):
 def regular(path, data_root):
     path = Path(path)
     relative = path.resolve(strict=True).relative_to(data_root)
-    require("old" not in relative.parts and path.is_file(), "Archived/non-file evidence is forbidden")
+    require("old" not in relative.parts and path.is_file(), '禁止使用归档证据或非文件证据')
     return path
 
 
@@ -65,12 +64,12 @@ def read_json(path, data_root):
 
 
 def summarize_calls(rows):
-    require(isinstance(rows, list), "Call metadata must be a list")
+    require(isinstance(rows, list), '调用元数据必须为列表')
     clean = []
     for row in rows:
-        require(isinstance(row, dict) and set(row) == set(CALL_COLUMNS), "Unexpected call metadata columns")
+        require(isinstance(row, dict) and set(row) == set(CALL_COLUMNS), '调用元数据列不符合预期')
         clean.append({column: row[column] for column in CALL_COLUMNS})
-    require([row["id"] for row in clean] == list(range(1, len(clean) + 1)), "Call IDs are not sequential")
+    require([row["id"] for row in clean] == list(range(1, len(clean) + 1)), '调用 ID 不连续')
     outcomes = Counter(row["outcome"] for row in clean)
     statuses = Counter(str(row["upstream_status"]) for row in clean)
     completed = sum(row["outcome"] == "forwarded" and type(row["upstream_status"]) is int
@@ -82,7 +81,7 @@ def summarize_calls(rows):
 
 
 def verdict_summary(document, reference):
-    require(type(document.get("passed")) is bool, "Verdict has no boolean outcome")
+    require(type(document.get("passed")) is bool, '判定缺少布尔结果')
     return {**reference, "passed": document["passed"],
             "failed_checks": [row["name"] for row in document["checks"] if row["passed"] is False]}
 
@@ -94,15 +93,15 @@ def formal_runs(data_root):
         batches.append({"variant": variant, **batch_ref})
         for row in batch["runs"]:
             run_id = row["run_id"]
-            require(run_id not in seen, "Duplicate formal run")
+            require(run_id not in seen, '正式运行重复')
             seen.add(run_id)
             run_root = Path(row["manifest"]).parent
-            require(run_root.name == run_id and run_root.parent.name == row["case"], "Run identity mismatch")
+            require(run_root.name == run_id and run_root.parent.name == row["case"], '运行身份不匹配')
             verdict, verdict_ref = read_json(run_root / "verdict.json", data_root)
             calls, calls_ref = read_json(run_root / "model-calls.json", data_root)
             usage = summarize_calls(calls)
             require(row["passed"] == verdict["passed"] and row["metrics"]["model_requests"]
-                    == verdict["metrics"]["model_requests"] == usage["reservations"], "Existing records disagree")
+                    == verdict["metrics"]["model_requests"] == usage["reservations"], '现有记录不一致')
             runs.append({"variant": variant, "run_id": run_id, "case": row["case"], "seed": row["seed"],
                          "passed": row["passed"], "verdict": verdict_summary(verdict, verdict_ref),
                          "calls_source": calls_ref, "usage": usage})
@@ -114,7 +113,7 @@ def i22_runs(data_root):
     for candidate, chain_id, category, review in I22_CHAINS:
         run_root = data_root / "runs" / DATE / candidate / "tools" / chain_id
         database = regular(data_root / "budgets/pause-recovery" / chain_id / chain_id / "calls.sqlite", data_root)
-        # Deliberately do not SELECT budget.token_hash or read run.token.
+        # 明确不对 budget.token_hash 执行 SELECT，也不读取 run.token。
         with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, timeout=2) as connection:
             connection.execute("PRAGMA query_only=ON")
             connection.execute("BEGIN")
@@ -128,20 +127,20 @@ def i22_runs(data_root):
             original_hash = reference["sha256"]
             original = document["passed"]
             require(document["chain_id"] == chain_id and document["candidate"] == candidate
-                    and document["metrics"]["reserved_model_calls"] == usage["reservations"], "I22 original outcome mismatch")
+                    and document["metrics"]["reserved_model_calls"] == usage["reservations"], 'I22 原始结果不匹配')
             verdicts.append(verdict_summary(document, reference))
             if review:
                 document, reference = read_json(run_root / "reviews" / review / "verdict.json", data_root)
                 review_calls = document["metrics"].get("reserved_model_calls", document["metrics"].get("model_calls"))
                 require(document["chain_id"] == chain_id and document["candidate"] == candidate
-                        and review_calls == usage["reservations"], "I22 review outcome mismatch")
+                        and review_calls == usage["reservations"], 'I22 复核结果不匹配')
                 require(document.get("original_verdict_sha256", original_hash) == original_hash,
-                        "Review refers to a different original verdict")
+                        '复核引用了不同的原始判定')
                 verdicts.append(verdict_summary(document, reference))
             effective = document["passed"]
         runs.append({"candidate": candidate, "chain_id": chain_id, "category": category,
                      "original_passed": original, "effective_passed": effective, "verdicts": verdicts,
-                     "calls_source": {"path": str(database), "mode": "read-only SQLite snapshot",
+                     "calls_source": {"path": str(database), "mode": '只读 SQLite 快照',
                                       "selected_columns": list(CALL_COLUMNS)}, "usage": usage})
     return runs
 
@@ -171,11 +170,11 @@ def main():
     paused = i22_runs(root)
     summary = {
         "schema": "harness-lab-read-only-usage-inventory/1", "date": DATE,
-        "scope": "Six explicit formal batches and thirteen ended I22 chains; incomplete research ledger, no ranking",
-        "excluded": ["Active/new chains not in I22_CHAINS", "old/", "screening/smoke/cancel/cold-read/calibration",
-                     "I23-I25", "original response/reasoning text", "tokens, secrets and budget binding rows"],
-        "unknown": ["uniform input/output/cache/reasoning token totals", "verified model prices and billed amount",
-                    "human development/debugging hours", "candidate upgrade cost", "full infrastructure cost"],
+        "scope": '明确选定的六个正式批次和十三条已结束 I22 链；调研台账不完整，不排名',
+        "excluded": ['未列入 I22_CHAINS 的活动或新链', "old/", "screening/smoke/cancel/cold-read/calibration",
+                     "I23-I25", '原始响应或推理文本', 'token、密钥和预算绑定行'],
+        "unknown": ['统一的输入、输出、缓存与推理 token 总量', '已核验的模型单价和账单金额',
+                    '人工开发与调试工时', '候选升级成本', '完整基础设施费用'],
         "formal_batches": batches, "formal_runs": formal,
         "formal_groups": aggregate(formal, ("variant", "case"), "passed"),
         "i22_runs": paused, "i22_groups": aggregate(paused, ("candidate", "category"), "effective_passed"),
@@ -185,8 +184,8 @@ def main():
     encoded = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         destination = args.output.resolve()
-        require(not destination.exists(), "Refuse to overwrite an existing snapshot")
-        require(root != destination and root not in destination.parents, "Do not write into the evidence root")
+        require(not destination.exists(), '拒绝覆盖现有快照')
+        require(root != destination and root not in destination.parents, '不能写入证据根目录')
         with destination.open("x") as target:
             target.write(encoded)
     else:

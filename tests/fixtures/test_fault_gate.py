@@ -1,8 +1,8 @@
-"""I23 calibration: real tools/fixture CLIs and HTTP; never an Agent pass.
+"""I23 校准：真实工具、模拟业务 CLI 和 HTTP，不作为 Agent 通过证据。
 
-Run only in the built local Docker validation image. Tests are a draft and have
-not been executed. The child bridge probe only calibrates the injection window;
-it does not stand in for either candidate's native crash recovery.
+仅在构建好的本地 Docker 验收镜像中运行。这些测试最初为尚未
+执行的草稿。子进程工具桥探针只校准故障窗口，不能代替任一
+候选的原生崩溃恢复。
 """
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -63,9 +63,9 @@ class GatedTools:
         selector = selectors.DefaultSelector()
         try:
             selector.register(self.process.stdout, selectors.EVENT_READ)
-            assert selector.select(10), "Tools CLI did not become ready"
+            assert selector.select(10), "工具 CLI 未就绪"
             line = self.process.stdout.readline()
-            assert line, "Tools CLI exited before readiness"
+            assert line, "工具 CLI 在就绪前退出"
             assert self.admin not in line and all(token not in line for token in self.tokens.values())
             self.base = "http://127.0.0.1:" + str(json.loads(line)["port"])
         finally:
@@ -108,7 +108,7 @@ class GatedTools:
             if state["gate"] and state["gate"]["state"] == "hit":
                 return state
             time.sleep(0.05)
-        raise AssertionError("Real prewrite request did not reach the private gate")
+        raise AssertionError("真实预写入请求未到达私有栅栏")
 
     def abandon(self):
         return self.request("POST", "/experiment/admin/prewrite/abandon", admin=True,
@@ -175,8 +175,8 @@ def test_target_never_gets_a_permit_and_abandon_cannot_release_a_live_attempt(tm
             assert tools.abandon().json() == {"abandoned": True, "old_attempt_revoked": True, "released": False}
             refused = blocked.result(timeout=5)
             assert refused.status_code == 410 and "permit" not in refused.json()
-        # This A is deliberately still alive: premature controller abandon is
-        # fail-closed and cannot turn the pending call into a late business write.
+        # 这里刻意保持 A 存活：控制器提前放弃仍须拒绝，
+        # 不能让待执行调用变成稍后发生的业务写入。
         assert tools.call("worker-a", "write", arguments, bridge="a-write", permit="forged" * 8).status_code == 403
         assert tools.report("worker-a", "a-late", arguments).status_code == 403
         admitted = tools.report("worker-b", "b-write", arguments)
@@ -270,7 +270,7 @@ def test_real_bridge_process_is_killed_before_actual_write_and_old_gate_never_re
             assert [row["phase"] for row in map(json.loads, Path(config["events"]).read_text().splitlines())] == ["before_report"]
             assert not any(row["tool"] == "write" and row["phase"] == "start" for row in tools.audit())
             assert tools.ledger()["write_count"] == 0
-            # Reconnect the actual service process with its original private DB.
+            # 使用原私有数据库重新连接真实服务进程。
             tools.stop()
             tools.start()
             assert tools.state()["gate"]["state"] == "abandoned"
@@ -305,9 +305,9 @@ def test_private_database_identity_and_workspace_boundary_reject_rebinding(tmp_p
         "database": str(tmp_path / "private/gate.sqlite"), "admin_token_sha256": digest("admin-token-32-characters-long")}
     original = PrewriteGate(binding, scope, tmp_path / "workspace")
     original.close()
-    with pytest.raises(GateError, match="another private binding"):
+    with pytest.raises(GateError, match='其他私有绑定'):
         PrewriteGate({**binding, "admin_token_sha256": digest("different-admin-token")}, scope, tmp_path / "workspace")
-    with pytest.raises(GateError, match="outside the candidate workspace"):
+    with pytest.raises(GateError, match='候选工作区之外'):
         PrewriteGate({**binding, "database": str(tmp_path / "workspace/gate.sqlite")}, scope, tmp_path / "workspace")
 
 
@@ -341,7 +341,7 @@ def test_consumed_but_not_started_dispatch_stays_unsettled_until_actual_terminal
     pending = gate.snapshot()["unsettled_dispatches"]
     assert len(pending) == 1 and pending[0]["state"] == "admitted"
     assert pending[0]["server_call_id"] == "admitted-before-tool-start"
-    # Service-observed completion, not A death or abandon, closes this counter.
+    # 只有服务观察到的完成才能关闭计数，A 退出或放弃均不能。
     gate.finish_dispatch("admitted-before-tool-start", known=True, status=200)
     assert gate.snapshot()["unsettled_dispatches"] == []
     gate.close()
@@ -363,10 +363,10 @@ def test_real_lost_receipt_remains_unknown_in_dispatch_ledger_without_auto_query
 
 @contextmanager
 def corrupt_committed_reply(fixture, status, body):
-    """Test-only loopback relay: really commit first, then corrupt the reply.
+    """仅供测试的回环代理：先真实提交，再破坏响应。
 
-    This calibrates uncertainty classification; production has no such relay.
-    The independent real fixture ledger remains the business source of truth.
+    用于校准不确定性分类，正式实现没有此代理。
+    独立真实业务账本仍是业务事实依据。
     """
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -452,7 +452,7 @@ def test_committed_but_invalid_fixture_reply_cannot_finish_A_or_admit_B(tmp_path
             assert tools.ledger()["request_count"] == tools.ledger()["write_count"] == 1
             hit_and_abandon(tools, arguments["item_id"])
             assert_unknown_blocks_B(tools, arguments)
-            # Revocation and service restart must not erase an uncertain call.
+            # 撤销与服务重启不能抹去结果不确定的调用。
             tools.stop()
             tools.start()
             assert_unknown_blocks_B(tools, arguments)
@@ -487,10 +487,10 @@ def test_disabled_gate_preserves_original_response_classification(tmp_path, fixt
 
 def synthetic_post_commit_error(kind):
     if kind == "ToolError":
-        return ToolError("Synthetic post-commit tool error")
+        return ToolError("模拟提交后工具错误")
     if kind == "UnicodeDecodeError":
-        return UnicodeDecodeError("utf-8", b"\xff", 0, 1, "synthetic post-commit decoding error")
-    return ValueError("Synthetic post-commit serialization error")
+        return UnicodeDecodeError("utf-8", b"\xff", 0, 1, "模拟提交后解码错误")
+    return ValueError("模拟提交后序列化错误")
 
 
 @pytest.mark.parametrize("kind", ["ToolError", "ValueError", "UnicodeDecodeError"])
@@ -499,8 +499,8 @@ def test_generic_exception_after_actual_commit_remains_unknown(tmp_path, fixture
     user = fixture_process.prepare(experiment_id="fault-recovery", variant="prewrite-calibration",
         write_mode="non_idempotent")["user-a"]
     tools = GatedTools(tmp_path, fixture_process, user)
-    # This test mutates an isolated test service object only. Both its real
-    # FixtureClient and the HTTP handler still execute over Docker loopback.
+    # 本测试只修改隔离的测试服务对象；实际 FixtureClient
+    # 与 HTTP 处理器仍通过 Docker 回环网络执行。
     server = ToolsHTTPServer(("127.0.0.1", 0), tools.binding, prewrite_binding=tools.private)
     if failure_stage == "tool":
         original = server.tools.call
@@ -559,8 +559,8 @@ def test_revoke_cannot_admit_B_until_all_admitted_A_work_has_a_known_terminal(tm
     with running(tmp_path, fixture_process) as tools:
         assert tools.setup().status_code == 200
         item_id = tools.item()
-        # Open the same private ledger independently to emulate the exact
-        # admission-before-start race without inventing a business request.
+        # 独立打开同一私有账本，模拟调用获准但尚未开始的
+        # 精确竞态，不虚构业务请求。
         gate = PrewriteGate(tools.private, tools.scope, tools.binding["workspace"],
             forbidden_credential_sha256={digest(tools.user["token"])})
         try:
@@ -571,7 +571,7 @@ def test_revoke_cannot_admit_B_until_all_admitted_A_work_has_a_known_terminal(tm
             gate.finish_dispatch("admitted-before-start", known=known, status=200 if known else 502)
             assert tools.call("worker-b", "list_items", {}).status_code == (200 if known else 409)
             if not known:
-                # A later unproved completion cannot silently repair unknown.
+                # 后续未经证明的完成不能静默消除 unknown 状态。
                 gate.finish_dispatch("admitted-before-start", known=True, status=200)
                 assert tools.call("worker-b", "list_items", {}).status_code == 409
                 assert gate.snapshot()["unsettled_dispatches"][0]["state"] == "unknown"

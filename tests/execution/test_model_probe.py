@@ -1,4 +1,4 @@
-"""A CLI's generic 429 must not be mistaken for a proven local budget denial."""
+"""不能把 CLI 的普通429错误误当作已证明的本地预算拒绝。"""
 import json
 
 import pytest

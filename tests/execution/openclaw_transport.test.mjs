@@ -1,4 +1,4 @@
-/** Local HTTP transport calibration only; no OpenClaw, model or business calls. */
+/** 仅校准本地 HTTP 传输，不调用 OpenClaw、模型或业务服务。 */
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
@@ -21,7 +21,7 @@ function fixture(t, deadline = () => false) {
     sessionKey: 'agent:lab-a:offline', encode: JSON.stringify, isDeadlineAborted: deadline }) }
 }
 
-test('actual HTTP reader abort closes only its client and never confirms native cancellation', { timeout: 5000 }, async t => {
+test('实际中止 HTTP 读取仅关闭当前客户端，不能证明原生取消成功', { timeout: 5000 }, async t => {
   const { output, transport } = fixture(t)
   let resolveDisconnect
   const closed = new Promise(resolve => { resolveDisconnect = resolve })
@@ -58,24 +58,24 @@ test('actual HTTP reader abort closes only its client and never confirms native 
   assert.equal(readFileSync(join(output, 'http-response.sse'), 'utf8').includes('[DONE]'), false)
 })
 
-test('wrong run, unsubmitted, repeated and already settled clients cannot schedule future cancellation', t => {
+test('运行不匹配、未提交、重复或已结束的客户端不能安排后续取消', t => {
   const { output, transport } = fixture(t)
   const cancel = () => transport.disconnect({ requestId: 'offline-probe:cancel:1', nativeRunId })
-  assert.throws(cancel, /No matching live HTTP/)
+  assert.throws(cancel, /没有可断开的匹配活跃 HTTP/)
   assert.equal(transport.signal.aborted, false)
   transport.start()
   transport.receive({ status: 200, headers: new Headers({ 'content-type': 'text/event-stream' }) })
   transport.observeRun(nativeRunId, { path: 'raw-events.jsonl', line: 1 })
-  assert.throws(() => transport.disconnect({ requestId: 'wrong-run', nativeRunId: 'other' }), /No matching live HTTP/)
+  assert.throws(() => transport.disconnect({ requestId: 'wrong-run', nativeRunId: 'other' }), /没有可断开的匹配活跃 HTTP/)
   assert.equal(transport.signal.aborted, false)
   cancel()
-  assert.throws(cancel, /No matching live HTTP/)
+  assert.throws(cancel, /没有可断开的匹配活跃 HTTP/)
   writeFileSync(join(output, 'http-response.sse'), 'partial')
   transport.finish({ error: new DOMException('aborted', 'AbortError'), done: false, frameCount: 1, gatewayRunId: nativeRunId })
-  assert.throws(cancel, /No matching live HTTP/)
+  assert.throws(cancel, /没有可断开的匹配活跃 HTTP/)
 })
 
-test('deadline and unrelated read failures cannot become requested cancellation', t => {
+test('超时和无关读取失败不能算作主动取消', t => {
   let deadline = false
   const { output, transport } = fixture(t, () => deadline)
   transport.start()
@@ -90,7 +90,7 @@ test('deadline and unrelated read failures cannot become requested cancellation'
   assert.equal(transport.snapshot.settled.result.outcome, 'read_error')
 })
 
-test('natural HTTP completion and client AbortError alone are never native terminal proof', t => {
+test('HTTP 自然完成或客户端 AbortError 均不能单独证明原生任务结束', t => {
   const { output, transport } = fixture(t)
   transport.start()
   transport.receive({ status: 200, headers: new Headers({ 'content-type': 'text/event-stream' }) })
@@ -99,7 +99,7 @@ test('natural HTTP completion and client AbortError alone are never native termi
   writeFileSync(join(output, 'http-response.sse'), 'data: [DONE]\n\n')
   transport.finish({ done: true, frameCount: 1, gatewayRunId: nativeRunId })
   assert.equal(transport.snapshot.settled.result.outcome, 'complete')
-  assert.throws(() => transport.disconnect({ requestId: 'late', nativeRunId }), /No matching live HTTP/)
+  assert.throws(() => transport.disconnect({ requestId: 'late', nativeRunId }), /没有可断开的匹配活跃 HTTP/)
   const terminal = { runId: nativeRunId, status: 'error', stopReason: 'aborted', endedAt: 1 }
   assert.equal(isCancelledTerminal(terminal, nativeRunId), true)
   for (const changed of [{ status: 'timeout' }, { stopReason: 'rpc' }, { pendingError: true }, { yielded: true }, { endedAt: null }, { runId: 'other' }]) {

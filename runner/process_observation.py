@@ -1,14 +1,11 @@
-"""Independent grading of a trusted host's retained Docker Worker observation.
+"""独立判定可信宿主机留存的 Docker Worker 观测。
 
-This checks process evidence only, never native task completion or tool results.
-Callers supply a trusted WorkerExpectation; the expected identity must not be
-copied from an arbitrary candidate-controlled result. The caller must record
-which fields were pinned before execution and which were observed afterward;
-an end-of-run Docker ID is attribution, not an independent pre-start ID pin.
-Existing detailed manifests and orchestration-status.json are supported without
-rewriting them.
-The CLI runs in the bench container and writes a new, supplemental audit only.
-"""
+只检查进程证据，不判断原生任务完成或工具结果。
+调用方必须提供可信 WorkerExpectation，不能从候选框架可控的任意结果复制预期身份。
+调用方必须记录哪些字段在执行前固定、哪些在执行后观测；
+运行结束时的 Docker ID 只能用于归属，不能替代独立的启动前 ID 固定记录。
+兼容现有详细清单和 orchestration-status.json，无需改写。
+CLI 在 bench 容器中运行，仅写入新的补充审计。"""
 from __future__ import annotations
 
 import argparse
@@ -36,7 +33,7 @@ _CANDIDATES = {
 
 
 def expected_exit_code(candidate: str, case: str) -> int:
-    """Current detailed policy: ordinary 0, cancel 1 except native graph drain 0."""
+    """当前详细验证策略：普通退出码为 0，取消为 1，但原生图 drain 为 0。"""
     return 1 if case == "cancel" and candidate != "deepagents_langgraph" else 0
 
 
@@ -63,34 +60,32 @@ class WorkerExpectation:
 
     def __post_init__(self):
         if not all(_matches(_ID, value) for value in (self.run_id, self.candidate, self.case)):
-            raise ValueError("Expected run, candidate and case must be explicit valid identifiers")
+            raise ValueError("预期 run、candidate 和 case 必须是明确有效的标识")
         if not _matches(_NAME, self.container_name) or not _matches(_DOCKER_ID, self.container_id):
-            raise ValueError("Expected Worker requires an exact name and full Docker ID")
+            raise ValueError("预期 Worker 必须有精确名称和完整 Docker ID")
         if not _matches(_IMAGE_ID, self.image_id):
-            raise ValueError("Expected image must be an immutable sha256 Docker image ID")
+            raise ValueError("预期镜像必须是不可变的 sha256 Docker 镜像 ID")
         if (not isinstance(self.image_tag, str) or not self.image_tag
                 or len(self.image_tag) > 512 or any(char.isspace() for char in self.image_tag)):
-            raise ValueError("Expected image tag is required")
+            raise ValueError("必须提供预期镜像标签")
         if type(self.expected_exit_code) is not int or not 0 <= self.expected_exit_code <= 255:
-            raise ValueError("Expected exit must be an integer Docker exit code")
+            raise ValueError("预期退出码必须是整数 Docker 退出码")
         if self.expected_exit_code != expected_exit_code(self.candidate, self.case):
-            raise ValueError("Expected exit does not match the current task policy; signals are not healthy exits")
+            raise ValueError("预期退出码不匹配当前任务策略；信号退出不能算健康退出")
         for value in (self.memory_limit, self.cpu_nano):
             if value is not None and (type(value) is not int or value <= 0):
-                raise ValueError("Expected resource limits must be positive integer limits")
+                raise ValueError("预期资源上限必须是正整数")
 
 
 def grade_process_observation(manifest: Any, host_observation: Any,
                               expected: WorkerExpectation) -> dict:
-    """Fail closed on missing/ambiguous observations; do not grade service exits.
+    """缺失或含糊的观测一律拒绝，不判定服务进程退出。
 
-    The manifest and host observation must come from trusted host evidence,
-    outside the candidate's writable output mount. This is not a signature or
-    live Docker inspection. Services may be running or have cleanup exit 137;
-    only the unique pinned candidate Worker is evaluated for process health.
-    """
+    清单和宿主机观测必须来自候选框架可写输出挂载之外的可信宿主机证据。
+    此检查不是签名验证，也不会实时检查 Docker。服务可能仍运行或清理时退出 137；
+    仅评估唯一固定的候选 Worker 的进程健康。"""
     if not isinstance(expected, WorkerExpectation):
-        raise TypeError("A trusted WorkerExpectation is required")
+        raise TypeError("必须提供可信 WorkerExpectation")
     manifest = manifest if isinstance(manifest, dict) else {}
     host = host_observation if isinstance(host_observation, dict) else {}
     identity = {key: getattr(expected, key) for key in ("run_id", "candidate", "case")}
@@ -114,32 +109,32 @@ def grade_process_observation(manifest: Any, host_observation: Any,
     exit_codes = (state.get("ExitCode"), manifest.get("candidate_exit_code"), host.get("candidate_exit_code"))
     checks = [
         ("manifest_identity", all(manifest.get(key) == value for key, value in identity.items()),
-         "Trusted manifest identifies the expected run, candidate and case"),
+         "可信清单标识预期 run、candidate 和 case"),
         ("host_identity", all(host.get(key) == value for key, value in identity.items()),
-         "Trusted host process observation identifies this same execution"),
-        ("valid_unique_inventory", bool(inventory_ok), "Retained Docker inventory has full, distinct IDs and names"),
-        ("exactly_one_candidate_worker", bool(unique), "Name, ID, image ID or tag identifies exactly one Worker"),
+         "可信宿主机进程观测标识同一次执行"),
+        ("valid_unique_inventory", bool(inventory_ok), "留存 Docker 清单具有完整且不同的 ID 和名称"),
+        ("exactly_one_candidate_worker", bool(unique), "名称、ID、镜像 ID 或标签必须恰好标识一个 Worker"),
         ("worker_identity", bool(unique) and worker.get("id") == expected.container_id
          and _name(worker.get("name")) == _name(expected.container_name)
          and worker.get("image_id") == expected.image_id and worker.get("image_tag") == expected.image_tag,
-         "The unique observed Worker matches all trusted expected identity fields; pin timing is caller-recorded"),
+         "唯一观测 Worker 匹配全部可信预期身份字段；固定时间由调用方记录"),
         ("worker_exited", bool(unique) and state.get("Status") == "exited"
          and type(state.get("Pid")) is int and state["Pid"] == 0,
-         "Docker reports an exited Worker with no running PID"),
+         "Docker 报告 Worker 已退出且无运行中 PID"),
         ("exit_codes_consistent", bool(unique) and all(type(code) is int
          and code == expected.expected_exit_code for code in exit_codes),
-         "Docker, manifest and host exit codes exactly match the expected exit, including its integer type"),
+         "Docker、清单和宿主机退出码必须精确匹配预期退出码，包含整数类型"),
         ("worker_no_oom", bool(unique) and state.get("OOMKilled") is False,
-         "Docker explicitly reports OOMKilled=false; a successful task cannot override OOM evidence"),
+         "Docker 必须明确报告 OOMKilled=false；任务成功不能覆盖 OOM 证据"),
         ("worker_inactive", bool(unique) and all(state.get(key) is False
          for key in ("Dead", "Running", "Paused", "Restarting")),
-         "All inactive state flags are explicitly false"),
+         "全部非活跃状态标志均明确为 false"),
         ("worker_no_docker_error", bool(unique) and state.get("Error") == "",
-         "Docker reports an explicit empty Error string"),
+         "Docker 明确报告空 Error 字符串"),
         ("worker_resource_limits", bool(unique) and all(type(worker.get(key)) is int
          and worker[key] > 0 and (pin is None or worker[key] == pin)
          for key, pin in (("memory_limit", expected.memory_limit), ("cpu_nano", expected.cpu_nano))),
-         "Observed memory and CPU limits are positive integers and match any supplied pins"),
+         "观测内存和 CPU 上限必须是正整数，并匹配所有已提供固定值"),
     ]
     return {"schema_version": 1, "audit_type": "candidate_docker_process_observation", **identity,
             "passed": all(passed for _, passed, _ in checks),
@@ -147,14 +142,14 @@ def grade_process_observation(manifest: Any, host_observation: Any,
             "expectation": asdict(expected),
             "observed_worker": {key: worker.get(key) for key in (
                 "id", "name", "image_id", "image_tag", "state", "memory_limit", "cpu_nano")} if unique else None,
-            "claim": "Retained trusted-host Worker process evidence only; no task, recovery, resource-efficiency or production-health conclusion"}
+            "claim": "仅为留存的可信宿主机 Worker 进程证据；不对任务、恢复、资源效率或生产健康作结论"}
 
 
 def _object_pairs(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError("Duplicate JSON object key")
+            raise ValueError("重复 JSON 对象键")
         result[key] = value
     return result
 
@@ -162,29 +157,29 @@ def _object_pairs(pairs):
 def _finite_float(value: str) -> float:
     number = float(value)
     if not math.isfinite(number):
-        raise ValueError("Non-finite JSON number")
+        raise ValueError("JSON 数值不是有限数")
     return number
 
 
 def read_evidence(path: Path) -> tuple[dict, dict]:
-    """Read an ordinary non-symlink JSON object and retain its exact byte hash."""
+    """读取普通、非符号链接的 JSON 对象，并保留原始字节哈希。"""
     if not path.is_absolute() or ".." in path.parts:
-        raise ValueError("Evidence paths must be absolute without traversal")
+        raise ValueError("证据路径必须为绝对路径且不含路径穿越")
     if any(parent.is_symlink() for parent in (path, *path.parents)) or not path.is_file():
-        raise ValueError("Evidence must be a regular file without symlink ancestors")
+        raise ValueError("证据必须为普通文件，祖先目录不得含符号链接")
     if path.stat().st_size > _MAX_JSON_BYTES:
-        raise ValueError("Evidence JSON exceeds size limit")
+        raise ValueError("证据 JSON 超出大小限制")
     data = path.read_bytes()
     value = json.loads(data, object_pairs_hook=_object_pairs, parse_float=_finite_float,
-                       parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("Non-finite JSON number")))
+                       parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("JSON 数值不是有限数")))
     if not isinstance(value, dict):
-        raise ValueError("Evidence JSON must be an object")
+        raise ValueError("证据 JSON 必须是对象")
     return value, {"path": str(path), "sha256": hashlib.sha256(data).hexdigest()}
 
 
 def audit_files(manifest_path: Path, host_path: Path, expectation_path: Path,
                 original_verdict_path: Path | None = None) -> dict:
-    """Offline supplemental audit. Never mutate or reinterpret the old verdict."""
+    """离线补充审计，不修改或重新解释旧判定。"""
     manifest, manifest_source = read_evidence(manifest_path)
     host, host_source = read_evidence(host_path)
     expected, expected_source = read_evidence(expectation_path)
@@ -204,11 +199,10 @@ def _status(checks: list[dict]) -> str:
 
 
 def snapshot_health(worker: dict, host_exit: Any, expected_exit: int | None) -> dict:
-    """A missing snapshot field is unknown; explicit OOM/fault evidence is failed.
+    """快照字段缺失记为未知；明确的 OOM/故障证据判失败。
 
-    The host exit may come from the same trusted manifest, which is explicitly
-    weaker than independent identity pins. OOM cannot be hidden by unknown IDs.
-    """
+    宿主机退出码可来自同一可信清单，但这明确弱于独立身份固定证据。
+    不能因 ID 未知而掩盖 OOM。"""
     state = worker.get("state") if isinstance(worker.get("state"), dict) else {}
     checks = []
 
@@ -227,17 +221,15 @@ def snapshot_health(worker: dict, host_exit: Any, expected_exit: int | None) -> 
         type(state["ExitCode"]) is int and type(host_exit) is int
         and state["ExitCode"] == host_exit == expected_exit) if known_exit else None})
     return {"status": _status(checks), "checks": checks,
-            "exit_source": "candidate_exit_code in the same trusted host manifest"}
+            "exit_source": "同一可信宿主机清单中的 candidate_exit_code"}
 
 
 def audit_manifest(manifest_path: Path, *, expectation_path: Path | None = None,
                    host_path: Path | None = None) -> dict:
-    """Supplement old evidence without upgrading unpinned identities to healthy.
+    """补充旧证据，不把未固定的身份提升为健康。
 
-    Complete host snapshots can pass snapshot_health on their own. Independent
-    validation remains unknown without separately supplied Worker identity pins.
-    Original task verdicts, including a passed verdict with OOM, stay untouched.
-    """
+    完整宿主机快照可独立通过 snapshot_health。没有单独提供的 Worker
+    身份固定证据时，独立验证仍为未知。原任务判定保持原样，包括伴随 OOM 的通过结果。"""
     manifest, source = read_evidence(manifest_path)
     candidate, run_id, case = (manifest.get(key) for key in ("candidate", "run_id", "case"))
     known_identity = (candidate in _CANDIDATES if isinstance(candidate, str) else False)
@@ -257,7 +249,7 @@ def audit_manifest(manifest_path: Path, *, expectation_path: Path | None = None,
               "run_id": run_id, "candidate": candidate, "case": case,
               "snapshot_health": health, "independent_identity_check": {"status": "unknown", "checks": []},
               "sources": {"manifest": source},
-              "claim": "Offline audit of retained trusted-host snapshots; original task verdict is not replaced"}
+              "claim": "离线审计留存的可信宿主机快照，不替换原任务判定"}
     original_path = manifest_path.parent / "verdict.json"
     if original_path.exists() or original_path.is_symlink():
         _, original_source = read_evidence(original_path)
@@ -276,8 +268,8 @@ def audit_manifest(manifest_path: Path, *, expectation_path: Path | None = None,
         result["sources"]["expectation"] = pin_source
         result["independent_identity_check"] = {"status": "passed" if strict["passed"] else "failed",
                                                   "checks": strict["checks"], "expectation": asdict(expected),
-                                                  "host_exit_source": "separate host observation" if host_path else "same host manifest"}
-    # Explicit snapshot faults win even when independent identity is unknown.
+                                                  "host_exit_source": "单独的宿主机观测" if host_path else "同一宿主机清单"}
+    # 即使独立身份未知，明确的快照故障也优先判失败。
     statuses = (health["status"], result["independent_identity_check"]["status"])
     result["status"] = "failed" if "failed" in statuses else "passed" if all(x == "passed" for x in statuses) else "unknown"
     return result
@@ -292,20 +284,20 @@ def main(argv=None) -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     from runner.bench import environment
-    info = environment()  # Actual acceptance runs only inside Docker.
+    info = environment()  # 真实验收仅在 Docker 内运行。
     if info["model_credentials_injected"]:
-        raise RuntimeError("Offline process audit must not receive model credentials")
+        raise RuntimeError("离线进程审计不得接收模型凭证")
     manifests = args.manifest + [path / "manifest.json" for path in args.run_dir]
     if not manifests or len(set(manifests)) != len(manifests):
-        raise ValueError("Supply distinct explicit manifest paths or run directories; no data-root scan")
+        raise ValueError("提供不同且明确的清单路径或运行目录；不扫描数据根目录")
     if len(manifests) != 1 and (args.expectation is not None or args.host_observation is not None):
-        raise ValueError("Independent identity pins apply to exactly one run per invocation")
+        raise ValueError("每次调用的独立身份固定值只适用于一次运行")
     if args.host_observation is not None and args.expectation is None:
-        raise ValueError("Separate host observations require explicit Worker identity pins")
+        raise ValueError("单独宿主机观测必须提供明确 Worker 身份固定值")
     if args.output.name != "process-audit.json" or not args.output.is_absolute():
-        raise ValueError("Use a new supplemental process-audit.json output")
+        raise ValueError("使用新的补充 process-audit.json 输出")
     if ".." in args.output.parts or any(parent.is_symlink() for parent in args.output.parents):
-        raise ValueError("Audit output must not traverse symlink directories")
+        raise ValueError("审计输出不能穿越符号链接目录")
     runs = [audit_manifest(path, expectation_path=args.expectation, host_path=args.host_observation) for path in manifests]
     result = {"schema_version": 1, "audit_type": "supplemental_candidate_process_audit_batch",
               "runs": runs, "environment": info,

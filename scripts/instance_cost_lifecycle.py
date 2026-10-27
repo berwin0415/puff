@@ -1,7 +1,6 @@
-"""Bounded I25 rotation-only lifecycle transport; all Agent work stays in Docker.
+"""仅用于 I25 轮换变体的受限生命周期控制；所有 Agent 工作都留在 Docker 内。
 
-No Docker or SDK work is performed by importing this module. This is an explicit
-new-variant path, not a general scheduler or a replacement for the old idle flow.
+导入本模块不会执行 Docker 或 SDK 操作。这是显式的新变体入口，不是通用调度器，也不替代旧空闲流程。
 """
 from __future__ import annotations
 
@@ -33,8 +32,8 @@ class RotationLifecycle:
         self.registrations, self.starts, self.requests, self.terminals, self.deletions = {}, {}, {}, {}, {}
 
     def _latch_failure(self, reason, sequence):
-        # Caller holds only failure_lock. Keep the first fixed reason/sequence;
-        # the sampler always writes the original observation, never a retry.
+        # 调用方只持有 failure_lock。保留首个固定原因和序号；
+        # 采样器始终写入原始观察，不以重试替代。
         if self.first_sampling_failure is None:
             self.first_sampling_failure = {"reason_code": reason, "sample_sequence": sequence,
                 "observed_monotonic": time.monotonic()}
@@ -46,7 +45,7 @@ class RotationLifecycle:
             self.inflight_before = before
 
     def sample_written(self, value):
-        # Called after the original sample is flushed to disk.
+        # 原始样本刷盘后调用。
         with self.failure_lock:
             sequence, reason = value["sample_sequence"], None
             moments = [value.get(key) for key in ("host_before_observer_monotonic", "host_started_monotonic",
@@ -113,7 +112,7 @@ class RotationLifecycle:
         raw = values[0]
         require(raw["Config"].get("Labels", {}).get("org.harness-lab.instance-cost-trial") == self.lab.plan["trial_id"],
             "lifecycle_inspect_foreign_trial")
-        # Match IdleDockerLab.observations' safe projection; never retain Env values.
+        # 与 IdleDockerLab.observations 的安全字段投影一致；不保留 Env 值。
         value = {"id": raw["Id"], "name": raw["Name"], "image_id": raw["Image"], "state": raw["State"],
             "role": raw["Config"].get("Labels", {}).get("org.harness-lab.role"),
             "memory_limit": raw["HostConfig"]["Memory"], "cpu_nano": raw["HostConfig"]["NanoCpus"],
@@ -126,8 +125,8 @@ class RotationLifecycle:
 
     def reserve(self, role):
         rows = self.lab.observations()
-        # Created/not-ready allocations also consume a reservation. A proven
-        # exited container stays registered until rm, but no longer allocates.
+        # 已创建但未就绪的分配也占用资源预留。已证明退出的
+        # 容器在 rm 前仍保留登记，但不再占用资源分配。
         pending = [row for row in rows if row["state"].get("Status") != "exited"]
         memory, cpu = self.lab.caps(role)
         require(sum(row["memory_limit"] for row in pending) + memory <= MEMORY
@@ -136,8 +135,8 @@ class RotationLifecycle:
             "lifecycle_allocation_refused")
 
     def create(self, argv, role, image, *, owner=None):
-        # Only exact creation/registration shares the ps -> inspect lock. No
-        # process startup, import, ready wait, network connection or stop waits.
+        # 仅确切创建和登记共用 ps → inspect 锁；锁内不执行
+        # 进程启动、导入、就绪等待、网络连接或停止等待。
         with self.inventory_lock:
             self.reserve(role)
             identity = self.lab.call(argv, timeout=30).stdout.strip()
@@ -245,7 +244,7 @@ class RotationLifecycle:
         self.remove(identity)
 
     def retire_observer(self, identity):
-        # Register the live object BEFORE its stop file can make it exit.
+        # 在停止文件可能使对象退出前，先登记活跃对象。
         stop = {"requested": True}
         self.request(identity, "service_stop", stop_control_sha256=sha(canonical(stop) + b"\n"))
         exclusive(self.lab.root / "protected/observer/stop.json", stop)
@@ -290,7 +289,7 @@ class RotationLifecycle:
                 phase, kind = self.lab.phase, self.lab.kind
             nonce, before = uuid4().hex, time.monotonic()
             control = self.lab.publish_control(phase, kind, nonce=nonce)
-        # No inventory/registry/control lock is retained while waiting.
+        # 等待期间不持有清单、登记或控制锁。
         path = self.lab.root / "protected/observer/replies" / (nonce + ".json")
         while not path.exists():
             if time.monotonic() > before + 8:
@@ -374,7 +373,7 @@ class RotationLifecycle:
 
 
 class RotationNativeWorker(NativeWorker):
-    """The same fixed DA resident command, with bounded lifecycle boundaries."""
+    """沿用固定的 DA resident 命令，并限制生命周期边界。"""
     def __init__(self, lifecycle, user, stage, *, network="none"):
         lab = lifecycle.lab
         self.lab, self.lifecycle, self.user = lab, lifecycle, user
@@ -417,7 +416,7 @@ class RotationNativeWorker(NativeWorker):
         self.reader = threading.Thread(target=consume, daemon=True)
         self.reader.start()
         lab.attached_workers.append(self)
-        # Real native import/readiness runs outside every sampling lock.
+        # 真实原生导入和就绪检查均在所有采样锁之外执行。
         ready = self.receive()
         require(ready.get("phase") == "ready" and ready.get("owner") == user["owner"], "lifecycle_worker_ready_invalid")
         live, _ = lifecycle.inspect(self.id)

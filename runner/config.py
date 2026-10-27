@@ -1,10 +1,8 @@
-"""Strict experiment settings and paths; this module never reads credentials.
+"""严格校验实验配置和路径；此模块从不读取凭证。
 
-The host and containers use the same relative layout. Call
-``config.for_environment("container")`` inside a container mounted at ``/data``.
-Only a resume chain may reuse its experiment, variant, user and session IDs;
-independent seeds/repetitions must receive distinct experiment or variant IDs.
-"""
+宿主机和容器采用相同相对布局。在挂载于 /data 的容器中调用
+``config.for_environment("container")``。只有恢复链可复用实验、变体、用户和会话 ID；
+独立种子或重复实验必须使用不同的实验或变体 ID。"""
 
 from __future__ import annotations
 
@@ -25,11 +23,11 @@ _LAYOUT = ("state", "workspaces", "fixtures", "budgets", "runs")
 
 
 class ConfigError(ValueError):
-    """Invalid settings or an unsafe experiment path."""
+    """配置无效，或实验路径不安全。"""
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
-    """Reject duplicate YAML keys instead of silently retaining the last one."""
+    """拒绝重复 YAML 键，不静默保留最后一个值。"""
 
 
 def _unique_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode) -> dict[str, Any]:
@@ -37,9 +35,9 @@ def _unique_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode) -> dict[st
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=True)
         if not isinstance(key, str):
-            raise ConfigError("Configuration mapping keys must be strings")
+            raise ConfigError("配置映射的键必须是字符串")
         if key in mapping:
-            raise ConfigError(f"Duplicate configuration key: {key}")
+            raise ConfigError(f"重复的配置键：{key}")
         mapping[key] = loader.construct_object(value_node, deep=True)
     return mapping
 
@@ -125,15 +123,15 @@ class ExperimentConfig:
 
     def for_environment(self, environment: Literal["host", "container"]) -> ExperimentConfig:
         if environment not in ("host", "container"):
-            raise ConfigError("Environment must be host or container")
+            raise ConfigError("environment 必须为 host 或 container")
         return replace(self, environment=environment)
 
     def initialize_layout(self) -> dict[str, Path]:
-        """Create only the five current experiment directories, excluding archives."""
+        """仅创建当前实验的五个目录，不包含归档。"""
         root = _root(self.data_root, "data_root")
         directories = {name: root / name for name in _LAYOUT}
-        # Check all paths before creating anything: an existing unsafe child must
-        # not leave a partially initialized layout behind.
+        # 创建前先检查全部路径：已有不安全子路径时，
+        # 不能留下部分初始化的目录布局。
         for directory in directories.values():
             _safe_path(root, directory)
         for directory in directories.values():
@@ -152,12 +150,11 @@ class ExperimentConfig:
         case: str = "tools",
         date: str | Date | None = None,
     ) -> RunPaths:
-        """Calculate paths without creating them or reading archived data.
+        """计算路径，不创建目录，也不读取归档数据。
 
-        Reusing IDs returns the same state and budget after a container restart.
-        A changed variant separates state, workspaces, fixture ledgers and budgets.
-        Evidence run IDs must be unique across independent experiments.
-        """
+        复用 ID 可在容器重启后获得同一状态和预算。
+        不同变体分别隔离状态、工作区、Fixture 账本和预算。
+        独立实验的证据运行 ID 必须唯一。"""
         components = {
             name: _component(value, name)
             for name, value in {
@@ -190,7 +187,7 @@ class ExperimentConfig:
 
 def _component(value: str, name: str) -> str:
     if not isinstance(value, str) or not _COMPONENT.fullmatch(value) or value.lower() == "old":
-        raise ConfigError(f"Invalid path component: {name}")
+        raise ConfigError(f"无效路径分量：{name}")
     return value
 
 
@@ -207,7 +204,7 @@ def _date(value: str | Date | None) -> str:
         else:
             if parsed.isoformat() == value:
                 return value
-    raise ConfigError("date must be a date or YYYY-MM-DD")
+    raise ConfigError("date 必须是日期对象或 YYYY-MM-DD 格式字符串")
 
 
 def _no_symlinks(path: Path) -> None:
@@ -215,14 +212,14 @@ def _no_symlinks(path: Path) -> None:
     for part in path.parts[1:]:
         current /= part
         if current.is_symlink():
-            raise ConfigError("Experiment paths must not contain symbolic links")
+            raise ConfigError("实验路径不能包含符号链接")
         if current.exists() and not current.is_dir():
-            raise ConfigError("Experiment directory path is occupied by a file")
+            raise ConfigError("实验目录路径已被文件占用")
 
 
 def _root(value: str | Path, name: str) -> Path:
     if not isinstance(value, (str, Path)):
-        raise ConfigError(f"{name} must be an absolute path")
+        raise ConfigError(f"{name} 必须是绝对路径")
     path = Path(value)
     if (
         not path.is_absolute() or path == Path(path.anchor)
@@ -230,10 +227,10 @@ def _root(value: str | Path, name: str) -> Path:
         or "~" in str(path) or "\\" in str(path)
         or any(ord(character) < 32 for character in str(path))
     ):
-        raise ConfigError(f"{name} must be an absolute non-archive directory without traversal")
+        raise ConfigError(f"{name} 必须是绝对目录路径，且不含归档目录或路径穿越")
     _no_symlinks(path)
     if path.exists() and not path.is_dir():
-        raise ConfigError(f"{name} must be a directory")
+        raise ConfigError(f"{name} 必须是目录")
     return path
 
 
@@ -241,64 +238,64 @@ def _safe_path(root: Path, path: Path) -> None:
     try:
         relative = path.relative_to(root)
     except ValueError as exc:
-        raise ConfigError("Experiment path escapes its data root") from exc
+        raise ConfigError("实验路径超出数据根目录") from exc
     if not relative.parts or relative.parts[0] not in _LAYOUT:
-        raise ConfigError("Experiment path is outside the current layout")
+        raise ConfigError("实验路径不在当前目录布局内")
     _no_symlinks(path)
     if path.exists() and not path.is_dir():
-        raise ConfigError("Experiment directory path is occupied by a file")
+        raise ConfigError("实验目录路径已被文件占用")
 
 
 def _mapping(value: Any, name: str, expected: set[str]) -> dict[str, Any]:
     if not isinstance(value, dict):
-        raise ConfigError(f"{name} must be a mapping")
+        raise ConfigError(f"{name} 必须是映射")
     missing = expected - value.keys()
     extra = value.keys() - expected
     if missing or extra:
-        raise ConfigError(f"{name}: missing keys {sorted(missing)}; unknown keys {sorted(extra)}")
+        raise ConfigError(f"{name}：缺少键 {sorted(missing)}；未知键 {sorted(extra)}")
     return value
 
 
 def _integer(value: Any, name: str, *, minimum: int = 1) -> int:
     if type(value) is not int or value < minimum:
-        raise ConfigError(f"{name} must be an integer >= {minimum}")
+        raise ConfigError(f"{name} 必须是整数，且不小于 {minimum}")
     return value
 
 
 def _number(value: Any, name: str) -> float:
     if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
-        raise ConfigError(f"{name} must be a finite positive number")
+        raise ConfigError(f"{name} 必须是有限正数")
     return float(value)
 
 
 def _integers(value: Any, name: str) -> tuple[int, ...]:
     if not isinstance(value, list) or not value:
-        raise ConfigError(f"{name} must be a nonempty integer list")
+        raise ConfigError(f"{name} 必须是非空整数列表")
     values = tuple(_integer(item, name, minimum=0) for item in value)
     if len(set(values)) != len(values):
-        raise ConfigError(f"{name} contains duplicates")
+        raise ConfigError(f"{name} 包含重复值")
     return values
 
 
 def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> ExperimentConfig:
-    """Read strict YAML; model fields contain names only, never secret values."""
+    """严格读取 YAML；模型字段只包含环境变量名，不包含秘密值。"""
     source = Path(path).absolute()
     if ".." in source.parts or any(part.lower() == "old" for part in source.parts):
-        raise ConfigError("Configuration must not be loaded from an archive or traversal path")
+        raise ConfigError("不能从归档目录或路径穿越位置加载配置")
     _no_symlinks(source.parent)
     if source.is_symlink():
-        raise ConfigError("Configuration must not be a symbolic link")
+        raise ConfigError("配置文件不能是符号链接")
     try:
         with source.open(encoding="utf-8") as stream:
             document = yaml.load(stream, Loader=_UniqueKeyLoader)
     except (OSError, yaml.YAMLError) as exc:
-        raise ConfigError("Cannot read experiment configuration") from exc
+        raise ConfigError("无法读取实验配置") from exc
     root = _mapping(document, "configuration", {
         "schema_version", "paths", "model", "budget", "seeds", "concurrency",
         "resources", "sampling", "execution_policy",
     })
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
-        raise ConfigError("Unsupported configuration schema_version")
+        raise ConfigError("不支持的配置 schema_version")
     paths = _mapping(root["paths"], "paths", {"data_root", "container_data_root"})
     host_data_root = _root(paths["data_root"], "paths.data_root")
     container_data_root = _root(paths["container_data_root"], "paths.container_data_root")
@@ -309,13 +306,13 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> ExperimentConfig:
         "name_env": "MODEL_NAME",
     }
     if model != expected_model:
-        raise ConfigError("Model settings must reference the three approved environment variable names")
+        raise ConfigError("模型配置必须引用三个已批准的环境变量名")
     budget = _mapping(root["budget"], "budget", {
         "active_timeout_seconds", "max_model_calls", "max_retries", "pause_wait_seconds",
         "budget_usd_reference", "usd_limit_enforced", "price_source",
     })
     if budget["usd_limit_enforced"] is not False or budget["price_source"] is not None:
-        raise ConfigError("Money enforcement is unavailable; keep usd_limit_enforced false and price_source null")
+        raise ConfigError("当前无法强制执行金额上限；usd_limit_enforced 须为 false，price_source 须为 null")
     parsed_budget = BudgetConfig(
         active_timeout_seconds=_integer(budget["active_timeout_seconds"], "budget.active_timeout_seconds"),
         max_model_calls=_integer(budget["max_model_calls"], "budget.max_model_calls"),
@@ -328,7 +325,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> ExperimentConfig:
     seeds = _mapping(root["seeds"], "seeds", {"smoke", "validation", "final"})
     parsed_seeds = SeedConfig(**{name: _integers(seeds[name], f"seeds.{name}") for name in seeds})
     if not (set(parsed_seeds.smoke) <= set(parsed_seeds.validation) <= set(parsed_seeds.final)):
-        raise ConfigError("Seed sets must be nested smoke <= validation <= final")
+        raise ConfigError("种子集合必须满足包含关系 smoke <= validation <= final")
     concurrency = _mapping(root["concurrency"], "concurrency", {"max_active_tasks", "idle_user_counts"})
     parsed_concurrency = ConcurrencyConfig(
         max_active_tasks=_integer(concurrency["max_active_tasks"], "concurrency.max_active_tasks"),
@@ -338,7 +335,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> ExperimentConfig:
         list(parsed_concurrency.idle_user_counts) != sorted(parsed_concurrency.idle_user_counts)
         or min(parsed_concurrency.idle_user_counts) < parsed_concurrency.max_active_tasks
     ):
-        raise ConfigError("idle_user_counts must increase and accommodate max_active_tasks")
+        raise ConfigError("idle_user_counts 必须递增，且能容纳 max_active_tasks")
     resources = _mapping(root["resources"], "resources", {"memory_bytes", "cpus"})
     sampling = _mapping(root["sampling"], "sampling", {"interval_seconds"})
     policy = _mapping(root["execution_policy"], "execution_policy", {
@@ -349,7 +346,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> ExperimentConfig:
         "sensitive_operations": "deny",
         "human_approval": False,
     } or policy["human_approval"] is not False:
-        raise ConfigError("Execution policy requires scoped automatic execution, sensitive denial and no approval")
+        raise ConfigError("执行策略必须为作用域内自动执行、拒绝敏感操作且不等待审批")
     return ExperimentConfig(
         schema_version=1,
         host_data_root=host_data_root,

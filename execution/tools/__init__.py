@@ -1,1 +1,1 @@
-"""Tools with explicit scope and workspace boundaries."""
+"""具有明确作用域与工作区边界的工具。"""

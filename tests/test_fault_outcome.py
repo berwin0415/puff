@@ -1,4 +1,4 @@
-"""Unexecuted I23 data-only exit1 calibration; no Docker or model calls."""
+"""I23 纯数据退出码1校准初稿，不调用 Docker 或模型。"""
 from argparse import Namespace
 from copy import deepcopy
 import hashlib
@@ -237,7 +237,7 @@ def test_bench_process_reader_independently_checks_exit1_native_sources(failure,
 
 def test_bench_rejects_forged_da_snapshot_even_when_public_sources_agree(failure, monkeypatch):
     if failure.candidate != 'deepagents_langgraph':
-        pytest.skip('DA physical checkpoint boundary')
+        pytest.skip('DA 物理检查点边界')
     monkeypatch.setattr(bench, 'load_config', lambda: SimpleNamespace(for_environment=lambda _: object()))
     monkeypatch.setattr(bench.io, 'source_on_host', lambda config, path: str(path))
     snapshot = json.loads((failure.directory / 'state-snapshot.json').read_bytes())
@@ -247,8 +247,8 @@ def test_bench_rejects_forged_da_snapshot_even_when_public_sources_agree(failure
     raw_path = failure.directory / 'raw-events.jsonl'
     change_json(raw_path, lambda row: row.update(data=snapshot))
     change_json(failure.directory / 'evidence-index.json', lambda row: row['files']['raw-events.jsonl'].update(sha256=checksum(raw_path)))
-    # Host freezes public source and physical BLOB hashes without importing
-    # MessagePack. Independent bench must still decode the original BLOB.
+    # 宿主不导入 MessagePack，只冻结公开来源与物理 BLOB 哈希；
+    # 独立验收程序仍须解码原始 BLOB。
     failure.evaluate()
     with pytest.raises(ValueError, match='physical_messages_differ'):
         bench.process_evidence(failure.paths, SCOPE, failure.pins,
@@ -271,7 +271,7 @@ def test_official_metadata_merge_preserves_precedence_filters_and_string_normali
     'physical_source', 'physical_extra', 'physical_integration', 'physical_non_json', 'stream_and_snapshot'])
 def test_da_metadata_must_match_official_merge_and_original_physical_row(failure, change):
     if failure.candidate != 'deepagents_langgraph':
-        pytest.skip('DA metadata merge boundary')
+        pytest.skip('DA 元数据合并边界')
     path = failure.directory / 'state-snapshot.json'
     snapshot = json.loads(path.read_bytes())
     if change.startswith('snapshot_'):

@@ -9,7 +9,7 @@ CPU = 10 ** 9
 
 
 def material():
-    # Two real workers and one shared sidecar under one total budget.
+    # 两个实际 Worker 与一个共享辅助服务共用同一总预算。
     rows = [{"id": char * 64, "memory_limit": memory, "cpu_nano": cpu,
              "state": {"Running": True}}
             for char, memory, cpu in (("a", 2 * GIB, CPU),

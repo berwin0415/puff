@@ -1,10 +1,9 @@
-"""Optional I24 process ownership boundary, independent of the active I22 runner.
+"""可选的 I24 进程归属边界，独立于当前 I22 运行器。
 
-Only a trusted fixture registers commands/paths. HTTP clients cannot start a
-process or choose a PID, path, token, endpoint or owner. No process launcher is
-connected by default; shared_uid supplies explicit Linux credentials for its
-optional calibration. This module supplies no agent loop, model or native state.
-"""
+只有可信 Fixture 可登记命令和路径。HTTP 客户端不能启动进程，
+也不能选择 PID、路径、令牌、端点或所有者。默认不接通任何进程启动器；
+shared_uid 为可选校准提供显式 Linux 凭证。
+此模块不提供 Agent 循环、模型或原生状态。"""
 from __future__ import annotations
 
 import base64
@@ -28,7 +27,7 @@ _MAX_FILE = 8 * 1024 * 1024
 
 
 class BoundaryError(ValueError):
-    """Safe fixed error code; arbitrary exception/command text is never public."""
+    """安全的固定错误码，绝不公开任意异常或命令文本。"""
     def __init__(self, code: str, status: int = 409):
         self.code, self.status = code, status
         super().__init__(code)
@@ -74,7 +73,7 @@ def _absolute(value):
 
 
 def _open_directory(path):
-    """Walk from / with directory fds; never follow a replaced ancestor symlink."""
+    """通过目录文件描述符从 / 开始逐层遍历，绝不跟随被替换的祖先符号链接。"""
     descriptor = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
     try:
         for part in Path(path).parts[1:]:
@@ -102,11 +101,10 @@ def _open_parent(root, relative):
 
 
 def read_bound_file(root, relative, *, limit=_MAX_FILE, allow_append=False):
-    """Sample an actual bounded regular file; log readers may accept append-only growth.
+    """采样真实且有大小限制的普通文件；日志读取可接受仅追加增长。
 
-    The returned hash describes exactly the sampled prefix, never an unseen tail.
-    Artifacts require a stable size/mtime across the read. Hard links are refused.
-    """
+    返回的哈希精确描述已采样前缀，不能代表未读取尾部。
+    产物要求读取期间大小和 mtime 稳定；拒绝硬链接。"""
     parent, name = _open_parent(root, relative)
     try:
         descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
@@ -136,10 +134,10 @@ def _separate(left, right):
 
 
 def linux_process_identity(pid):
-    """Actual Linux process start ticks, separate from mixed Docker PIDs metrics."""
+    """读取真实 Linux 进程启动时钟计数，与混合 Docker PIDs 指标分开。"""
     try:
         text = Path(f"/proc/{pid}/stat").read_text()
-        # comm may contain spaces or parentheses; state is field 3.
+        # comm 可含空格或括号；state 为第 3 个字段。
         fields = text[text.rfind(")") + 2:].split()
         return {"pid": pid, "start_ticks": int(fields[19]), "source": "linux_proc_stat"}
     except (OSError, ValueError, IndexError):
@@ -181,12 +179,10 @@ class OwnedAttempt:
 
 
 class TaskSupervisor:
-    """One long-lived container, fresh child per task attempt, no scheduling loop.
+    """一个常驻容器，每次任务尝试新建子进程，不提供调度循环。
 
-    start() is trusted fixture/orchestrator code only; there is deliberately no
-    public HTTP start/registration endpoint. The same object is retained until
-    that exact child exits; user input can never substitute a numeric PID.
-    """
+    start() 仅供可信 Fixture/编排器调用，故意不提供公开 HTTP 启动/注册端点。
+    保留同一对象直到该子进程退出；用户输入不能替换为数字 PID。"""
     def __init__(self, tasks, audit: Callable[[dict], None], *, max_active=2,
                  popen_factory=None, identity_reader=linux_process_identity):
         if type(max_active) is not int or not 1 <= max_active <= 2:
@@ -242,8 +238,8 @@ class TaskSupervisor:
                     raise BoundaryError("invalid_fixture", 400)
                 _relative(value["events_file"]); _relative(value["readiness_file"])
                 match = value["ready_match"]
-                # Existing I22 adapters emit this only after installing handlers.
-                # This proves handler installation, not active/native safe pause.
+                # 现有 I22 适配器仅在安装处理器后发出此标记。
+                # 它只能证明处理器已安装，不能证明运行中原生暂停安全。
                 if match != {"phase": "pause_handler_installed", "signal": "SIGUSR2"}:
                     raise BoundaryError("invalid_fixture", 400)
                 attempts[attempt_id] = AttemptSpec(attempt_id, value["candidate"], tuple(argv), dict(environment), config, evidence,
@@ -257,7 +253,7 @@ class TaskSupervisor:
             raise BoundaryError("config_overlaps_attempt_evidence", 400)
         if any(not _separate(left, right) for index, left in enumerate(config_roots) for right in config_roots[index + 1:]):
             raise BoundaryError("overlapping_attempt_config", 400)
-        # No task may write another task's protected config/evidence or state.
+        # 任何任务均不得写入另一任务的受保护配置、证据或状态。
         for task in tasks.values():
             for attempt in task.attempts.values():
                 if any(not _separate(root, other) for root in (attempt.config_dir, attempt.evidence_dir) for other in roots):
@@ -269,7 +265,7 @@ class TaskSupervisor:
                     "scope": dict(task.scope), **values})
 
     def start(self, task_id, attempt_id):
-        """Trusted API only. Does not invent a resume binding or checkpoint."""
+        """仅供可信 API 调用，不虚构恢复绑定或检查点。"""
         with self.lock:
             task = self.tasks.get(task_id)
             if task is None or attempt_id not in task.attempts:
@@ -283,8 +279,8 @@ class TaskSupervisor:
             if sum(owned.process.poll() is None for owned in self.owned.values()) >= self.max_active:
                 raise BoundaryError("active_task_limit", 429)
             spec = task.attempts[attempt_id]
-            # Fresh output roots prevent a previous readiness marker/stream from
-            # granting control to a later process that has not installed handlers.
+            # 使用新输出根目录，防止旧就绪标记或流
+            # 给尚未安装处理器的后续进程授予控制。
             if any(spec.evidence_dir.iterdir()):
                 raise BoundaryError("attempt_evidence_not_empty")
             if self.popen_factory is None:
@@ -384,7 +380,7 @@ class TaskSupervisor:
                     "source": "actual_allowlisted_workspace_files"}
 
     def cancel(self, task_id, request_id, *, attempt_id=None):
-        """Attempt a signal on the retained child; neither delivery nor cancel is confirmed."""
+        """尝试向保留的子进程发信号；不能据此确认信号送达或取消完成。"""
         with self.lock:
             task, owned = self._active(task_id, attempt_id)
             if owned.process.poll() is not None:
@@ -410,9 +406,9 @@ class TaskSupervisor:
                 self._record("control_dispatch_failed", task, request_id=request_id, attempt_id=owned.spec.attempt_id)
                 raise BoundaryError("control_dispatch_failed") from None
             owned.cancel_request_id = request_id
-            # POSIX Popen.send_signal() can return normally after its internal
-            # poll finds an exited child, or after swallowing ProcessLookupError.
-            # No exception is evidence of an attempted call, never a signal ACK.
+            # POSIX Popen.send_signal() 内部 poll 发现子进程已退出，
+            # 或吞掉 ProcessLookupError 后，均可能正常返回。
+            # 未抛异常只能证明尝试调用，不能证明信号已确认送达。
             self._record("signal_dispatch_attempted", task, request_id=request_id, attempt_id=owned.spec.attempt_id,
                          signal="SIGUSR1", signal_delivery_confirmed=False, native_cancel_confirmed=False)
             return {"task_id": task_id, "attempt_id": owned.spec.attempt_id, "request_id": request_id,

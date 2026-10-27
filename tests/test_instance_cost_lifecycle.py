@@ -1,7 +1,7 @@
-"""I25 registered-lifecycle calibration source; run only in frozen Docker.
+"""I25 已登记生命周期校准源码，只在固定 Docker 中运行。
 
-Synthetic records and fake transport never establish real Agent, Docker,
-resources or business capability. This module invokes neither Docker nor SDKs.
+合成记录与传输替身不能证明真实 Agent、Docker、资源或业务能力。
+本模块不调用 Docker 或 SDK。
 """
 from copy import deepcopy
 import json
@@ -357,7 +357,7 @@ def test_exact_absence_rejects_generic_failure_or_another_container(change):
 
 
 def test_observer_wait_releases_all_lifecycle_locks_without_forgiving_its_timeout(tmp_path, monkeypatch):
-    """Events hold the probe wait; no actual sleep, Docker or fake sample."""
+    """用事件控制探针等待，不实际休眠、调用 Docker 或伪造采样。"""
     waiting, reply_ready = threading.Event(), threading.Event()
     state, errors, values = {}, [], []
 
@@ -377,7 +377,7 @@ def test_observer_wait_releases_all_lifecycle_locks_without_forgiving_its_timeou
     def blocked_wait(seconds):
         assert seconds == .05
         waiting.set()
-        assert reply_ready.wait(2), "test failed to publish the original observer reply"
+        assert reply_ready.wait(2), "测试未能发布原始观察进程响应"
 
     monkeypatch.setattr(host.time, "sleep", blocked_wait)
 
@@ -392,7 +392,7 @@ def test_observer_wait_releases_all_lifecycle_locks_without_forgiving_its_timeou
     try:
         assert waiting.wait(2)
         for lock in (lifecycle.control_lock, lifecycle.registry_lock, lifecycle.inventory_lock):
-            assert lock.acquire(blocking=False), "a long observer wait retained a lifecycle lock"
+            assert lock.acquire(blocking=False), "长时间等待观察进程时仍持有生命周期锁"
             lock.release()
         path = tmp_path / "protected/observer/replies" / (state["probe_nonce"] + ".json")
         path.write_bytes(canonical({"control_sequence": state["sequence"], "phase": state["phase"],

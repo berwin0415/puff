@@ -1,7 +1,7 @@
 {
   "id": "harness-lab-tools",
-  "name": "Harness Lab scoped tools",
-  "description": "Projects trusted HTTP tools or basic original Playwright MCP tools without an Agent or business workflow.",
+  "name": "Harness 实验室作用域工具",
+  "description": "投影可信 HTTP 工具或原始 Playwright MCP 基础工具，不包含 Agent 或业务流程。",
   "activation": { "onStartup": true },
   "contracts": {
     "tools": ["harness_list_items", "harness_write", "harness_receipt", "harness_ledger", "harness_read_file", "harness_write_file", "harness_calculate_totals", "harness_sensitive_export", "harness_query_order_status", "harness_browser_navigate", "harness_browser_snapshot", "harness_browser_fill_form", "harness_browser_type", "harness_browser_click", "harness_browser_tabs", "harness_browser_wait_for"]

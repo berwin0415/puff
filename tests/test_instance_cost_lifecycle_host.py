@@ -1,4 +1,4 @@
-"""I25 host boundary counterexamples; synthetic transport, no runtime capability."""
+"""I25 宿主边界反例；使用合成传输，不证明运行时能力。"""
 from copy import deepcopy
 import io
 import json
@@ -26,7 +26,7 @@ def lab(tmp_path):
 
 def unlocked(lifecycle):
     for lock in (lifecycle.inventory_lock, lifecycle.registry_lock, lifecycle.control_lock):
-        assert lock.acquire(blocking=False), "a long native wait retained a lifecycle lock"
+        assert lock.acquire(blocking=False), "长时间等待原生执行时仍持有生命周期锁"
         lock.release()
 
 
@@ -152,6 +152,6 @@ def test_healthy_samples_do_not_open_or_latch_a_failure_file(tmp_path):
 
 
 def test_old_default_cost_flow_does_not_construct_lifecycle_transport(tmp_path):
-    # rotation_users accepts absent opt-in as the original default route.
+    # rotation_users 未收到显式启用值时，使用原默认路径。
     target = CostFlowLab(tmp_path, {"trial_id": "legacy-default"})
     assert target.lifecycle is None

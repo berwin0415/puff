@@ -1,9 +1,6 @@
-"""Replace a deleted worker and inspect native business state without a model.
+"""替换已删除的 Worker，并在不调用模型的情况下检查原生业务状态。
 
-The host only schedules Docker, records Docker facts, hashes files and samples
-resources. Preparation and verdicts execute in the existing bench image. This
-reads the existing Compose service definitions directly: Compose itself is not
-invoked, so its model-proxy env_file and the repository .env are never opened.
+宿主仅调度 Docker、记录 Docker 事实、计算文件哈希及采集资源样本。准备和判定在已有 bench 镜像内执行。这里直接读取现有 Compose 服务定义，不调用 Compose，因此不会打开 model-proxy 的 env_file 或仓库 .env。
 """
 from __future__ import annotations
 
@@ -37,14 +34,14 @@ def save(path, value):
 def regular(path, root):
     path, root = Path(path).absolute(), Path(root).absolute()
     if not path.is_relative_to(root) or ".." in path.parts:
-        raise ValueError("Probe paths must remain inside the current data root")
+        raise ValueError('探针路径必须位于当前数据根目录内')
     current = root
     if current.is_symlink():
-        raise ValueError("Probe paths cannot follow symlinks")
+        raise ValueError('探针路径不能跟随符号链接')
     for part in path.relative_to(root).parts:
         current /= part
         if current.is_symlink():
-            raise ValueError("Probe paths cannot follow symlinks")
+            raise ValueError('探针路径不能跟随符号链接')
     return path
 
 
@@ -53,7 +50,7 @@ class NativeStateLab(Lab):
         super().__init__()
         for key in ("MODEL_API_BASE_URL", "MODEL_API_KEY", "MODEL_NAME", "OPENAI_API_KEY", "DEEPSEEK_API_KEY"):
             self.env.pop(key, None)
-        # No config resolution, env-file loading or model profile activation.
+        # 不解析配置、不加载 env-file，也不激活模型 profile。
         self.services = yaml.safe_load((ROOT / "compose/docker-compose.yml").read_text())["services"]
         self.owned = []
         self.network = None
@@ -64,7 +61,7 @@ class NativeStateLab(Lab):
         if reply.returncode:
             if "no such object" in reply.stderr.lower() or "no such container" in reply.stderr.lower():
                 return None
-            raise RuntimeError("Docker inspection failed; absence was not established")
+            raise RuntimeError('Docker 检查失败；尚未证明对象不存在')
         row = json.loads(reply.stdout)[0]
         env = row.get("Config", {}).get("Env", [])
         return {"id": row["Id"], "name": row["Name"], "image_id": row["Image"],
@@ -79,7 +76,7 @@ class NativeStateLab(Lab):
     def create(self, name, service, probe_id, image, mounts, command, *, network="none", alias=None, env=None, entrypoint=None):
         spec = self.services[service]
         if not spec.get("read_only") or spec.get("env_file"):
-            raise ValueError("Only existing read-only services without env_file may be used")
+            raise ValueError('仅允许使用已有的只读服务，且不能配置 env_file')
         args = ["docker", "create", "--name", name, "--label", LABEL + "=" + probe_id,
                 "--label", OWNER_LABEL + "=" + self.owner,
                 "--label", "org.harness-lab.experiment=current", "--platform", spec["platform"],
@@ -93,13 +90,13 @@ class NativeStateLab(Lab):
             args += ["--network-alias", alias]
         for source, target, writable in mounts:
             if not Path(source).exists():
-                raise FileNotFoundError("Required original mount is absent: " + target)
+                raise FileNotFoundError('缺少必需的原始挂载：' + target)
             args += ["--mount", "type=bind,src=" + str(source) + ",dst=" + target + ("" if writable else ",readonly")]
         for key, value in (env or {}).items():
             args += ["--env", key + "=" + value]
         args += [image, *command]
-        # Record intent first: a timed-out create may have succeeded. Cleanup
-        # still requires this invocation's unguessable ownership label.
+        # 先记录操作意图：create 超时仍可能已成功。清理时
+        # 仍须核对本次调用不可猜测的归属标签。
         self.owned.append((name, probe_id))
         reply = self.call(args, capture=True, timeout=20)
         return reply.stdout.strip()
@@ -158,28 +155,28 @@ class NativeStateLab(Lab):
         manifest = json.loads(regular(run / "manifest.json", self.config.host_data_root).read_text())
         candidate = manifest.get("candidate")
         if candidate not in SUPPORTED or manifest.get("case") != "extension":
-            raise ValueError("Only completed extension runs with an explicit native inspection API are supported")
+            raise ValueError('仅支持已结束的扩展任务，且必须有明确的原生检查 API')
         service, prefix, _, _ = CANDIDATES[candidate]
         workers = [row for row in manifest["containers"] if row["image_tag"] == self.services[service]["image"]
                    and any(m["Destination"] == "/state" for m in row["mounts"])]
         if len(workers) != 1:
-            raise ValueError("The original manifest must identify exactly one candidate worker")
+            raise ValueError('原始清单必须标明且仅标明一个候选 Worker')
         original = workers[0]
         absent = {key: self.inspect(original[key]) is None for key in ("id", "name")}
         if not all(absent.values()):
-            raise RuntimeError("The original worker must already be deleted; the probe will not delete it")
+            raise RuntimeError('原 Worker 必须已删除；探针不会替你删除')
         if any(row["state"]["Running"] for row in self.containers()):
-            raise RuntimeError("Another current experiment is running")
+            raise RuntimeError('另一项当前实验正在运行')
         source_mounts = {row["Destination"]: regular(row["Source"], self.config.host_data_root) for row in original["mounts"]}
         state = source_mounts["/state"]
         active = self.call(["docker", "ps", "--quiet"], capture=True, timeout=10).stdout.split()
         for ident in active:
             other = self.inspect(ident)
             if other and any(Path(m["Source"]) == state and m["RW"] for m in other["mounts"]):
-                raise RuntimeError("The original native state already has another writer")
+                raise RuntimeError('原生状态已有其他写入进程')
         root = regular(run / "native-state", self.config.host_data_root)
         root.mkdir(exist_ok=True)
-        # Serializes probes of one original run, including DSH's writable load.
+        # 串行探测同一原运行，包括 DSH 的可写加载。
         with (root / ".probe.lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             probe = root / probe_id
@@ -198,7 +195,7 @@ class NativeStateLab(Lab):
         try:
             code, status["prepare_bench"] = self.bench("prepare", probe, run, mounts["/state"], probe_id)
             if code:
-                raise RuntimeError("Bench preparation rejected the source run; inspect bench-prepare.log")
+                raise RuntimeError('bench 准备阶段拒绝了源运行；请检查 bench-prepare.log')
             network = "none"
             if candidate == "deepseek_harness":
                 network = "harness-lab-native-" + probe_id
@@ -220,7 +217,7 @@ class NativeStateLab(Lab):
                     self.call(["docker", "start", name], capture=True, timeout=10)
                 code, _ = self.bench("wait-services", probe, run, mounts["/state"], probe_id, network=network)
                 if code:
-                    raise RuntimeError("Original fixture/tools setup did not become ready")
+                    raise RuntimeError('原 Fixture 或工具服务未就绪')
             else:
                 status["network"] = {"name": "none", "internal": False}
             allowed = {"/config/scope.json", "/config/scope.token", "/config/model-run.token"}
@@ -240,7 +237,7 @@ class NativeStateLab(Lab):
                         reply = self.call(["docker", "stats", "--no-stream", "--format", "{{json .}}", ident], capture=True, timeout=5)
                         row = {"unix_time": time.time(), "containers": [json.loads(line) for line in reply.stdout.splitlines()]}
                     except Exception:
-                        row = {"unix_time": time.time(), "containers": [], "error": "Docker sampling failed"}
+                        row = {"unix_time": time.time(), "containers": [], "error": 'Docker 采样失败'}
                     samples.append(row)
                     with (probe / "resource-samples.jsonl").open("a") as stream:
                         stream.write(json.dumps(row) + "\n")
@@ -277,7 +274,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=120)
     args = parser.parse_args()
     if not 1 <= args.timeout <= 600:
-        parser.error("timeout must be between 1 and 600 seconds")
+        parser.error('timeout 必须为 1 至 600 秒')
     return NativeStateLab().run(args.run_dir, args.probe_id, args.timeout)
 
 

@@ -1,8 +1,8 @@
-"""Synthetic verifier calibration only; these fixtures cannot pass native I24.
+"""仅校准合成验收器，测试数据不能代替原生 I24 通过。
 
-Run inside the reviewed Docker bench. No test starts an SDK or calls a model.
-The actual I24 verdict separately requires original candidate files, product
-HTTP, original SQLite checkpoints, complete Docker identities and tool effects.
+在复核后的 Docker 验收镜像运行，不启动 SDK 或调用模型。
+真实 I24 判定还需候选原件、产品 HTTP、原生 SQLite checkpoint、
+完整 Docker 身份与工具副作用证据。
 """
 from datetime import datetime, timedelta, timezone
 import base64
@@ -148,11 +148,11 @@ def test_missing_authentication_and_missing_task_do_not_count_as_scope_rejection
 
 @pytest.mark.parametrize("kind", ["main", "cancel"])
 def test_active_controls_and_sequential_exit_reads_refresh_idle_sockets_without_replaying_posts(tmp_path, monkeypatch, kind):
-    """A 15-second idle backend double exercises the actual ProductClient.
+    """通过15秒空闲限制的后端替身测试真实 ProductClient。
 
-    Activity selection takes 20 seconds per owner; polling A then takes over
-    15 seconds while B's accepted-control socket sits idle. No wall-clock wait,
-    candidate, model or native-capability assertion belongs to this calibration.
+    每个用户的活动选择耗时20秒；随后轮询 A 超过15秒时，
+    B 的控制确认连接保持空闲。校准不进行真实等待，不运行候选、
+    模型或原生能力断言。
     """
     clock, sequence, posts, first_a_poll = [100.0], [0], [], [None]
     owner_state_reads, delayed_b_eof = {"user-a": 0, "user-b": 0}, [False]
@@ -194,11 +194,11 @@ def test_active_controls_and_sequential_exit_reads_refresh_idle_sockets_without_
             self.last_response, self.principal, self.closed = None, None, False
 
         def request(self, method, route, *, body, headers):
-            assert not self.closed, "closed HTTPConnection was reused"
+            assert not self.closed, "复用了已关闭的 HTTPConnection"
             if self.last_response is not None and clock[0] - self.last_response > 15:
                 raise ConnectionError("backend_closed_idle_socket")
             principal = headers["Authorization"].removeprefix("Bearer ")
-            assert self.principal in (None, principal), "a socket changed authenticated owner"
+            assert self.principal in (None, principal), "socket 改变了已鉴权所有者"
             self.principal = principal
             _, _, task_id, operation = route.split("/", 3)
             operation = operation.split("?", 1)[0]
@@ -229,8 +229,8 @@ def test_active_controls_and_sequential_exit_reads_refresh_idle_sockets_without_
             if not self.closed:
                 if (kind == "main" and self.principal == "user-b"
                         and getattr(self, "last_owner_state_count", 0) == 3 and not delayed_b_eof[0]):
-                    # B's dedicated reconnect/EOF handling may take over the
-                    # idle limit. A's denial must use its fresh socket first.
+                    # B 的专用重连或 EOF 处理可能超过空闲上限，
+                    # A 的拒绝请求必须先使用新连接。
                     clock[0] += 20
                     delayed_b_eof[0] = True
                 m.append(journal, {"kind": "connection_peer_eof", "connection_id": self.identity})
@@ -300,8 +300,8 @@ def test_idempotent_reissued_write_cannot_hide_behind_unchanged_business_ledger(
     encoded_lines(filename, original)
     data = filename.read_bytes()
     paused = {"audit": {"bytes": len(data), "sha256": p.sha(data), "completed_write_ids": ["confirmed-operation"]}}
-    # Fixture idempotency could retain the exact original business row, but
-    # dispatching its confirmed operation again must independently fail.
+    # 模拟业务幂等机制可能保留完全相同的原业务记录，
+    # 但重复派发已确认操作仍须独立判为失败。
     encoded_lines(filename, original + [{"scope": scope, "tool": "write", "phase": "start", "call_id": "second",
         "arguments": {"operation_id": "confirmed-operation"}}])
     with pytest.raises(ValueError, match="completed_business_write_reissued_after_resume"):
@@ -339,8 +339,8 @@ def cancel_identity_fixture():
 def test_cancel_identity_metadata_is_only_one_guard_not_native_confirmation():
     task, chain = cancel_identity_fixture()
     m.validate_cancel_identity(task, *chain)
-    # This helper accepts the coherent metadata only. cancel_native still
-    # requires actual original file references, active stream, SQLite and audit.
+    # 此辅助函数只接纳一致的元数据；cancel_native 仍需实际原始
+    # 文件引用、活动流、SQLite 和审计证据。
 
 
 @pytest.mark.parametrize("index,field,value", [(3, "request_id", "different-request"),
@@ -580,7 +580,7 @@ def test_baseline_old_entry_wrong_binding_or_unhealthy_wrapper_cannot_pass(tmp_p
 
 
 def baseline_native_binding_fixture(tmp_path, monkeypatch):
-    """Match the real artifact layout: provenance lives in entrypoint.json."""
+    """匹配真实产物布局，来源信息存于 entrypoint.json。"""
     paths = SimpleNamespace(run=tmp_path / "run", fixture=tmp_path / "fixture", budget=tmp_path / "budget")
     scope = {"experiment_id": "multi-user-baseline", "variant": "baseline-main-a",
         "user_id": "user-a", "session_id": "session-a"}

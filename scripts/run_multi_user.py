@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Host-only Docker orchestration for the DA I24 two-Worker experiment.
+"""DA I24 双 Worker 实验的宿主 Docker 编排。
 
-Images must already contain the reviewed code. There is no build/download,
-candidate import, task preparation, model request or grading on this host.
+镜像必须已包含经审查的代码。宿主不构建或下载、不导入候选、不准备任务、不请求模型，也不评分。
 """
 from __future__ import annotations
 
@@ -34,7 +33,7 @@ DA = "deepagents_langgraph"
 def candidate_for(args):
     candidate = getattr(args, "candidate", DA)
     if candidate not in {DA, DSH}:
-        raise ValueError("Allowlisted I24 candidate required")
+        raise ValueError('需要白名单中的 I24 候选')
     return candidate
 
 
@@ -60,21 +59,21 @@ def container_identity(value):
 
 
 SAMPLING_RUNTIME_CODES = {
-    "Sampling transition lacks its exact pre-start registration": "transition_registration_mismatch",
-    "Sampling transition was not requested for this exact object": "transition_not_requested",
-    "Sampling transition lacks an allowed actual terminal observation": "transition_terminal_not_healthy",
-    "Missing container has no previously observed exact removal": "transition_removal_unproven",
-    "Unexplained Docker sampling error during container transition": "transition_command_error_unexplained",
-    "Unexpected Docker sampling stderr during container transition": "transition_command_stderr_unexpected",
-    "Docker inspection failed; absence is unproven": "observation_absence_unproven",
-    "Complete Docker inventory lost the requested object": "observation_requested_identity_missing",
-    "Exact transitioned container absence was not observed": "transition_absence_unproven",
-    "Removing container lacks its exact recorded terminal and absence evidence": "transition_removing_unproven",
+    '采样过渡缺少确切的启动前登记': "transition_registration_mismatch",
+    '未针对该确切对象请求采样过渡': "transition_not_requested",
+    '采样过渡缺少允许的实际终态观察': "transition_terminal_not_healthy",
+    '容器缺失，但此前未观察到确切删除': "transition_removal_unproven",
+    '容器过渡期间出现无法解释的 Docker 采样错误': "transition_command_error_unexplained",
+    '容器过渡期间 Docker 采样出现非预期 stderr': "transition_command_stderr_unexpected",
+    'Docker 检查失败；尚未证明对象不存在': "observation_absence_unproven",
+    '完整 Docker 清单丢失了请求对象': "observation_requested_identity_missing",
+    '未观察到确切过渡容器已不存在': "transition_absence_unproven",
+    '正在删除的容器缺少确切记录的终态和不存在证据': "transition_removing_unproven",
 }
 
 
 class SamplingFailure(RuntimeError):
-    """Fixed reason and safe Docker observations, never raw inspect or Env."""
+    """仅使用固定原因和安全 Docker 观察，不包含原始 inspect 或 Env。"""
 
     def __init__(self, code, observations=None):
         super().__init__(code)
@@ -82,8 +81,8 @@ class SamplingFailure(RuntimeError):
 
 
 def container_observation(c):
-    # Project inspect before retaining it, including on validation failures.
-    # Env values and full inspect output must never enter sampler diagnostics.
+    # 保留 inspect 前先投影安全字段；核验失败时也一样。
+    # Env 值和完整 inspect 输出不能进入采样器诊断。
     return {"id": c["Id"], "name": c["Name"], "image_id": c["Image"], "image_tag": c["Config"]["Image"],
         "state": c["State"], "memory_limit": c["HostConfig"]["Memory"], "cpu_nano": c["HostConfig"]["NanoCpus"],
         "init_enabled": c["HostConfig"].get("Init") is True,
@@ -92,9 +91,9 @@ def container_observation(c):
         "networks": {name: {"network_id": value["NetworkID"], "aliases": value.get("Aliases", [])}
             for name, value in c["NetworkSettings"]["Networks"].items()},
         "environment_names": sorted(value.split("=", 1)[0] for value in c["Config"].get("Env", [])),
-        # Docker does not promise a stable Mounts array order across inspect
-        # calls. Keep every projected mount, including duplicates, in a stable
-        # order before storing the independent observations.
+        # Docker 不保证多次 inspect 返回的 Mounts 数组顺序稳定。
+        # 保留所有投影挂载，包括重复项；按稳定顺序排列后
+        # 再保存独立观察。
         "mounts": sorted(({key: mount[key] for key in ("Source", "Destination", "RW")} for mount in c["Mounts"]),
             key=lambda mount: (mount["Destination"], mount["Source"], mount["RW"]))}
 
@@ -108,7 +107,7 @@ def stopped_container(value, *, bench=False):
 
 
 def recorded_removal_matches(after, terminal):
-    """A removing snapshot is retained as a transition, never a healthy exit."""
+    """将 removing 快照保留为过渡状态，不认作健康退出。"""
     if not isinstance(after, dict) or not isinstance(terminal, dict):
         return False
     state = after.get("state", {})
@@ -126,25 +125,23 @@ def recorded_removal_matches(after, terminal):
 
 def explained_sampling_transition(before, replies, after, registration, retirement, completion, *,
         removing_observed_monotonic=None, removal_absence=None):
-    """Only exact, pre-registered and independently observed terminal objects.
+    """仅接受确切、预先登记且独立观察到终态的对象。
 
-    A wrapper's requested SIGTERM is an infrastructure transition, never native
-    child success. Unknown Docker failures and forced exit 137 remain failures.
-    No lock or wait is held while Docker observes a transition.
+    包装进程请求 SIGTERM 仅代表基础设施过渡，不代表原生子进程成功。未知 Docker 失败和强制退出 137 仍属于失败。Docker 观察过渡期间不持锁或等待。
     """
     if registration is None or container_identity(before) != container_identity(registration):
-        raise RuntimeError("Sampling transition lacks its exact pre-start registration")
+        raise RuntimeError('采样过渡缺少确切的启动前登记')
     bench = before["role"] == "acceptance"
     record = completion if bench else retirement
     if not bench and (not record or container_identity(record["before_stop"]) != container_identity(before)):
-        raise RuntimeError("Sampling transition was not requested for this exact object")
+        raise RuntimeError('未针对该确切对象请求采样过渡')
     removing = after is not None and after.get("state", {}).get("Status") == "removing"
     terminal = (record or {}).get("after_stop") if after is None or removing else after
     if (terminal is None or container_identity(terminal) != container_identity(before)
             or not stopped_container(terminal, bench=bench)):
-        raise RuntimeError("Sampling transition lacks an allowed actual terminal observation")
+        raise RuntimeError('采样过渡缺少允许的实际终态观察')
     if after is None and (not record or "removal_requested_monotonic" not in record):
-        raise RuntimeError("Missing container has no previously observed exact removal")
+        raise RuntimeError('容器缺失，但此前未观察到确切删除')
     if removing:
         proof, deleted = removal_absence or {}, (record or {}).get("deleted", {})
         moments = [(record or {}).get("removal_requested_monotonic"), removing_observed_monotonic,
@@ -168,7 +165,7 @@ def explained_sampling_transition(before, replies, after, registration, retireme
                 or proof.get("id") != before["id"] or proof.get("id_absent") is not True
                 or type(proof.get("returncode")) is not int or proof["returncode"] != 1
                 or not isinstance(proof.get("stdout"), str) or proof["stdout"].strip() != "[]" or not exact_absence):
-            raise RuntimeError("Removing container lacks its exact recorded terminal and absence evidence")
+            raise RuntimeError('正在删除的容器缺少确切记录的终态和不存在证据')
     names = "(?:" + "|".join(re.escape(name) for name in (before["id"], before["name"], before["name"].lstrip("/"))) + ")"
     known_error = re.compile(r"(?:error(?: response from daemon)?:\s*)?(?:container\s+" + names
         + r"\s+is not running|no such (?:object|container):\s*" + names + r")", re.IGNORECASE)
@@ -180,9 +177,9 @@ def explained_sampling_transition(before, replies, after, registration, retireme
         eof = kind == "stats" and eof_at_recorded_exit and reply.stderr.strip() == "EOF"
         if reply.returncode and (reply.returncode != 1 or reply.stdout.strip()
                 or not (known_error.fullmatch(reply.stderr.strip()) or eof)):
-            raise RuntimeError("Unexplained Docker sampling error during container transition")
+            raise RuntimeError('容器过渡期间出现无法解释的 Docker 采样错误')
         if not reply.returncode and reply.stderr.strip():
-            raise RuntimeError("Unexpected Docker sampling stderr during container transition")
+            raise RuntimeError('容器过渡期间 Docker 采样出现非预期 stderr')
     value = {"kind": "registered_bench_healthy_exit" if bench else "registered_host_requested_wrapper_stop",
         "container_id": before["id"], "registration": registration, "terminal_observation": terminal,
         "retirement": retirement, "completion": completion, "absence_observed": after is None or removing,
@@ -213,8 +210,8 @@ class MultiUserLab:
         self.global_paths = paths_for(self.config, args)
         self.owned, self.networks, self.records, self.sampling_errors, self.overages = [], [], [], [], []
         self.registered = {}
-        # Only short in-memory registration updates hold this lock. Docker
-        # inspect/start/stop/rm/stats/top never run under it.
+        # 本锁仅保护短时内存登记更新。Docker 的
+        # inspect/start/stop/rm/stats/top 均在锁外执行。
         self.registry_lock = threading.RLock()
         self.registrations, self.retirements, self.bench_completions, self.inventory_absences = {}, {}, {}, []
         self.network_registrations = {}
@@ -223,12 +220,12 @@ class MultiUserLab:
         self.sequence = 0
         self.pins = json.loads(Path(args.pins_file).read_text())
         if candidate_for(args) == DSH and self.pins.get("candidate") != DSH:
-            raise ValueError("DSH-specific material pins required")
+            raise ValueError('需要 DSH 专用固定材料')
         self.image = {role: self.pins[key] for role, key in (("worker", "worker_image_id"),
             ("bench", "bench_image_id"), ("services", "services_image_id"))}
         for value in self.image.values():
             if not re.fullmatch(r"sha256:[0-9a-f]{64}", value):
-                raise ValueError("Prebuilt exact Docker image IDs are required")
+                raise ValueError('需要确切的预构建 Docker 镜像 ID')
 
     def call(self, argv, *, check=True, timeout=15):
         return subprocess.run(argv, cwd=ROOT, env=self.env, capture_output=True, text=True,
@@ -293,40 +290,40 @@ class MultiUserLab:
                 r"(?:error(?: response from daemon)?:\s*)?no such (?:object|container):\s*" + re.escape(identity),
                 reply.stderr.strip(), flags=re.IGNORECASE):
                 return None
-            raise RuntimeError("Docker inspection failed; absence is unproven")
+            raise RuntimeError('Docker 检查失败；尚未证明对象不存在')
         selected = [row for row in self.inventory() if row["id"] == json.loads(reply.stdout)[0]["Id"]]
         if len(selected) != 1:
-            raise RuntimeError("Complete Docker inventory lost the requested object")
+            raise RuntimeError('完整 Docker 清单丢失了请求对象')
         return selected[0]
 
     def preflight(self):
         self.config.initialize_layout()
         if self.inventory():
-            raise RuntimeError("Existing harness-lab containers must be removed by their owning trial first")
+            raise RuntimeError('现有 harness-lab 容器必须由所属实验先行删除')
         if self.global_paths.fixture.exists() or self.global_paths.run.exists():
-            raise FileExistsError("Trial evidence already exists; use another trial ID")
+            raise FileExistsError('实验材料已存在；请使用其他实验 ID')
         info = json.loads(self.call(["docker", "info", "--format", "{{json .}}"], timeout=15).stdout)
         if info["OSType"] != "linux" or info["MemTotal"] < 6 * 1024**3 or info["NCPU"] < 3:
-            raise RuntimeError("Docker must provide the frozen 6 GiB / 3 CPU total budget")
+            raise RuntimeError('Docker 必须提供冻结的 6 GiB / 3 CPU 总预算')
         for identity in self.image.values():
             actual = self.call(["docker", "image", "inspect", "--format", "{{.Id}}", identity]).stdout.strip()
             if actual != identity:
-                raise RuntimeError("Pinned local image identity changed")
+                raise RuntimeError('固定的本地镜像身份已变化')
         hash_keys = ("source_export_sha256", "adapter_export_sha256") + (("adapter_helper_sha256",) if candidate_for(self.args) == DA else ())
         for key in hash_keys:
             if not re.fullmatch(r"[0-9a-f]{64}", str(self.pins.get(key, ""))):
-                raise ValueError("Actual source, adapter and helper hashes are required")
-        # Compose alone resolves .env quoting. The expanded secret values never
-        # enter a command line, output, run manifest or candidate environment.
+                raise ValueError('需要实际源码、适配器和辅助脚本的哈希')
+        # 仅由 Compose 解析 .env 引号。展开后的密钥值不进入
+        # 命令行、输出、运行清单或候选环境。
         command = ["docker", "compose", "--project-name", "harness-lab", "-f",
             str(ROOT / "compose/docker-compose.yml"), "--profile", "model", "config", "--format", "json"]
         resolved = json.loads(self.call(command).stdout)
         proxy_env = resolved["services"]["model-proxy"]["environment"]
         if proxy_env.get("MODEL_NAME") != self.pins.get("model_name"):
-            raise ValueError("Configured remote model differs from frozen model_name")
+            raise ValueError('配置的远程模型与冻结 model_name 不同')
         if any(not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", key) or not isinstance(value, str)
             or "\n" in value or "\r" in value for key, value in proxy_env.items()):
-            raise ValueError("Resolved proxy environment cannot be transferred exactly")
+            raise ValueError('无法原样传递解析后的代理环境')
         self.global_paths.fixture.mkdir(parents=True)
         exclusive(self.global_paths.fixture / "material-pins.json", self.pins)
         self.proxy_env_file = self.global_paths.fixture / "proxy.env"
@@ -343,7 +340,7 @@ class MultiUserLab:
             self.networks.append(name)
             identity = reply.stdout.strip()
             if not re.fullmatch(r"[0-9a-f]{64}", identity):
-                raise RuntimeError("Created network lacks its exact identity")
+                raise RuntimeError('创建的网络缺少确切身份')
             self.network_registrations[identity] = {"id": identity, "name": name, "trial_id": self.args.trial_id}
 
     def network(self, letter):
@@ -389,10 +386,10 @@ class MultiUserLab:
                 or (observed["memory_limit"], observed["cpu_nano"]) != caps
                 or (role != "acceptance" and observed.get("init_enabled") is not True)
                 or observed["state"]["Status"] != "created" or observed["state"]["Running"]):
-            raise RuntimeError("Exact created container registration is required before start")
+            raise RuntimeError('启动前必须登记创建容器的确切身份')
         with self.registry_lock:
             if identity in self.registrations:
-                raise RuntimeError("Container identity was already registered")
+                raise RuntimeError('容器身份已登记')
             self.registrations[identity] = observed
 
     def wait_port(self, identity, port, *, worker=False):
@@ -407,7 +404,7 @@ class MultiUserLab:
     def bench(self, action, *, letter="a", extra=(), check=True):
         running_workers = [row for row in self.inventory() if row["role"] == "worker" and row["state"]["Running"]]
         if running_workers:
-            raise RuntimeError("Bench cannot run concurrently with the two Worker wrappers")
+            raise RuntimeError('bench 不能与两个 Worker 包装进程并发运行')
         self.sequence += 1
         name = "harness-lab-" + self.args.trial_id + "-bench-" + str(self.sequence)
         self.owned.append(name)
@@ -436,11 +433,11 @@ class MultiUserLab:
             exclusive(log.with_suffix(".container.json"), observed)
         self.call(["docker", "rm", identity])
         if self.observation(identity) is not None:
-            raise RuntimeError("Bench removal absence was not observed")
+            raise RuntimeError('未观察到 bench 已删除且不存在')
         with self.registry_lock:
             self.bench_completions[identity]["deleted"] = {"id": identity, "id_absent": True, "observed_at": now()}
         if check and reply.returncode:
-            raise RuntimeError("Docker bench " + action + " failed; inspect its retained log")
+            raise RuntimeError('Docker bench ' + action + ' 失败；请检查其保留日志')
         return reply.returncode
 
     def start_fixture(self):
@@ -469,14 +466,14 @@ class MultiUserLab:
         return services
 
     def calibrate_surface(self, kind, letter):
-        """New image/full-scope calibration, without a model token or prompt."""
+        """新镜像与完整 scope 校准，不使用模型 token 或提示词。"""
         network_name, alias = self.network(letter), "surface-" + letter
         networks = [(identity, value) for identity, value in self.network_registrations.items()
             if value.get("name") == network_name]
         if (len(networks) != 1 or networks[0][0] != networks[0][1].get("id")
                 or not re.fullmatch(r"[0-9a-f]{64}", networks[0][0])
                 or networks[0][1].get("trial_id") != self.args.trial_id):
-            raise RuntimeError("DSH surface requires its exact created network registration")
+            raise RuntimeError('DSH 工具面需要登记已创建网络的确切身份')
         network_binding = {**deepcopy(networks[0][1]), "aliases": [alias]}
         self.bench("prepare-surface", letter=letter, extra=("--kind", kind, "--letter", letter))
         paths = paths_for(self.config, self.args, kind, letter)
@@ -499,7 +496,7 @@ class MultiUserLab:
         (paths.run / "surface-calibration/candidate.log").write_text(logs.stdout + logs.stderr)
         if (waited.returncode != 0 or waited.stdout.strip() != "0" or after is None
                 or after["state"]["ExitCode"] != 0 or after["state"]["OOMKilled"]):
-            raise RuntimeError("DSH zero-model native tool surface failed; keep original diagnostics")
+            raise RuntimeError('DSH 零模型原生工具面失败；保留原始诊断')
         self.retire(identity)
         exclusive(paths.run / "trusted/surface-container.json", {"before_start": before, "after_exit": after,
             "network_binding": network_binding,
@@ -541,14 +538,14 @@ class MultiUserLab:
         mounts = [(self.global_paths.fixture / ("backend-" + kind + ".json"), "/control/backend.json", True)]
         for folder in ("state", "workspaces", "fixtures", "budgets", "runs"):
             mounts.append((self.config.host_data_root / folder, "/data/" + folder, True))
-        # Only the backend journal and product-client evidence are writable.
+        # 仅后端日志和产品客户端证据可写。
         for folder in ("clients", "backend-" + kind):
             source = self.global_paths.run / folder
             destination = str(source).replace(str(self.config.host_data_root), "/data", 1)
             mounts.append((source, destination, False))
         mounts.append((self.global_paths.run / ("backend-" + kind), "/backend-private", False))
-        # Collector writes each protected trigger/exit observation; candidates
-        # cannot mount these task trusted directories.
+        # 采集器写入每项受保护的触发或退出观察；候选
+        # 不能挂载这些任务的可信目录。
         for letter in ("a", "b"):
             source = paths_for(self.config, self.args, kind, letter).run / "trusted"
             mounts.append((source, str(source).replace(str(self.config.host_data_root), "/data", 1), False))
@@ -557,7 +554,7 @@ class MultiUserLab:
             "--journal", "/backend-private/control.jsonl", "--port", "8091"]
         for task_id in (tasks if start_tasks is None else start_tasks):
             if task_id not in tasks:
-                raise ValueError("Only trusted registered tasks may start")
+                raise ValueError('仅可信的已登记任务可启动')
             command += ["--start", task_id]
         identity = self.create("backend", kind + "-backend", self.network("a"), "backend", mounts,
             command, second_network=self.network("b"))
@@ -574,15 +571,15 @@ class MultiUserLab:
             "--seed", str(self.args.seed), "--kind", kind, "--phase", "active" if flags else phase, *flags, *candidate_flags], timeout=305, check=False)
         (self.global_paths.run / ("collector-" + kind + "-" + phase + ".log")).write_text(reply.stdout + reply.stderr)
         if reply.returncode:
-            raise RuntimeError("Product collector failed; retained evidence is authoritative")
+            raise RuntimeError('产品采集器失败；以保留证据为准')
 
     def retire(self, identity):
         before = self.observation(identity)
         if before is None or before["trial_id"] != self.args.trial_id:
-            raise RuntimeError("Cannot retire an unowned container")
+            raise RuntimeError('不能回收非本实验拥有的容器')
         with self.registry_lock:
             if identity not in self.registrations:
-                raise RuntimeError("Cannot retire an unregistered container")
+                raise RuntimeError('不能回收未登记的容器')
             self.retirements[identity] = {"before_stop": before, "requested_monotonic": time.monotonic()}
         self.call(["docker", "stop", "--time", "3", identity], timeout=15)
         stopped = self.observation(identity)
@@ -591,7 +588,7 @@ class MultiUserLab:
         self.call(["docker", "rm", identity])
         deleted = self.observation(identity)
         if deleted is not None:
-            raise RuntimeError("Container absence was not observed")
+            raise RuntimeError('未观察到容器已不存在')
         with self.registry_lock:
             self.retirements[identity]["deleted"] = {"id": identity, "id_absent": True, "observed_at": now()}
         self.records.append({"time": now(), "before_stop": before, "after_stop": stopped,
@@ -643,8 +640,8 @@ class MultiUserLab:
                     replies[kind] = reply
                     commands[kind] = {"returncode": reply.returncode, "stdout": reply.stdout, "stderr": reply.stderr}
                 except Exception as error:
-                    # Only these exact stats/top commands may retain partial
-                    # output. Never retain exception text, argv, env or inspect.
+                    # 只有这些确切的 stats/top 命令可保留部分输出。
+                    # 不保留异常文本、argv、env 或 inspect。
                     partial = {}
                     for field in ("stdout", "stderr"):
                         value = getattr(error, field, None)
@@ -686,19 +683,19 @@ class MultiUserLab:
             after_row = after.get(identity)
             removal = {}
             if after_row is not None and after_row.get("state", {}).get("Status") == "removing":
-                # A fresh exact-ID inspect must prove absence after the retained
-                # removing snapshot. A successful inspect can contain Env, so
-                # retain stdout only when it is the actual empty JSON array.
+                # 在保留 removing 快照后，须以新的确切 ID inspect 证明对象不存在。
+                # inspect 成功输出可能包含 Env，因此
+                # 仅在 stdout 确实为空 JSON 数组时保留。
                 reply = self.call(["docker", "inspect", identity], check=False, timeout=8)
                 proof = {"id": identity, "id_absent": reply.returncode == 1 and reply.stdout.strip() == "[]",
                     "returncode": reply.returncode, "stdout": reply.stdout if reply.stdout.strip() == "[]" else None,
                     "stderr": reply.stderr, "observed_monotonic": time.monotonic(), "observed_at": now()}
                 diagnostic.setdefault("removal_absence_observations", {})[identity] = proof
-                # rm can finish and register its exact deletion while this
-                # read-only inspect runs. Refresh only this ID, without holding
-                # the registry lock across any Docker call. Existing captured
-                # fields must stay byte-for-byte equal; only new fields may
-                # have appeared during the confirmation.
+                # 此只读 inspect 执行期间，rm 可能完成并登记确切删除。
+                # 仅刷新本 ID 的记录，不在任何 Docker 调用期间
+                # 持有登记锁。已有捕获字段必须逐字节一致；
+                # 确认期间只允许出现新增字段，
+                # 不修改原字段。
                 with self.registry_lock:
                     latest = deepcopy((self.registrations.get(identity), self.retirements.get(identity),
                         self.bench_completions.get(identity)))
@@ -714,7 +711,7 @@ class MultiUserLab:
                 retirements.get(identity), completions.get(identity), **removal)
             if transition["absence_observed"] and "absence_observation" not in transition:
                 if self.observation(identity) is not None:
-                    raise RuntimeError("Exact transitioned container absence was not observed")
+                    raise RuntimeError('未观察到确切过渡容器已不存在')
                 transition["absence_observation"] = {"id": identity, "id_absent": True, "observed_at": now()}
             transitions.append(transition)
         return {"time": now(), "phase": self.phase, "started_monotonic": started,
@@ -746,7 +743,7 @@ class MultiUserLab:
             self.stop_sampling.wait(max(0, 2 - (time.monotonic() - tick)))
 
     def cleanup_inspect(self, kind, identity):
-        """Retain safe exact-ID observations; unknown Docker output is not absence."""
+        """保留安全的确切 ID 观察；未知 Docker 输出不能证明对象不存在。"""
         command = ["docker", "inspect", identity] if kind == "container" else ["docker", "network", "inspect", identity]
         result = {"id": identity, "kind": kind, "status": "unknown"}
         try:
@@ -789,8 +786,8 @@ class MultiUserLab:
         return result
 
     def cleanup(self):
-        # Only create-returned exact IDs are mutation targets. A final list is
-        # evidence, never permission to delete another object's resources.
+        # 仅将 create 返回的确切 ID 作为修改目标。最终清单仅是
+        # 证据，不授权删除其他对象的资源。
         failures, resolved_names = [], set()
         result = {"trial_id": self.args.trial_id, "started_at": now(), "containers": [], "networks": [],
             "native_child_health_claimed": False}
@@ -914,7 +911,7 @@ class MultiUserLab:
                 selected = [row for row in active if row["state"]["Running"]]
                 expected = (5, 3 * 1024**3, 1750000000) if baseline else (8, 5905580032, 3000000000)
                 if (len(selected), sum(row["memory_limit"] for row in selected), sum(row["cpu_nano"] for row in selected)) != expected:
-                    raise RuntimeError("Frozen active container allocation differs")
+                    raise RuntimeError('冻结的活跃容器分配不一致')
                 exclusive(self.global_paths.run / (kind + "-active-containers.json"), active)
                 self.collector(backend, kind, "baseline" if baseline else "active")
                 for identity in workers:
@@ -935,9 +932,9 @@ class MultiUserLab:
             errors.append(type(error).__name__ + ":" + str(error))
         finally:
             try:
-                # Exact IDs returned by this trial's docker create are retained
-                # even if a later inventory read fails. Stop paid execution
-                # before any grading or final evidence operation can fail.
+                # 即使后续清单读取失败，也保留本实验 docker create
+                # 返回的确切 ID。在任何评分或最终证据操作可能失败前
+                # 先停止付费执行。
                 if not outcome:
                     for identity, role in self.registered.items():
                         if role == "fixtures":
@@ -990,7 +987,7 @@ def main():
     parser.add_argument("--pins-file", required=True)
     parser.add_argument("--date", required=True)
     parser.add_argument("--seed", type=int, choices=(101, 202, 303), default=101)
-    parser.add_argument("--baseline", action="store_true", help="Only A's main task; small-quota admission, not I24 capability")
+    parser.add_argument("--baseline", action="store_true", help='仅运行 A 主任务；验证小配额准入，不证明 I24 能力')
     parser.add_argument("--candidate", choices=(DA, DSH), default=DA)
     args = parser.parse_args()
     lock_path = Path("/tmp/harness-lab-exclusive.lock")
