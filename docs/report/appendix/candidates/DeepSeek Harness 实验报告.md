@@ -115,7 +115,7 @@
 
 **实验补充**：`sensitive_export` 的拒绝规则。
 
-**效果**：3/3（各 2 次请求）。**关键区别**：按原始记录，DeepSeek Harness 的拒绝 `layer` 可以是 `candidate_execution`，即在框架执行层拦下；而本轮补充测试的四个初筛框架，拒绝都发生在 `fixture_execution`（业务服务端返回 403）。前者能省一次网络往返，也不依赖服务端配合。
+**效果**：3/3（各 2 次请求）。**关键区别**：按原始记录，DeepSeek Harness 的拒绝 `layer` 可以是 `candidate_execution`，即在框架执行层拦下；而本轮补测运行的四个初筛框架，拒绝都发生在 `fixture_execution`（业务服务端返回 403）。前者能省一次网络往返，也不依赖服务端配合。
 
 #### 4.3 超量写入拒绝
 
@@ -146,7 +146,7 @@
 
 ### 实验五：暂停续跑
 
-**要求的能力**：在已发生真实写入、任务仍活动时暂停；安全落盘；删除旧容器；等 10 分钟；新容器从原状态继续，不重发提示、不重置额度。
+**要求的能力**：在已发生真实写入、任务仍活动时暂停；安全落盘；删除旧容器；等待至少 10 分钟；新容器从原状态继续，不重发提示、不重置额度。
 
 **框架自带**：官方持久目标、会话事件、检查点；在公开步骤边界停止并完成落盘。
 
@@ -244,6 +244,6 @@
 - 候选配置：[configs/candidates/deepseek_harness.yaml](../../../../configs/candidates/deepseek_harness.yaml)
 - 接入说明：[adapters/deepseek_harness/README.md](../../../../adapters/deepseek_harness/README.md)
 - 验收记录：[docs/validation/deepseek_harness.md](../../../validation/deepseek_harness.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/deepseek-multi-user-execution.md)
-- 本轮补充运行：`runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`
+- 本轮补测运行：`runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`（原始记录未入库，在实验机上）
 
 [返回框架索引](单框架实验报告索引.md) · [下一篇：Deep Agents + LangGraph](<Deep Agents + LangGraph 实验报告.md>)

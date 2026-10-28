@@ -54,7 +54,7 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 
 **首轮结果**：两轮均通过（6、7 次请求）。
 
-**本轮补充测试**（新数据）：
+**本轮补测运行**（新数据）：
 
 | 商品数据 | 结果 | 模型请求 | 失败项 |
 | --- | --- | ---: | --- |
@@ -96,7 +96,7 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 
 #### 4.2 敏感操作拒绝 —— 本轮新增，通过
 
-**本轮补充测试**（新数据）：
+**本轮补测运行**（新数据）：
 
 | 项目 | 结果 |
 | --- | --- |
@@ -130,7 +130,7 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 
 **本轮正式运行**：15 次（五类 × 三组），网页按四十次预算重跑，共 103 次模型请求，**15/15 通过**。
 
-**已知失败**：只有此前补充测试里的一次分页违规（第二组）。正式三组未再出现。取消用例未接通属于实验限制。
+**已知失败**：只有此前补测运行里的一次分页违规（第二组）。正式三组未再出现。取消用例未接通属于实验限制。
 
 ---
 
@@ -155,7 +155,7 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 - 接入说明：[adapters/openhands/README.md](../../../../adapters/openhands/README.md)
 - 初筛记录：[docs/validation/openhands.md](../../../validation/openhands.md)
 - 来源锁定：[adapters/openhands/LOCK_PROVENANCE.json](../../../../adapters/openhands/LOCK_PROVENANCE.json)
-- 本轮补充运行：`runs/2026-10-27/openhands/`
+- 本轮补测运行：`runs/2026-10-27/openhands/`（原始记录未入库，在实验机上）
   - `sensitive/supp-case-openhands-151514`（通过）
   - `tools/supp-tools-openhands-202-152032`（`all_pages_read` 失败）
   - `tools/supp-tools-openhands-303-152128`（通过）
