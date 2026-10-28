@@ -155,7 +155,7 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 - 接入说明：[adapters/openhands/README.md](../../../../adapters/openhands/README.md)
 - 初筛记录：[docs/validation/openhands.md](../../../validation/openhands.md)
 - 来源锁定：[adapters/openhands/LOCK_PROVENANCE.json](../../../../adapters/openhands/LOCK_PROVENANCE.json)
-- 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/openhands/`
+- 本轮补充运行：`runs/2026-10-27/openhands/`
   - `sensitive/supp-case-openhands-151514`（通过）
   - `tools/supp-tools-openhands-202-152032`（`all_pages_read` 失败）
   - `tools/supp-tools-openhands-303-152128`（通过）

@@ -244,6 +244,6 @@
 - 候选配置：[configs/candidates/deepseek_harness.yaml](../../../../configs/candidates/deepseek_harness.yaml)
 - 接入说明：[adapters/deepseek_harness/README.md](../../../../adapters/deepseek_harness/README.md)
 - 验收记录：[docs/validation/deepseek_harness.md](../../../validation/deepseek_harness.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/deepseek-multi-user-execution.md)
-- 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`
+- 本轮补充运行：`runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`
 
 [返回框架索引](README.md) · [下一篇：Deep Agents + LangGraph](deepagents_langgraph.md)

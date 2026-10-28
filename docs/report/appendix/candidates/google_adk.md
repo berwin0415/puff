@@ -144,7 +144,7 @@ ADK 是四条补齐路线里唯一**十五项全部通过、无任何失败格**
 - 候选配置：[configs/candidates/google_adk.yaml](../../../../configs/candidates/google_adk.yaml)
 - 接入说明：[adapters/google_adk/README.md](../../../../adapters/google_adk/README.md)
 - 初筛记录：[docs/validation/google_adk.md](../../../validation/google_adk.md)
-- 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/google_adk/`
+- 本轮补充运行：`runs/2026-10-27/google_adk/`
   - `sensitive/supp-case-google_adk-151432`（通过）
   - `tools/supp-tools-google_adk-202-151842`（通过）
   - `tools/supp-tools-google_adk-303-151936`（通过）

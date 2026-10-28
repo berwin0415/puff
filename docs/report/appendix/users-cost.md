@@ -68,7 +68,7 @@ Deep Agents 的取消采用原生执行步边界的协作停止：等待当前�
 
 本实验支持“所测 Deep Agents 接法已证明若干多人服务必要机制”。生产身份系统、浏览器使用期隔离、同一任务执行程序换用户复用均未验证；DSH 没有形成完整的多人实验通过结论。下一项成本实验使用另一套常驻入口，也不能直接继承这里的权限结论。
 
-证据：[多人实验设计与三组结果](../../validation/multi-user-design.md)、[DSH 接线设计](../../validation/deepseek-multi-user-design.md)、[DSH 实际执行记录](../../validation/deepseek-multi-user-execution.md)。原判定见 [Deep Agents 101](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/scope-verdict.json)、[202](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/scope-verdict.json)、[303](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-303-001/scope-verdict.json)及 [DSH 双用户试跑](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope/i24-dsh-smoke-101-001/scope-verdict.json)。
+证据：[多人实验设计与三组结果](../../validation/multi-user-design.md)、[DSH 接线设计](../../validation/deepseek-multi-user-design.md)、[DSH 实际执行记录](../../validation/deepseek-multi-user-execution.md)。原判定见 Deep Agents 101（`scope/i24-da-removal-101-001`）、202（`scope/i24-da-removal-202-001`）、303（`scope/i24-da-removal-303-001`）及 DSH 双用户试跑（`scope/i24-dsh-smoke-101-001`）。
 
 ## 实验八：持续运行与按需启动的资源比较
 
@@ -128,7 +128,7 @@ Deep Agents 的取消采用原生执行步边界的协作停止：等待当前�
 
 所以五用户仍是失败的探索轮，十用户未运行，首轮在此收尾。现有结果支持“按需回收降低了所测空闲窗口占用，同时增加启动等待”的初步判断；完整收益、生产容量、三组输入的配对比较、常驻入口的权限验证和真实产品后端费用均未建立。
 
-证据：[实例成本完整记录](../../validation/instance-cost-flow.md)、[生命周期采样设计](../../validation/instance-cost-lifecycle-sampling-design.md)。原判定见[两用户按需](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-od-101-001/protected/flow-verdict.json)、[两用户常驻](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-101-001/protected/flow-verdict.json)、[五用户轮换](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json)；旧采样[按需补审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)和[常驻补审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json)单独保留。
+证据：[实例成本完整记录](../../validation/instance-cost-flow.md)、[生命周期采样设计](../../validation/instance-cost-lifecycle-sampling-design.md)。原判定见两用户按需（`i25-da-od-101-001/protected`）、两用户常驻（`i25-da-resident-101-001/protected`）、五用户轮换（`i25-da-rotation-n5-101-001/protected`）；旧采样按需补审计（`i25-legacy-sampling-audits-001/proof`）和常驻补审计（`i25-legacy-sampling-audits-001/proof`）单独保留。
 
 ## 实验九：模型用量与建设维护投入
 
@@ -211,5 +211,5 @@ Deep Agents 的取消采用原生执行步边界的协作停止：等待当前�
 
 证据：各框架请求数来自[010请求安全汇总](../../validation/research-usage-summary.json)的 `by_candidate`；模型用量与缺口来自[010 token安全汇总](../../validation/token-usage-summary.json)的 `by_candidate`。口径见[请求与费用台账](../../validation/costs.md)、[token计量记录](../../validation/token-usage-design.md)。工程来源见[四条详细路线投入盘点](../../validation/engineering-inventory.md)及 [Pi](../../validation/pi_agent_core.md)、[Google ADK](../../validation/google_adk.md)、[Codex SDK](../../validation/codex_sdk.md)、[OpenHands](../../validation/openhands.md)初筛记录。
 
-最终[请求统计执行原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)与[token提取执行原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json)均记录独立断网只读执行及清理结果；[首轮收尾记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-closeout-001/documents.json)保存最终文档核验。项目容器和网络已清理，镜像、状态、预算及失败证据保留。
+最终请求统计执行原件（`runtime/research-usage-check-010`）与token提取执行原件（`runtime/token-usage-check-010`）均记录独立断网只读执行及清理结果；首轮收尾记录（`runtime/research-closeout-001`）保存最终文档核验。项目容器和网络已清理，镜像、状态、预算及失败证据保留。
 

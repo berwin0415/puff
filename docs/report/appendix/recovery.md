@@ -240,15 +240,15 @@ Deep Agents 较早的两批故障冒烟也分别因验收器不能正确读取�
 
 设计依据见[暂停设计](../../validation/pause-recovery-design.md)和[故障设计](../../validation/fault-recovery-design.md)；冻结任务见[暂停配置](../../../configs/tasks/pause-resume.yaml)与[故障配置](../../../configs/tasks/fault-recovery.yaml)。设计文档与配置保留了一些实施早期状态，当前结果应结合[暂停执行记录](../../validation/pause-recovery.md)、[资源汇总](../../validation/pause-resource-summary.json)和[故障执行记录的收尾部分](../../validation/fault-recovery-execution.md)阅读。
 
-暂停执行记录列出全部六条完成链及历史中止链。DSH 第一组的[原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/verdict.json)与[追加离线复核](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i22-deepseek-pause-seed-101-002/reviews/restored-header-002/verdict.json)分别保留，不能只引用复核而隐藏原记录。
+暂停执行记录列出全部六条完成链及历史中止链。DSH 第一组的原判定（`tools/i22-deepseek-pause-seed-101-002`）与追加离线复核（`reviews/restored-header-002`）分别保留，不能只引用复核而隐藏原记录。
 
 | 故障阶段原始索引 | DSH | Deep Agents |
 | --- | --- | --- |
-| 第一组无故障基线 | [round-baseline101-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i23-dsh-round-baseline101-001/batch.json) | [send-baseline101-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-baseline101-001/batch.json) |
-| 四故障冒烟 | [round-smoke-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-smoke-001/batch.json) | [send-smoke-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-smoke-001/batch.json) |
-| 正式二十四格 | [formal-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-formal-001/batch.json) | [formal-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-formal-001/batch.json) |
-| 补普通基线 | [baseline-rest-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-baseline-rest-001/batch.json) | [baseline-rest-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-baseline-rest-001/batch.json) |
-| 最终关键窗口补测 | [final-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-final-001/batch.json) | [final-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-final-001/batch.json) |
+| 第一组无故障基线 | round-baseline101-001（`runtime/i23-dsh-round-baseline101-001`） | send-baseline101-001（`runtime/i23-da-send-baseline101-001`） |
+| 四故障冒烟 | round-smoke-001（`runtime/i23-dsh-round-smoke-001`） | send-smoke-001（`runtime/i23-da-send-smoke-001`） |
+| 正式二十四格 | formal-001（`runtime/i23-dsh-removal-formal-001`） | formal-001（`runtime/i23-da-removal-formal-001`） |
+| 补普通基线 | baseline-rest-001（`runtime/i23-dsh-removal-baseline-rest-001`） | baseline-rest-001（`runtime/i23-da-removal-baseline-rest-001`） |
+| 最终关键窗口补测 | final-001（`runtime/i23-dsh-removal-final-001`） | final-001（`runtime/i23-da-removal-final-001`） |
 
 实现入口包括[暂停编排](../../../scripts/run_pause_recovery.py)、[暂停验收](../../../runner/pause_recovery.py)、[故障编排](../../../scripts/run_fault_recovery.py)、[故障分轴验收](../../../runner/fault_recovery.py)与[批次完整性控制](../../../scripts/run_fault_batch.py)。这些文件用于追踪实验如何落实，不表示分享报告要求读者运行实验。
 

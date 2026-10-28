@@ -174,7 +174,7 @@
 - 候选配置：[configs/candidates/codex_sdk.yaml](../../../../configs/candidates/codex_sdk.yaml)
 - 接入说明：[adapters/codex_sdk/README.md](../../../../adapters/codex_sdk/README.md)
 - 初筛记录：[docs/validation/codex_sdk.md](../../../validation/codex_sdk.md)
-- 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/codex_sdk/`
+- 本轮补充运行：`runs/2026-10-27/codex_sdk/`
   - `sensitive/supp-case-codex_sdk-151553`（通过）
   - `tools/supp-tools-codex_sdk-202-152231`（通过）
   - `tools/supp-tools-codex_sdk-303-152325`（通过）
