@@ -21,9 +21,9 @@
 
 ## 本机材料位置及归档校验
 
-DSH 和 OpenClaw 使用 `/Users/hanbowen01/repo/deepseek-harness`、`/Users/hanbowen01/repo/openclaw`；LangGraph 使用 `/Users/hanbowen01/harness-lab-sources/langgraph`。三者导出前校验完整 HEAD、origin、无工作区改动、无子模块。发现 dirty 会停止导出，不把本地修改冒充官方版本。
+DSH 和 OpenClaw 使用各自的本地源码导出目录；LangGraph 使用固定归档目录中的 langgraph 导出。三者导出前校验完整 HEAD、origin、无工作区改动、无子模块。发现 dirty 会停止导出，不把本地修改冒充官方版本。
 
-其余来源直接从 `/Users/hanbowen01/harness-lab-sources/` 下固定归档导出，不依赖旁边已解压目录；无 `.git` 的 Deep Agents 工作树也不直接作为构建依据。GitHub 源码包不自动提供子模块内容，当前构建所需内容须在各候选步骤再次核对。
+其余来源直接从固定的归档目录导出，不依赖旁边已解压目录；无 `.git` 的 Deep Agents 工作树也不直接作为构建依据。GitHub 源码包不自动提供子模块内容，当前构建所需内容须在各候选步骤再次核对。
 
 | 来源归档 | SHA-256 |
 | --- | --- |

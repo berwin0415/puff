@@ -31,7 +31,7 @@ Agent 根据目标读取 `request.json`、查询所有分页、自行筛选并�
 
 原生 `assistant/message.usage` 按消息各计一次（不再累加 chunk 中的重复 usage）：两轮 `totalTokens` 分别为 26490、14043，`outputTokens` 为 2291、1702；原始缓存等字段保留在 `native-usage-summary.json`，不重复加入 total。小样本的调用和 token 差异只能作观察，尚不能据此推算生产成本。
 
-证据在 `/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/<run_id>/`：`manifest.json`、`input.json`、`model-calls.json`、`ledger.json`、`tool-events.jsonl`、`verdict.json`、资源采样，以及 `candidate/` 内的原始通知、SDK 完整结果和来源信息。候选只能挂载其输出子目录，不能改工具审计。
+证据在 `runs/2026-10-20/deepseek_harness/tools/<run_id>/`：`manifest.json`、`input.json`、`model-calls.json`、`ledger.json`、`tool-events.jsonl`、`verdict.json`、资源采样，以及 `candidate/` 内的原始通知、SDK 完整结果和来源信息。候选只能挂载其输出子目录，不能改工具审计。
 
 复现：
 
@@ -81,7 +81,7 @@ uv run --frozen python scripts/probe_candidate_budget.py --run-id UNIQUE_BUDGET_
 
 ### 正式三组：15/15 通过，浏览器预算余量很小
 
-批次索引：[i17-dsh-formal-batch-001/batch.json](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-formal-batch-001/batch.json)。已逐轮交叉核对 manifest、input、verdict、原生 result、模型调用及资源指标；批次汇总与各轮证据一致。15轮均为不同候选容器 ID，使用同一镜像 `sha256:3c4da6e39b8c237a3df6a9bfcaf291050c6ed922bbba43dd9d1b372aa16c8504`、同一接入材料 `f9058d67826f632d7f177ce0ee4c02a646526689089003f29982ea1fc68f9f95`；bench 镜像为 `sha256:f5031a02d411a650a72dc7a768f61ce6332a831518b3fa7c31cb9eae2e35ad8a`。任务文件 SHA256 与批次冻结记录及当前定义相符。
+批次索引：i17-dsh-formal-batch-001/batch.json（`runtime/i17-dsh-formal-batch-001`）。已逐轮交叉核对 manifest、input、verdict、原生 result、模型调用及资源指标；批次汇总与各轮证据一致。15轮均为不同候选容器 ID，使用同一镜像 `sha256:3c4da6e39b8c237a3df6a9bfcaf291050c6ed922bbba43dd9d1b372aa16c8504`、同一接入材料 `f9058d67826f632d7f177ce0ee4c02a646526689089003f29982ea1fc68f9f95`；bench 镜像为 `sha256:f5031a02d411a650a72dc7a768f61ce6332a831518b3fa7c31cb9eae2e35ad8a`。任务文件 SHA256 与批次冻结记录及当前定义相符。
 
 | 用例 | 101 / 202 / 303 模型请求 | 各轮验收 | 各轮实际业务写入 | 三轮入口耗时范围 |
 | --- | --- | --- | --- | --- |
@@ -111,7 +111,7 @@ browser的101、202轮正好在第20次模型请求后正常完成，并未发�
 
 ### 冷读003：必需自定义事件的兼容缺口与重新设计
 
-`i17-dsh-native-state-003` 对正式 `i17-dsh-extension-seed-101-001` 的原生状态做真实换容器冷读。旧候选已删除，新容器ID不同且镜像相同；未启动模型代理、未注入上游凭证、没有新增模型或业务工具调用。候选公开 `agents.resume` 返回 `failed/runtime_error`，报错为 `session "main" contains event type "harness-lab/business-state" (seq 924) unknown to this harness and not marked ignorable`。详见[原生失败结果](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-101-001/native-state/i17-dsh-native-state-003/candidate/result.json)及[失败verdict](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-seed-101-001/native-state/i17-dsh-native-state-003/verdict.json)。因加载失败而没有业务态导出文件，验收随后报告 `Native evidence must be a regular file`；该文件缺失是结果，不是原生拒绝的原因。原始state、工作区、预算、HTTP审计及正式批次证据均保留。
+`i17-dsh-native-state-003` 对正式 `i17-dsh-extension-seed-101-001` 的原生状态做真实换容器冷读。旧候选已删除，新容器ID不同且镜像相同；未启动模型代理、未注入上游凭证、没有新增模型或业务工具调用。候选公开 `agents.resume` 返回 `failed/runtime_error`，报错为 `session "main" contains event type "harness-lab/business-state" (seq 924) unknown to this harness and not marked ignorable`。详见原生失败结果（`i17-dsh-native-state-003/candidate`）及失败verdict（`native-state/i17-dsh-native-state-003`）。因加载失败而没有业务态导出文件，验收随后报告 `Native evidence must be a regular file`；该文件缺失是结果，不是原生拒绝的原因。原始state、工作区、预算、HTTP审计及正式批次证据均保留。
 
 此项准确归因为实验业务接入与固定版本的事件兼容契约不匹配：源码 `known-event-types.ts` 的事件目录为构建时生成，持久化 `prepare` 仅接受已知事件或明确可忽略的外部信息事件；`sessionProjections.register` 注册的是投影，不会把事件类型加入该目录。公开 `agents.resume` 的加载也先于 Agent setup，且固定源码明确未提供外部事件名早期注册机制，因此简单前移投影注册无法解决。业务态为必需数据，不能改标 `ignorable` 来绕过拒绝。该结果不说明所有DSH原生状态都不可恢复，也不否定原15/15任务在原容器内的完成证据。
 
@@ -125,15 +125,15 @@ browser的101、202轮正好在第20次模型请求后正常完成，并未发�
 
 正式101/202/303的五类任务原批次已完成。新保存方式的`i17-dsh-extension-smoke-002`真实19项全过，10次模型请求、3笔写入/3次请求，原生completed。新镜像为`sha256:dc5238ff6e83883e223619d149c4b784e55f491c86b3fa7be90dc99ce29336ed`，adapter export为`0b2bc9379bf53d47edbfe8f4206a81e1ed547ed8673b069f18bcdd1822872be7`，来源清单hash`209ab1e04aa4897d91c67991b1d2269bf4ef3e31aea1b3f3ed7793494c67ece4`，构建材料留在`runtime/i17-dsh-build-004/`。
 
-该新run的[冷读004](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/extension/i17-dsh-extension-smoke-002/native-state/i17-dsh-native-state-004/verdict.json)真实23项全过：旧Worker确已删除，同镜像新容器ID，经公开原生加载和投影读回相同完整业务状态；原日志前缀保留，仅允许原生加载边界追加，工作区/预算/HTTP审计/原candidate证据不变。没有启动模型代理、注入真凭证或新增业务工具调用，独有探针资源已清理。DSH加载需要写入原生边界，因此state为受校验的rw挂载，不能写成全程只读。此结果只证明换容器可重建业务态，不是暂停或任务继续。冷读001/002接线失败和003自定义事件兼容失败保留，不改旧日志，也不把新方案倒套到旧正式批次。
+该新run的冷读004（`native-state/i17-dsh-native-state-004`）真实23项全过：旧Worker确已删除，同镜像新容器ID，经公开原生加载和投影读回相同完整业务状态；原日志前缀保留，仅允许原生加载边界追加，工作区/预算/HTTP审计/原candidate证据不变。没有启动模型代理、注入真凭证或新增业务工具调用，独有探针资源已清理。DSH加载需要写入原生边界，因此state为受校验的rw挂载，不能写成全程只读。此结果只证明换容器可重建业务态，不是暂停或任务继续。冷读001/002接线失败和003自定义事件兼容失败保留，不改旧日志，也不把新方案倒套到旧正式批次。
 
-新接法的数量拒绝冒烟11项通过、2模型/0写；extension/extension-denied各101/202/303也已完成，6/6通过、31次真实模型请求、9笔写入。三组extension为10/9/6次模型、各3笔写入和实际回执；三组denied均2次模型、0写入。所有原生completed，候选/验收退出码均0，6个不同Worker，同一新候选镜像与bench。批次索引为[i17-dsh-metadata-formal-batch-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-metadata-formal-batch-001/batch.json)。未涉及业务扩展分支的tools/browser/sensitive原结果仍有效，不无故重复全部任务。
+新接法的数量拒绝冒烟11项通过、2模型/0写；extension/extension-denied各101/202/303也已完成，6/6通过、31次真实模型请求、9笔写入。三组extension为10/9/6次模型、各3笔写入和实际回执；三组denied均2次模型、0写入。所有原生completed，候选/验收退出码均0，6个不同Worker，同一新候选镜像与bench。批次索引为i17-dsh-metadata-formal-batch-001（`runtime/i17-dsh-metadata-formal-batch-001`）。未涉及业务扩展分支的tools/browser/sensitive原结果仍有效，不无故重复全部任务。
 
 诊断已覆盖真实缺文件400和代理注入504后的重试，尚未覆盖无效schema参数或真实网络空闲超时。取消两轮原生结束事件写入失败的缺口必须保留；现有证据只覆盖模型活动时发取消，不能推断工具写入在途的取消效果。I17允许以明确缺口记录研究结果，不以无限修上游作为完成条件，但应把尚未覆盖的停点和补齐范围写清。本轮薄接入位于scoped-runtime-entrypoint、tools-plugin、business-extension三个候选文件及profile配置；原生循环/Session/调度/重试来自官方，Playwright MCP为官方配套，作用域/规则/回执别名/metadata业务投影为业务接入，Docker编排/预算代理/独立验收为公共自研实验层。新6轮原生入口累计102.207秒；它和构建日志只反映自动时间，真实人工工时未知，I26再按同口径汇总代码和失败支出。五组关键任务、10分钟暂停续跑、故障写入窗口、后端鉴权和实例成本分别留给后续专项，I17已完成约定实验并以明确取消缺口收尾；不等于全部能力通过。
 
 ## 最终补充：404/505
 
-[final-dsh-batch-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/final-dsh-batch-001/batch.json)已结束，SHA-256为`5992321cff4b56dc3c73c26a8c66a395ccb3cb5c5007d07a7220d308aaa251b9`。五类各两轮，**10/10完整通过、78次真实远程模型请求、14笔实际写入**。
+final-dsh-batch-001（`runtime/final-dsh-batch-001`）已结束，SHA-256为`5992321cff4b56dc3c73c26a8c66a395ccb3cb5c5007d07a7220d308aaa251b9`。五类各两轮，**10/10完整通过、78次真实远程模型请求、14笔实际写入**。
 
 | case | 404/505完整通过 | 请求数（404/505） | 实际写入（404/505） | 核对结果 |
 | --- | --- | --- | --- | --- |
@@ -163,13 +163,13 @@ browser的101、202轮正好在第20次模型请求后正常完成，并未发�
 
 ## I23 故障正式矩阵的当前结果
 
-2026-10-21。删除与容器清单互斥修订后的[i23-dsh-removal-formal-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-formal-001/batch.json)已结束：24/24格有效，完整通过23/24。唯一失败是模型超时/非幂等服务/101的业务`all_pages_read`检查；报告、实际写入、scope和审计等其余业务项通过，不能用正确结果覆盖分页要求。
+2026-10-21。删除与容器清单互斥修订后的i23-dsh-removal-formal-001（`runtime/i23-dsh-removal-formal-001`）已结束：24/24格有效，完整通过23/24。唯一失败是模型超时/非幂等服务/101的业务`all_pages_read`检查；报告、实际写入、scope和审计等其余业务项通过，不能用正确结果覆盖分页要求。
 
 模型超时完整5/6，其余工具失败、写后丢回执和写前强杀均6/6。六条强杀链均从原生状态换容器恢复；24格外层检查、host和清理有效，已提交操作重发均0。本批固定模型、镜像和冻结材料单列在[故障执行记录](fault-recovery-execution.md)，索引SHA-256为`acc141a648168dc40e9dbb0f21d7646f96ad9412ffa1406ebab3c9d445c45ac8`；不与旧两个采样停止批合并成功率。两路线补普通基线及最终关键故障种子均已结束，I23约定调研完成并保留业务失败；本批已纳入010：293条reservation中287条远程200、6条本地注入，不能全部视为远程调用；金额未知。
 
-[DSH补普通基线202/303](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-baseline-rest-001/batch.json)已`completed`、完整4/4通过；按幂等202/303、非幂等202/303顺序，原模型计数为9/9/14/9，外层检查及清理有效。索引SHA-256为`a7aa22808d1c6d88d69c30ce9748d5e81d74468d67ef6b2ffd1444b39167951e`。与此前101两模式2/2可描述同候选材料普通基线6/6，但原bench为`8a58c351…`、本批为`4dd8a37e…`，保留分层，不拼成同一完整镜像组合或并入故障矩阵成功率。010 Docker安全分组已确认本补基线41条远程200；这只覆盖明确登记来源，仍不称完整远程账单。
+DSH补普通基线202/303（`runtime/i23-dsh-removal-baseline-rest-001`）已`completed`、完整4/4通过；按幂等202/303、非幂等202/303顺序，原模型计数为9/9/14/9，外层检查及清理有效。索引SHA-256为`a7aa22808d1c6d88d69c30ce9748d5e81d74468d67ef6b2ffd1444b39167951e`。与此前101两模式2/2可描述同候选材料普通基线6/6，但原bench为`8a58c351…`、本批为`4dd8a37e…`，保留分层，不拼成同一完整镜像组合或并入故障矩阵成功率。010 Docker安全分组已确认本补基线41条远程200；这只覆盖明确登记来源，仍不称完整远程账单。
 
-[DSH最终关键故障404/505](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-final-001/batch.json)已`completed`且完整8/8通过，写前强杀与写后丢回执各4/4。四条强杀链均原生换容器恢复，八格外层、host及清理有效，已提交操作重发均0；索引SHA-256为`84a57b8942df276f2f8bd05df874e66aa07259675deb82b625baf20b2da689e1`。本轮正式23/24、普通基线6/6（bench分层）、最终8/8分别留存，不合并成功率，也不与旧停止批拼接。I23调研已结束，尚不推出生产可靠性或迁移成本结论；010独立断网Docker SQL/token均已通过，本最终批95条远程200；全研究登记343库/2485条reservation，已知token部分10,253,403，仍有17个未登记来源未查、缺usage、无请求级关联及金额。009历史原件保留，详见[用量台账](costs.md)。
+DSH最终关键故障404/505（`runtime/i23-dsh-removal-final-001`）已`completed`且完整8/8通过，写前强杀与写后丢回执各4/4。四条强杀链均原生换容器恢复，八格外层、host及清理有效，已提交操作重发均0；索引SHA-256为`84a57b8942df276f2f8bd05df874e66aa07259675deb82b625baf20b2da689e1`。本轮正式23/24、普通基线6/6（bench分层）、最终8/8分别留存，不合并成功率，也不与旧停止批拼接。I23调研已结束，尚不推出生产可靠性或迁移成本结论；010独立断网Docker SQL/token均已通过，本最终批95条远程200；全研究登记343库/2485条reservation，已知token部分10,253,403，仍有17个未登记来源未查、缺usage、无请求级关联及金额。009历史原件保留，详见[用量台账](costs.md)。
 
 ## I24 两用户接线与当前验证状态
 
@@ -184,6 +184,6 @@ browser的101、202轮正好在第20次模型请求后正常完成，并未发�
 
 003的CLI退出0，host `passed=true` 且errors、sampling_errors、overages均为空；baseline-verdict三项全过，最终容器/网络清单为空。该结果只通过单用户准入门禁，不能为双用户冒烟补通过。冒烟唯一采样错误发生在B旧Worker原终态exit143、非OOM之后：删除已请求，采样时确切ID仍存在，约21毫秒后才确认删除。未来的删除确认不能解释先前样本，原失败保留。
 
-网络修订经独立只读评审；新bench六个相关文件 **430项容器校准通过**，断网、无key、退出0、无OOM且确切容器清理通过，见 [校准原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/dsh-network-revision-check-001/host.json)。该结果验证接线与拒绝边界，不能代替真实任务、有效并发、后端隔离或换容器续跑。Worker、bench、services和新pins均在 [I24执行记录](deepseek-multi-user-execution.md) 固定，不混用旧I22或失败基线材料。
+网络修订经独立只读评审；新bench六个相关文件 **430项容器校准通过**，断网、无key、退出0、无OOM且确切容器清理通过，见 校准原件（`runtime/dsh-network-revision-check-001`）。该结果验证接线与拒绝边界，不能代替真实任务、有效并发、后端隔离或换容器续跑。Worker、bench、services和新pins均在 [I24执行记录](deepseek-multi-user-execution.md) 固定，不混用旧I22或失败基线材料。
 
 取消仍单列：ACK不表示原生完成。I17两次取消的结束事件缺口保留；本次I24两取消在原生评分前因预算结果在途/未知停止，不能据此判断原生取消通过或失败，也不能用Goal暂停、idle或强制退出补通过。浏览器使用期隔离、同Worker跨用户复用和常驻成本本轮未完成；DSH专用包装、证据适配与校准属于额外自研投入。

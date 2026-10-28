@@ -33,4 +33,4 @@
 
 内建 shell、goal、image、web search 等公开开关已关闭；CLI 仍暴露 MCP 资源元数据接口，首轮确有调用，不宣称模型可见面只有八工具。这些元数据原样留存，业务边界外的其他任务工具仍判异常。输出 token 无可生效公开上限的缺口保留。浏览器、暂停恢复、租户接入与实例成本未验收；I16 暂缓进一步投入，不等于这些能力不支持。
 
-证据根：`/Users/hanbowen01/harness-lab-data/runs/2026-10-20/codex_sdk/`，构建日志在`runtime/`，模拟探针和协议运行在`tools/`。接入材料与复现命令见[说明](../../adapters/codex_sdk/README.md)。
+证据根：`runs/2026-10-20/codex_sdk/`，构建日志在`runtime/`，模拟探针和协议运行在`tools/`。接入材料与复现命令见[说明](../../adapters/codex_sdk/README.md)。

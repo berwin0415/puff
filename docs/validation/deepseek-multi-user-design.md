@@ -8,7 +8,7 @@
 
 ## 1. 采用哪份材料，已有证据能复用到哪里
 
-测试对象沿用 MIT 开源 `deepseek-ai/deepseek-harness`，固定提交 `dd6322d604e00eec1ba5e0c8541159906a21094a`、包版本 `0.1.2-alpha.3`。继续使用 I22 的 `goal-runtime` 入口和官方 Goal 插件，不改用 I23 的 `fault-round-order` 入口，也不升级或修补上游。来源及入口分层见 [候选附录](../report/candidates/deepseek_harness.md)。
+测试对象沿用 MIT 开源 `deepseek-ai/deepseek-harness`，固定提交 `dd6322d604e00eec1ba5e0c8541159906a21094a`、包版本 `0.1.2-alpha.3`。继续使用 I22 的 `goal-runtime` 入口和官方 Goal 插件，不改用 I23 的 `fault-round-order` 入口，也不升级或修补上游。来源及入口分层见 [候选附录](<../report/appendix/candidates/DeepSeek Harness 实验报告.md>)。
 
 | 已有材料 | 已验证内容 | 本次可复用与不能外推的部分 |
 | --- | --- | --- |

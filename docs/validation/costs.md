@@ -38,7 +38,7 @@
 
 009已登记的Deep Agents正式24库共154条计数：148条远程200、6条本地注入；24格完整10/24，14格仅业务分页失败。此前DSH停止批前18格有效结束、17格完整通过，另1格分页业务失败；第19格因采样inspect返回1而完整性停止，不判候选成败，但已发生消耗仍计入。旧正式两格、旧停止批及I24三组的原判定保持不变，失败消耗全部保留。
 
-010新增五个固定阶段已全部结束；以下是上表新增部分的展开，**不能再与上表相加**。数字直接取自Docker内完成的[阶段分组原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-010/proof/fault-phase-usage.json)，未在宿主重新计算；该分组仅覆盖这48库，不是完整账单。
+010新增五个固定阶段已全部结束；以下是上表新增部分的展开，**不能再与上表相加**。数字直接取自Docker内完成的阶段分组原件（`research-usage-enrollment-010/proof`），未在宿主重新计算；该分组仅覆盖这48库，不是完整账单。
 
 | 本次追加阶段 | 库数 | 全部计数 | 远程200 | 本地注入 |
 | --- | ---: | ---: | ---: | ---: |
@@ -48,7 +48,7 @@
 | Deep Agents关键故障final | 8 | 50 | 50 | 0 |
 | DSH关键故障final | 8 | 95 | 95 | 0 |
 
-新增48库共500条计数，其中494条远程200、6条本地注入；原[分组host记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-phase-usage-check-010/host.json)为断网、无模型key、退出0、健康终态且清理通过。费用登记只说明付费路径闭合，不改变原业务/资源判定，不能把失败记录删掉后再比较。
+新增48库共500条计数，其中494条远程200、6条本地注入；原分组host记录（`runtime/fault-phase-usage-check-010`）为断网、无模型key、退出0、健康终态且清理通过。费用登记只说明付费路径闭合，不改变原业务/资源判定，不能把失败记录删掉后再比较。
 
 4条远程未确认包括历史OpenClaw断连3条及I25 resident故障A断连1条；另1条在途未知来自按需故障A。后两者的付费进程已经清理，未知指原记账未落完整，不表示现在仍有任务运行。它们不能补成200，也不能按零消耗计算。被代理在reservation前拒绝的401/429等仍未知，不能用`recorded_rejected=0`推断没有拒绝。
 
@@ -56,7 +56,7 @@
 
 当前`unresolved=[]`、物理别名重复为0；17个未登记库只列路径、未查询SQL：旧Deep Agents I24两库、DSH I24七库、I25 N5八库。[未支持格式说明](research-usage-unenrolled-formats.json)列出后两类15条确切路径及暂缓原因，不是零消耗证明，也不代替SQL快照中另存的旧两库缺口。DSH I24与N5新格式未被当前reader支持，不为凑齐总量扩建reader或伪装闭合格式；模型前接线失败、取消在途/未知等也不擅自补零或200。发现范围是`budgets/`及库存日期2026-10-21的run内数据库，不能据此认定其他日期没有未列库。没有原预算库的直接API探针、已删除临时库和归档也不在本表。
 
-010由固定bench `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`在Docker内执行，断网、仅将 `runs/` 与 `budgets/` 两个子目录只读挂到相同绝对路径，输出使用独立挂载、无模型key，退出0、无OOM并确切清理，见[host记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)。010库存SHA-256为`3d424d716689b10179dc59f16ca95bd11c7066aa3140e2d68652d0c53f1d14c3`，SQL安全汇总为`69d2a174beb4f73f8defc9b154ad4313968eb8a63d5a038354f732326c0c44b1`，未支持格式说明为`38fcbf58203b61f03a8cd6cbba78d133323bbb7ce98dfc7c7c73708d4f406c59`。库存原件中的“Metadata enrollment only”描述冻结清单生成步骤；后续独立SQL及token执行由各自host记录证明，不改写库存原件。原[006快照](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-006/proof/summary.json)、[007快照](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-007/proof/summary.json)和[009快照](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-009/proof/summary.json)分别保留238库/1528计数、252库/1612计数及295库/1985计数，没有覆盖。
+010由固定bench `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`在Docker内执行，断网、仅将 `runs/` 与 `budgets/` 两个子目录只读挂到相同绝对路径，输出使用独立挂载、无模型key，退出0、无OOM并确切清理，见host记录（`runtime/research-usage-check-010`）。010库存SHA-256为`3d424d716689b10179dc59f16ca95bd11c7066aa3140e2d68652d0c53f1d14c3`，SQL安全汇总为`69d2a174beb4f73f8defc9b154ad4313968eb8a63d5a038354f732326c0c44b1`，未支持格式说明为`38fcbf58203b61f03a8cd6cbba78d133323bbb7ce98dfc7c7c73708d4f406c59`。库存原件中的“Metadata enrollment only”描述冻结清单生成步骤；后续独立SQL及token执行由各自host记录证明，不改写库存原件。原006快照（`research-usage-enrollment-006/proof`）、007快照（`research-usage-enrollment-007/proof`）和009快照（`research-usage-enrollment-009/proof`）分别保留238库/1528计数、252库/1612计数及295库/1985计数，没有覆盖。
 
 ## 这些数字回答什么
 
@@ -132,19 +132,19 @@ DSH三条基线原评分失败，追加`durable-goal-001`通过；DSH暂停10100
 
 ```sh
 set -e
-usage_proof_root=/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-reproduce-010-001
+usage_proof_root=runs/2026-10-21/infrastructure/runtime/research-usage-reproduce-010-001
 mkdir "$usage_proof_root"
 docker run --rm --name harness-lab-research-usage-reproduce-010-001 \
   --label com.docker.compose.project=harness-lab --label org.harness-lab.role=bench \
   --platform linux/arm64 --network none --read-only \
   --memory 512m --cpus 0.5 --pids-limit 128 --tmpfs /tmp:size=128m \
-  --mount type=bind,src=/Users/hanbowen01/harness-lab-data/runs,dst=/Users/hanbowen01/harness-lab-data/runs,readonly \
-  --mount type=bind,src=/Users/hanbowen01/harness-lab-data/budgets,dst=/Users/hanbowen01/harness-lab-data/budgets,readonly \
+  --mount type=bind,src=runs,dst=runs,readonly \
+  --mount type=bind,src=budgets,dst=budgets,readonly \
   --mount "type=bind,src=$usage_proof_root,dst=/proof" \
   --entrypoint python \
   sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186 \
   scripts/summarize_research_usage.py \
-  --inventory /Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-010/inventory.json \
+  --inventory runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-010/inventory.json \
   --output /proof/summary.json
 ```
 
@@ -180,6 +180,6 @@ docker run --rm --name harness-lab-research-usage-reproduce-010-001 \
 
 2026-10-21过去008追加：逐项保留007原252项，追加已停止DSH新正式批前19格至271；新增219条计数（213远程200、6本地注入），当时1831条reservation。费用汇总与token提取分别在断网Docker中健康退出并清理通过，旧007及新正式批原判定均保留。token结果是四候选有限主来源的已知部分，金额、请求级覆盖及I26整体完成状态不变。
 
-2026-10-21过去009追加：逐项及按序保留008原271项，追加Deep Agents首次完整结束的正式故障矩阵24库至295库。新增154条计数中148条远程200、6条本地注入；当时1985条reservation，包括1922远程200、4远程未确认、1在途未知、36模拟、22本地注入。SQL和token两个独立断网容器均退出0、无OOM且确切清理通过。token选中259项四候选登记、237目录，1785份去重观察中1772份输入/输出/总量已知，已知总量部分7,769,302；13份观察未知和11个无可用usage单元仍保留。过去008的271库/1831计数及7,216,348已知token原件不覆盖；009不改变候选原判定、请求关联和金额未知的限制。009[库存原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-009/inventory.json)hash为`f5575fa9b0d8c3e9348076b1a74ef321035b76007720af523a15095cb56a52c9`，[SQL原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-009/proof/summary.json)hash为`859764a220f390d570546c2d632e05ed7826fc41e68a12d305b2feb948063c62`，均不覆盖。
+2026-10-21过去009追加：逐项及按序保留008原271项，追加Deep Agents首次完整结束的正式故障矩阵24库至295库。新增154条计数中148条远程200、6条本地注入；当时1985条reservation，包括1922远程200、4远程未确认、1在途未知、36模拟、22本地注入。SQL和token两个独立断网容器均退出0、无OOM且确切清理通过。token选中259项四候选登记、237目录，1785份去重观察中1772份输入/输出/总量已知，已知总量部分7,769,302；13份观察未知和11个无可用usage单元仍保留。过去008的271库/1831计数及7,216,348已知token原件不覆盖；009不改变候选原判定、请求关联和金额未知的限制。009库存原件（`runtime/research-usage-enrollment-009`）hash为`f5575fa9b0d8c3e9348076b1a74ef321035b76007720af523a15095cb56a52c9`，SQL原件（`research-usage-enrollment-009/proof`）hash为`859764a220f390d570546c2d632e05ed7826fc41e68a12d305b2feb948063c62`，均不覆盖。
 
 2026-10-21当前010追加：保留009全部295项原对象字节及顺序，追加DSH正式24格、两路线各4格正常基线rest及各8格关键故障final，共48库；新增500条计数含494远程200及6本地注入。两个独立SQL/token断网容器及阶段分组容器均健康退出0、无模型key并确切清理。当前数字见本文开头；009及`docs/report/`历史快照不覆盖，010也不将未登记材料补零或声称完整研究账单。

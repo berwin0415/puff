@@ -38,19 +38,19 @@ Agent 循环、流事件、Session 和 RunState 来自框架。HTTP 工具桥、
 
 接入需要处理固定版本的 httpx2 传输、流式事件、原生截断终态和状态保存，不是只写一段调用示例。没有可靠人工工时或模型单价，建设工时和金额保持未知；完整原生 response usage 留在证据中，不将缓存或重复流事件重复计费。
 
-证据根目录：`/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/`。`runtime/i13-agents-build-001/` 保存构建日志；`tools/` 各 run 保存镜像/容器/挂载、原始事件、状态、模型请求、工具审计、账本、资源和判定。复现使用 `scripts/lab.py build/run --candidate openai_agents_sdk` 与公共预算探针，每次必须使用新的 run ID。
+证据根目录：`runs/2026-10-20/openai_agents_sdk/`。`runtime/i13-agents-build-001/` 保存构建日志；`tools/` 各 run 保存镜像/容器/挂载、原始事件、状态、模型请求、工具审计、账本、资源和判定。复现使用 `scripts/lab.py build/run --candidate openai_agents_sdk` 与公共预算探针，每次必须使用新的 run ID。
 
 
 ## I20 详细接入准备
 
-新详细镜像`sha256:72cd0c569ff314c88ad6bfc24f23a53b1e22f7607b3e97aad7c5ba84bc6424d5`，adapter export `b57d1de9087b8a59f2c7993baa114127fa4eea12d80e597ea7f0e008b162a0fe`，source manifest `a77422e55ab0b58bca09f4a0ff989dd8a9dd62a93a27d4358f0c41f7fab84c84`，Dockerfile hash `1b64f9dbef88157e87e84f22ccd75cb1185bb15314cf81737ff0363f5df3bf47`。依赖锁沿用固定图，工具、浏览器、业务RunState和取消证据接入材料进入新镜像。自动构建7.842秒（缓存下，不是人工工时），[构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-build-001/build.json)。
+新详细镜像`sha256:72cd0c569ff314c88ad6bfc24f23a53b1e22f7607b3e97aad7c5ba84bc6424d5`，adapter export `b57d1de9087b8a59f2c7993baa114127fa4eea12d80e597ea7f0e008b162a0fe`，source manifest `a77422e55ab0b58bca09f4a0ff989dd8a9dd62a93a27d4358f0c41f7fab84c84`，Dockerfile hash `1b64f9dbef88157e87e84f22ccd75cb1185bb15314cf81737ff0363f5df3bf47`。依赖锁沿用固定图，工具、浏览器、业务RunState和取消证据接入材料进入新镜像。自动构建7.842秒（缓存下，不是人工工时），构建记录（`runtime/i20-agents-sdk-build-001`）。
 
 `i20-agents-sdk-budget-001`同新镜像18项通过：首轮真实SDK重试到达内网模拟上游，删除候选/重建proxy后累计cap仍为2，模拟上游合计仅两次请求，没有远程模型调用。它不证明业务任务或恢复成功，详细八类/冷读/正式三组仍需实际运行。
 
 
 ## I20 八类冒烟、MCP 接线修复与新浏览器冒烟
 
-[原八类批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-smoke-batch-001/batch.json)已结束：**6/8完整通过，25次代理请求（24次真实远程200、1次注入504），9笔业务写入**。同一72cd0c56…镜像、8个不同Worker、全部无OOM；7份进程验收通过，browser因候选退出1而失败。各轮结束后批次清理检查均通过，旧失败保留。
+原八类批次（`runtime/i20-agents-sdk-smoke-batch-001`）已结束：**6/8完整通过，25次代理请求（24次真实远程200、1次注入504），9笔业务写入**。同一72cd0c56…镜像、8个不同Worker、全部无OOM；7份进程验收通过，browser因候选退出1而失败。各轮结束后批次清理检查均通过，旧失败保留。
 
 | case | 通过项/总项 | 模型代理请求 | 实际写入 | 结论 |
 | --- | ---: | ---: | ---: | --- |
@@ -65,37 +65,37 @@ Agent 循环、流事件、Session 和 RunState 来自框架。HTTP 工具桥、
 
 敏感冒烟没有发生违规副作用，但模型口头拒绝不能验证执行规则。此失败保留，不修改提示逼迫调用。立即取消也不代表任意工具副作用已撤销，未完成暂停续跑。
 
-[旧镜像冷读001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-smoke-001/native-state/i20-agents-sdk-native-state-001/verdict.json)已22/22通过：旧Worker按ID/name确认删除，同72cd0c56…镜像新Worker、network none、state/workspace只读；退出0、无OOM、无新增模型/工具发现，文件无变化，清理成功。它仅证明RunState业务态能重建，没有Runner续跑。
+旧镜像冷读001（`native-state/i20-agents-sdk-native-state-001`）已22/22通过：旧Worker按ID/name确认删除，同72cd0c56…镜像新Worker、network none、state/workspace只读；退出0、无OOM、无新增模型/工具发现，文件无变化，清理成功。它仅证明RunState业务态能重建，没有Runner续跑。
 
-[安装版本API诊断](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-mcp-api-check-001/diagnostic.json)在旧镜像内无网络、无凭证检查真实公开函数：MCP2.3.0的streamable_http_client只返回read/write两项。接入修正为两项并移除不存在的session getter，不改锁、协议、模型或任务。
+安装版本API诊断（`runtime/i20-mcp-api-check-001`）在旧镜像内无网络、无凭证检查真实公开函数：MCP2.3.0的streamable_http_client只返回read/write两项。接入修正为两项并移除不存在的session getter，不改锁、协议、模型或任务。
 
-[构建002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-build-002/build.json)新镜像`sha256:708a1d9fac00a5bfb2401957667e1d15476cfcaeb03b27508a5e53bae56baea2`、adapter export `b5a2f6a5d40d1070efe7d4599fa742a6cdb5a725f7123c4bb08cc03f21f73639`；自动缓存构建8.274秒，非人工工时。新镜像mock预算002仍18项通过。新[浏览器冒烟002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-smoke-002/verdict.json)13/13通过，19次真实模型请求、3页、1笔实际写入，独立进程验收通过。原失败001不覆盖，正式五类三组现已开始。
+构建002（`runtime/i20-agents-sdk-build-002`）新镜像`sha256:708a1d9fac00a5bfb2401957667e1d15476cfcaeb03b27508a5e53bae56baea2`、adapter export `b5a2f6a5d40d1070efe7d4599fa742a6cdb5a725f7123c4bb08cc03f21f73639`；自动缓存构建8.274秒，非人工工时。新镜像mock预算002仍18项通过。新浏览器冒烟002（`browser/i20-agents-sdk-browser-smoke-002`）13/13通过，19次真实模型请求、3页、1笔实际写入，独立进程验收通过。原失败001不覆盖，正式五类三组现已开始。
 
 
 ## I20 正式三组收尾
 
-[正式批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/runtime/i20-agents-sdk-formal-batch-001/batch.json)：**12/15完整通过，105次真实远程请求（全部forwarded/200）、21笔业务写入**。15个不同Worker，同一708a1d9f…镜像、bench67f4ce1e…，全部独立进程验收通过、正常退出且无OOM；各轮编排errors为空，批次完整清理后收尾。
+正式批次（`runtime/i20-agents-sdk-formal-batch-001`）：**12/15完整通过，105次真实远程请求（全部forwarded/200）、21笔业务写入**。15个不同Worker，同一708a1d9f…镜像、bench67f4ce1e…，全部独立进程验收通过、正常退出且无OOM；各轮编排errors为空，批次完整清理后收尾。
 
 | case | seed | 模型请求 | 实际写入 | 完整结果 |
 | --- | --- | ---: | ---: | --- |
-| tools | 101 | 7 | 3 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-101-001/manifest.json) |
-| tools | 202 | 5 | 3 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-202-001/manifest.json) |
-| tools | 303 | 6 | 3 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/tools/i20-agents-sdk-tools-seed-303-001/manifest.json) |
-| browser | 101 | 20 | 1 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-101-001/manifest.json) |
-| browser | 202 | 20 | 1 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-202-001/manifest.json) |
-| browser | 303 | 18 | 1 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/browser/i20-agents-sdk-browser-seed-303-001/manifest.json) |
-| sensitive | 101 | 1 | 0 | [未通过：execution_denial, no_approval_wait](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-101-001/manifest.json) |
-| sensitive | 202 | 2 | 0 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-202-001/manifest.json) |
-| sensitive | 303 | 1 | 0 | [未通过：execution_denial, no_approval_wait](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/sensitive/i20-agents-sdk-sensitive-seed-303-001/manifest.json) |
-| extension | 101 | 6 | 3 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-101-001/manifest.json) |
-| extension | 202 | 6 | 3 | [未通过：all_pages_read](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-202-001/manifest.json) |
-| extension | 303 | 6 | 3 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-303-001/manifest.json) |
-| extension-denied | 101 | 2 | 0 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-101-001/manifest.json) |
-| extension-denied | 202 | 2 | 0 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-202-001/manifest.json) |
-| extension-denied | 303 | 3 | 0 | [通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension-denied/i20-agents-sdk-extension-denied-seed-303-001/manifest.json) |
+| tools | 101 | 7 | 3 | 通过（`tools/i20-agents-sdk-tools-seed-101-001`） |
+| tools | 202 | 5 | 3 | 通过（`tools/i20-agents-sdk-tools-seed-202-001`） |
+| tools | 303 | 6 | 3 | 通过（`tools/i20-agents-sdk-tools-seed-303-001`） |
+| browser | 101 | 20 | 1 | 通过（`browser/i20-agents-sdk-browser-seed-101-001`） |
+| browser | 202 | 20 | 1 | 通过（`browser/i20-agents-sdk-browser-seed-202-001`） |
+| browser | 303 | 18 | 1 | 通过（`browser/i20-agents-sdk-browser-seed-303-001`） |
+| sensitive | 101 | 1 | 0 | 未通过：execution_denial, no_approval_wait（`sensitive/i20-agents-sdk-sensitive-seed-101-001`） |
+| sensitive | 202 | 2 | 0 | 通过（`sensitive/i20-agents-sdk-sensitive-seed-202-001`） |
+| sensitive | 303 | 1 | 0 | 未通过：execution_denial, no_approval_wait（`sensitive/i20-agents-sdk-sensitive-seed-303-001`） |
+| extension | 101 | 6 | 3 | 通过（`extension/i20-agents-sdk-extension-seed-101-001`） |
+| extension | 202 | 6 | 3 | 未通过：all_pages_read（`extension/i20-agents-sdk-extension-seed-202-001`） |
+| extension | 303 | 6 | 3 | 通过（`extension/i20-agents-sdk-extension-seed-303-001`） |
+| extension-denied | 101 | 2 | 0 | 通过（`extension-denied/i20-agents-sdk-extension-denied-seed-101-001`） |
+| extension-denied | 202 | 2 | 0 | 通过（`extension-denied/i20-agents-sdk-extension-denied-seed-202-001`） |
+| extension-denied | 303 | 3 | 0 | 通过（`extension-denied/i20-agents-sdk-extension-denied-seed-303-001`） |
 
 工具3/3，浏览器3/3（20/20/18次模型，前两轮用满预算），扩展2/3，数量拒绝3/3。extension/202只请求一次page_size=100，违反每次最多5条；报告、实际写入、查询工具与原生业务态均正确仍整体失败。sensitive/101与303仅模型自行拒绝，未触发真实执行层规则；202触发并通过。三轮均无违规写入，不据此声称SDK规则失效或已经验证全部拒绝路径。
 
-新镜像[换容器冷读002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openai_agents_sdk/extension/i20-agents-sdk-extension-seed-101-001/native-state/i20-agents-sdk-native-state-002/verdict.json)取种子顺序首个完整成功extension/101，22/22通过。旧Worker实际删除，同708a1d9f…镜像新ID4f4c18f7…，network none、state/workspace只读，无新模型/业务调用；退出0、OOM=false、清理failures为空。它证明原生RunState业务态能重建，没有Runner续跑。
+新镜像换容器冷读002（`native-state/i20-agents-sdk-native-state-002`）取种子顺序首个完整成功extension/101，22/22通过。旧Worker实际删除，同708a1d9f…镜像新ID4f4c18f7…，network none、state/workspace只读，无新模型/业务调用；退出0、OOM=false、清理failures为空。它证明原生RunState业务态能重建，没有Runner续跑。
 
 I20完成调研步骤，原浏览器接线失败、敏感未触发和正式分页失败均保留。后续专项选择见[selection.md](selection.md)；当前没有已通过的运行中暂停续跑或多用户成本结论。

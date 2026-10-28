@@ -109,7 +109,7 @@ Agent 循环、原生工具执行和模型调用来自 Pi。统一 HTTP 工具�
 
 ## 证据、复现与后续边界
 
-证据根目录为 `/Users/hanbowen01/harness-lab-data/runs/2026-10-20/pi_agent_core/`：
+证据根目录为 `runs/2026-10-20/pi_agent_core/`：
 
 - `runtime/i11-build-001/` 至 `i11-build-003/`：构建日志和镜像来源记录。
 - `tools/i11-pi-tools-001/`、`i11-pi-tools-002/`：完整 manifest、独立判定、模型调用、工具审计、业务账本、资源采样；`candidate/` 下保留原始事件、transport 尝试、原生结果和状态观察。

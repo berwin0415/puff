@@ -14,13 +14,13 @@
 | Deep Agents `0.7.28` / LangGraph `1.2.16`，提交分别为 `0089e635…` / `98043c37…` | `RunControl.request_drain`、实际 `GraphDrained`、`durability="sync"`、SQLite saver | 区分暂停与取消；可信 resume 分支；同 thread/checkpoint 传 `None` 继续；保存与重建验收 | 最接近现有控制入口；完整换容器续跑仍未验证 |
 | OpenAI Agents SDK `0.24.0`，`64cd5dfc5a1579870dcbed0ea42b27aa84033fee` | 原生 `Runner.run_streamed`、SQLiteSession、immediate cancel、RunState 诊断导出 | 独立 `after_turn` 暂停；完整私有 RunState 原子落盘；`from_json` 后交给 Runner；同 Session 续用 | 公开接口齐备，但 after_turn → JSON → 新进程组合尚需实测，不能拿诊断导出代替 |
 
-对应配置为 [DSH](/Users/hanbowen01/repo/puff/configs/candidates/deepseek_harness.yaml)、[Deep Agents](/Users/hanbowen01/repo/puff/configs/candidates/deepagents_langgraph.yaml)、[Agents SDK](/Users/hanbowen01/repo/puff/configs/candidates/openai_agents_sdk.yaml)。接口细节与源码链接继续保留在 [recovery-interfaces.md](/Users/hanbowen01/repo/puff/docs/validation/recovery-interfaces.md)。
+对应配置为 [DSH](../../configs/candidates/deepseek_harness.yaml)、[Deep Agents](../../configs/candidates/deepagents_langgraph.yaml)、[Agents SDK](../../configs/candidates/openai_agents_sdk.yaml)。接口细节与源码链接继续保留在 [recovery-interfaces.md](recovery-interfaces.md)。
 
 有三处现成入口不能直接拿来运行 I22：
 
-- DSH 的 [resume 分支](/Users/hanbowen01/repo/puff/adapters/deepseek_harness/scoped-runtime-entrypoint.ts:373)目前先恢复 idle Session，再选择是否提交一条明确的新 followup；没有 followup 就只检查状态。两者均不是未完成任务自动继续。现 profile 也没有加载上述四项官方插件。
-- Deep Agents 的 [入口](/Users/hanbowen01/repo/puff/adapters/deepagents_langgraph/entrypoint.py:251)明确拒绝已有 checkpoint，正常运行始终提交新 user message，并为扩展任务新建 business_state。只删掉拒绝语句会把新 prompt 和空业务状态灌进旧图，属于错误接法。
-- Agents SDK 的 [入口](/Users/hanbowen01/repo/puff/adapters/openai_agents_sdk/entrypoint.py:327)拒绝非空 Session；[finally 导出](/Users/hanbowen01/repo/puff/adapters/openai_agents_sdk/entrypoint.py:390)经过 `encoded()` 脱敏，并以普通 `write_text` 保存。此文件是诊断材料，不能直接当作可信、完整、已经 durable 的恢复输入。
+- DSH 的 [resume 分支](../../adapters/deepseek_harness/scoped-runtime-entrypoint.ts:373)目前先恢复 idle Session，再选择是否提交一条明确的新 followup；没有 followup 就只检查状态。两者均不是未完成任务自动继续。现 profile 也没有加载上述四项官方插件。
+- Deep Agents 的 [入口](../../adapters/deepagents_langgraph/entrypoint.py:251)明确拒绝已有 checkpoint，正常运行始终提交新 user message，并为扩展任务新建 business_state。只删掉拒绝语句会把新 prompt 和空业务状态灌进旧图，属于错误接法。
+- Agents SDK 的 [入口](../../adapters/openai_agents_sdk/entrypoint.py:327)拒绝非空 Session；[finally 导出](../../adapters/openai_agents_sdk/entrypoint.py:390)经过 `encoded()` 脱敏，并以普通 `write_text` 保存。此文件是诊断材料，不能直接当作可信、完整、已经 durable 的恢复输入。
 
 ## 2. 一条实验链怎样运行
 
@@ -51,19 +51,19 @@
 
 在可用边界，按最新 Goal `{id, revision}` 调 `goals.pause`，阻止后续自动 round，再返回 `{kind:"reject"}`。原生 turn 结束原因应保留为 `blocked`，Goal 为 `paused/disarmed`，不能把原生事件改写成 paused。随后 `whenIdle()`、确认工具在途调用均已结束、inbox 无 pending，再在 live Session 上 await `sessions.flush` 成功。缺少真实 turn/end、flush 失败或发生已知的结束事件缺口时，都不能凭 idle 标签确认暂停。
 
-**这里有一个必须收窄的范围。** [pre-step 实现](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/sources/main/packages/core/agent-loop/src/agent.ts:234)调用 hook 前已经 claim 输入。最小路径只接受该 hook 参数中原始 claimed `messages` 为空、没有并发 followup/steer/inject、inbox 为空的单任务；这里检查的是原始 claim，不把下游追加的 runtime context 算作新用户输入。否则 reject 可能丢掉刚 claim 的输入。若命中的是另一条 Goal round 或普通消息，明确记“该停点不在已验证范围”，不能静默丢弃。后续 dispose 默认还会清空 inbox，即便之前 cancel 使用 keepInbox，也不构成队列保存证明。
+**这里有一个必须收窄的范围。** [pre-step 实现](../../external/build-context/deepseek_harness/sources/main/packages/core/agent-loop/src/agent.ts:234)调用 hook 前已经 claim 输入。最小路径只接受该 hook 参数中原始 claimed `messages` 为空、没有并发 followup/steer/inject、inbox 为空的单任务；这里检查的是原始 claim，不把下游追加的 runtime context 算作新用户输入。否则 reject 可能丢掉刚 claim 的输入。若命中的是另一条 Goal round 或普通消息，明确记“该停点不在已验证范围”，不能静默丢弃。后续 dispose 默认还会清空 inbox，即便之前 cancel 使用 keepInbox，也不构成队列保存证明。
 
 **保存和恢复。** A 记录 Goal id/objective/revision/phase/roundsStarted、Session header/seq、工作区清单、最后原生事件与 flush 来源；正常关闭后保留完整原生文件。B 用 `agents.resume({resumeSessionId, agentOptions, setup})`，在发布前重挂相同工具、guard 和投影，核对 Goal 与原 Session 一致、activation 为 disarmed。可信恢复请求再调用 `goals.resume`，由官方 driver 开启后续 round。恢复输入由该原生机制产生，不另调用原任务的 `followup`。
 
-这一条验证的是“持久目标 + 步边界协作暂停 + 新进程继续目标”，比恢复旧 turn 的指令位置更宽。模型可能重读文件或查询回执，额外请求和 token 必须记录。checkpoint policy 在模型和顶层工具派发前 flush，也没有把业务提交和 JSONL 组成一个事务，不能声称 exactly-once。官方 [Goal driver](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/sources/main/packages/goal/goal-round-driver/src/index.ts:137)和 [checkpoint policy](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/sources/main/packages/session/session-checkpoint-policy/src/index.ts:63)继续承担这些原生行为。
+这一条验证的是“持久目标 + 步边界协作暂停 + 新进程继续目标”，比恢复旧 turn 的指令位置更宽。模型可能重读文件或查询回执，额外请求和 token 必须记录。checkpoint policy 在模型和顶层工具派发前 flush，也没有把业务提交和 JSONL 组成一个事务，不能声称 exactly-once。官方 [Goal driver](../../external/build-context/deepseek_harness/sources/main/packages/goal/goal-round-driver/src/index.ts:137)和 [checkpoint policy](../../external/build-context/deepseek_harness/sources/main/packages/session/session-checkpoint-policy/src/index.ts:63)继续承担这些原生行为。
 
 ## 4. Deep Agents：drain 后从下一节点继续
 
-沿用现有 [NativeRunControl](/Users/hanbowen01/repo/puff/adapters/deepagents_langgraph/run_control.py:39) 和 SQLite saver，新增独立的 pause action/reason，不能把当前 `experiment_cancel` 记录事后改名。暂停请求仍由所属事件循环调用公开 `request_drain("experiment_pause")`；不取消 asyncio 主任务，不中断 HTTP 工具来制造保存点。
+沿用现有 [NativeRunControl](../../adapters/deepagents_langgraph/run_control.py:39) 和 SQLite saver，新增独立的 pause action/reason，不能把当前 `experiment_cancel` 记录事后改名。暂停请求仍由所属事件循环调用公开 `request_drain("experiment_pause")`；不取消 asyncio 主任务，不中断 HTTP 工具来制造保存点。
 
 **A 的安全点。** 原生当前 superstep 完成，下一 superstep 前实际抛出 `GraphDrained`；`durability="sync"` 完成 checkpoint 保存。读取真实 snapshot，记录 thread_id、checkpoint_id、values 摘要、`next`、tasks/errors/interrupts，以及流中已开始但未结束的调用。需要保留明确的下一节点，否则可能是已经自然完成；异常、interrupt 或超时单独分类。退出 SQLite saver 后再登记完整 state 目录，不在连接仍打开时只复制主 SQLite 文件而漏掉 WAL。
 
-**B 的最小分支。** 在 [现有拒绝旧 checkpoint 的位置](/Users/hanbowen01/repo/puff/adapters/deepagents_langgraph/entrypoint.py:251)增加可信 new/resume 判断。new 分支仍要求空状态；resume 分支要求相同 graph/tool/schema/model、同 thread、namespace 与保存的 checkpoint。持有原 chain 独占执行权，先用带指定 `checkpoint_id` 的 `aget_state` 精确核对保存材料，再用不带 ID 的配置读取当前 head，确认它仍等于保存的 ID、内容与暂停状态；不接受“历史 checkpoint 还存在”作为当前恢复依据。新建 RunControl，实际执行 `graph.astream(None, config={"configurable":{"thread_id":原thread,"checkpoint_ns":原namespace}, ...}, durability="sync", control=新control)`，执行配置不携带 `checkpoint_id`。固定版本的 [_loop.py](/Users/hanbowen01/repo/puff/external/build-context/deepagents_langgraph/sources/langgraph/libs/langgraph/langgraph/pregel/_loop.py:952)会将显式 ID 加 `None` 识别为 time travel，可能走 fork/replay；不能把带 ID 的 snapshot.config 直接用于执行，也不设置私有内部标志绕过。核查到执行期间继续持有 chain 独占，防止 head 被另一执行者推进。不再生成 user message，不再初始化 business_state，不调用 `update_state` 改节点。
+**B 的最小分支。** 在 [现有拒绝旧 checkpoint 的位置](../../adapters/deepagents_langgraph/entrypoint.py:251)增加可信 new/resume 判断。new 分支仍要求空状态；resume 分支要求相同 graph/tool/schema/model、同 thread、namespace 与保存的 checkpoint。持有原 chain 独占执行权，先用带指定 `checkpoint_id` 的 `aget_state` 精确核对保存材料，再用不带 ID 的配置读取当前 head，确认它仍等于保存的 ID、内容与暂停状态；不接受“历史 checkpoint 还存在”作为当前恢复依据。新建 RunControl，实际执行 `graph.astream(None, config={"configurable":{"thread_id":原thread,"checkpoint_ns":原namespace}, ...}, durability="sync", control=新control)`，执行配置不携带 `checkpoint_id`。固定版本的 [_loop.py](../../external/build-context/deepagents_langgraph/sources/langgraph/libs/langgraph/langgraph/pregel/_loop.py:952)会将显式 ID 加 `None` 识别为 time travel，可能走 fork/replay；不能把带 ID 的 snapshot.config 直接用于执行，也不设置私有内部标志绕过。核查到执行期间继续持有 chain 独占，防止 head 被另一执行者推进。不再生成 user message，不再初始化 business_state，不调用 `update_state` 改节点。
 
 要区分两种“pending”：checkpoint 的 `next` 和未来 task 可以存在，它们正是要继续的工作；当前在途 task、未结束的工具/模型请求必须为零。不能要求 snapshot 没有任何下一任务，也不能只看 snapshot 有下一任务就推断旧进程已经安全。真实动态 interrupt 才使用 `Command(resume=...)`，drain 恢复不伪造审批答案。
 
@@ -79,17 +79,17 @@
 
 **B 的最小分支。** 重建同名 Agent、工具 callable/schema/路由、模型与同一 SQLiteSession；先检查完整快照归属、hash、chain/scope、版本与配置，再 `await RunState.from_json(agent, full_state, strict_context=True)`。把返回 state 交给 `Runner.run_streamed(agent, state, session=原Session, hooks=新观测hooks, run_config=相同配置)`，不传新的原始 prompt，不用新 attempt 的 context 覆盖旧业务 context。RunState 内的 current_turn/max_turns 和已保存项目计数由原生 Runner 延续，不能手工清零。
 
-RunState 保存的是可重建的执行状态，不保存活的 Python 闭包、HTTP 连接和凭证。它的 [from_json 契约](/Users/hanbowen01/repo/puff/external/build-context/openai_agents_sdk/sources/main/src/agents/run_state.py:2423)要求应用核对完整快照的可信来源；strict_context 不负责身份认证。原生拒绝 `terminal_unrecoverable` 或不兼容状态时保留失败，不删标记，不修改私有 current_step 绕过。当前桥接使用 FunctionTool；若以后改为原生 MCP，需额外保持 pending 调用的 recipient bindings 和原服务器配置。
+RunState 保存的是可重建的执行状态，不保存活的 Python 闭包、HTTP 连接和凭证。它的 [from_json 契约](../../external/build-context/openai_agents_sdk/sources/main/src/agents/run_state.py:2423)要求应用核对完整快照的可信来源；strict_context 不负责身份认证。原生拒绝 `terminal_unrecoverable` 或不兼容状态时保留失败，不删标记，不修改私有 current_step 绕过。当前桥接使用 FunctionTool；若以后改为原生 MCP，需额外保持 pending 调用的 recipient bindings 和原服务器配置。
 
-OpenAI Docs 的 [Running agents](https://developers.openai.com/api/docs/guides/agents/running-agents)也区分结束流、下一轮对话与从 state 继续未完成运行。该在线文档只作概念参照；after_turn、序列化和跨进程的实际行为以仓库锁定版本的 [cancel 实现](/Users/hanbowen01/repo/puff/external/build-context/openai_agents_sdk/sources/main/src/agents/result.py:941)、RunState 和本专项实测为准，不能因文档有 state 就宣布组合已经通过。
+OpenAI Docs 的 [Running agents](https://developers.openai.com/api/docs/guides/agents/running-agents)也区分结束流、下一轮对话与从 state 继续未完成运行。该在线文档只作概念参照；after_turn、序列化和跨进程的实际行为以仓库锁定版本的 [cancel 实现](../../external/build-context/openai_agents_sdk/sources/main/src/agents/result.py:941)、RunState 和本专项实测为准，不能因文档有 state 就宣布组合已经通过。
 
 ## 6. 同一任务，预算和写入也必须接得上
 
-**逻辑任务 ID 与尝试 ID 分开。** `chain_id` 固定为 scope 的 variant，session_id 不变，预算路径也不变；attempt_id 仅区分 worker-a/worker-b 的容器与证据目录，不进入业务 operation_prefix，不成为新预算。当前 [Detailed prepare](/Users/hanbowen01/repo/puff/runner/detailed.py:73)每次都要求新目录、创建场景并生成新 token，不能在 B 再跑一次。新专项只能在 chain 创建时 prepare，一次恢复不得重置场景、账本或工作区。
+**逻辑任务 ID 与尝试 ID 分开。** `chain_id` 固定为 scope 的 variant，session_id 不变，预算路径也不变；attempt_id 仅区分 worker-a/worker-b 的容器与证据目录，不进入业务 operation_prefix，不成为新预算。当前 [Detailed prepare](../../runner/detailed.py:73)每次都要求新目录、创建场景并生成新 token，不能在 B 再跑一次。新专项只能在 chain 创建时 prepare，一次恢复不得重置场景、账本或工作区。
 
 **请求也分 new 和 resume。** 只有 new 请求可提交原 prompt；resume 请求只接受原 chain 的绑定与原生状态引用，不接收新的任务文本，不能在恢复失败时回退到 new。暂停使用独立通道，例如绑定本 attempt 的 SIGUSR2 → pause intent，保留当前 SIGUSR1 的取消含义；拒绝启动前、已结束、重复或不属于本 attempt 的请求，不把它们排队影响未来任务。
 
-**复用原模型预算。** A/B 使用同一个 calls.sqlite、run.token、cap=20；[代理](/Users/hanbowen01/repo/puff/execution/model_proxy.py:39)已经将 DB 与 token hash/cap 绑定，并在上游请求前原子 reserve。B 只重新挂载/启动，不创建新的预算文件；用预算前后行号/数量和实际请求验证延续。失败和模型内部重试也计入 20 次。`max_retries=2` 保持原配置，不额外加整任务重试或工具自动重试；恢复本身不是重新发放一份 20 次额度。SDK max_turns、DSH round 数均不能替代 API 计数。
+**复用原模型预算。** A/B 使用同一个 calls.sqlite、run.token、cap=20；[代理](../../execution/model_proxy.py:39)已经将 DB 与 token hash/cap 绑定，并在上游请求前原子 reserve。B 只重新挂载/启动，不创建新的预算文件；用预算前后行号/数量和实际请求验证延续。失败和模型内部重试也计入 20 次。`max_retries=2` 保持原配置，不额外加整任务重试或工具自动重试；恢复本身不是重新发放一份 20 次额度。SDK max_turns、DSH round 数均不能替代 API 计数。
 
 **累计活跃时间。** 当前入口的进程内 monotonic deadline 会在 B 重新开始。专项由可信编排追加记录 A/B 的候选准备、执行、安全保存和退出时间，累计不得超过 300 秒；600 秒暂停等待与独立评分不算候选活跃时间，恢复冷启动算。B 仅获得剩余额度，同时由宿主硬期限约束；没有剩余时间就拒绝恢复。用 chain 私有记录即可，无需另建通用任务状态数据库。
 
@@ -114,7 +114,7 @@ OpenAI Docs 的 [Running agents](https://developers.openai.com/api/docs/guides/a
 | `adapters/openai_agents_sdk/entrypoint.py`、新增 pause helper | 独立 after_turn 控制；完整私有快照保存；可信 RunState resume；诊断导出与可执行快照分开 |
 | `tests/` 下专项校准 | 校准错误 scope、错镜像、残损快照、缺安全终态、预算重置、重复 write、自然完成冒充暂停、OOM 退出等反例；校准不算候选运行通过 |
 
-数据继续放在 `/Users/hanbowen01/harness-lab-data`，不另起实验根目录。按 `paths_for("pause-recovery", chain_id, candidate, "alice", "main", chain_id, case="pause-resume")` 得到同链目录；attempt 放在该 run 内部，避免改变已有路径函数和历史材料：
+数据继续放在配置的 `data_root`，不另起实验根目录。按 `paths_for("pause-recovery", chain_id, candidate, "alice", "main", chain_id, case="pause-resume")` 得到同链目录；attempt 放在该 run 内部，避免改变已有路径函数和历史材料：
 
 ```text
 state/pause-recovery/<chain>/<candidate>/alice/main/     候选完整原生状态；SDK 私有可执行快照也在这里
@@ -130,7 +130,7 @@ runs/<date>/<candidate>/pause-resume/<chain>/
   verdict.json                       整条链独立验收；失败不覆盖
 ```
 
-实际路径以 [paths_for](/Users/hanbowen01/repo/puff/runner/config.py:144)返回值为准；state/workspace 包含 candidate/user/session，fixture 归属于 experiment/variant，不能另手拼出不同绑定。基线使用另一 chain，按种子关联对照，不共享预算和业务状态。
+实际路径以 [paths_for](../../runner/config.py:144)返回值为准；state/workspace 包含 candidate/user/session，fixture 归属于 experiment/variant，不能另手拼出不同绑定。基线使用另一 chain，按种子关联对照，不共享预算和业务状态。
 
 ## 8. 验收怎么判，结果怎么说
 

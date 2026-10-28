@@ -10,7 +10,7 @@
 
 `uv sync --frozen` 可重建环境。`runner/config.py` 拒绝未知/重复配置项、虚报美元限额、路径穿越和符号链接；同一恢复链路径稳定，实验、变体和用户状态互相分开。根目录配置没有从归档取回实现，仅参考归档的更紧预算，继续使用已保留的 `.env`。
 
-固定镜像中的测试结果：**84 passed**。记录：`/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/bootstrap/i01-config-check/`，含测试输出和配置/程序哈希。测试在 Linux 容器内执行，宿主没有代办能力任务。
+固定镜像中的测试结果：**84 passed**。记录：`runs/2026-10-20/infrastructure/bootstrap/i01-config-check/`，含测试输出和配置/程序哈希。测试在 Linux 容器内执行，宿主没有代办能力任务。
 
 ## I02：容器基础
 
@@ -29,8 +29,8 @@
 ```bash
 uv sync --frozen
 uv export --frozen --no-emit-project --output-file compose/locks/bench-requirements.txt
-HARNESS_LAB_DATA_ROOT=/Users/hanbowen01/harness-lab-data docker compose -f compose/docker-compose.yml build bench
-HARNESS_LAB_DATA_ROOT=/Users/hanbowen01/harness-lab-data docker compose -f compose/docker-compose.yml run --rm bench check --run-id UNIQUE_ID
+HARNESS_LAB_DATA_ROOT=/path/to/harness-lab-data docker compose -f compose/docker-compose.yml build bench
+HARNESS_LAB_DATA_ROOT=/path/to/harness-lab-data docker compose -f compose/docker-compose.yml run --rm bench check --run-id UNIQUE_ID
 ```
 
 尚未验证任何候选能力，未发起模型调用。
@@ -133,4 +133,4 @@ I14已经结束：Codex最终官方MCP配置approve镜像下两新容器工具�
 
 详细编排现于执行前固定候选镜像ID、名称和配额，结束后从可信宿主Docker快照保存独立观测，验收容器严格检查唯一Worker归属、退出码、OOM、异常状态及配额；完整容器ID是结束时唯一名称归属，不能称启动前独立ID固定。`i18-process-scope-check-001` 在新bench `sha256:ec10ed62c62a2f3355ec34c656649b8d374b5edb77d156e264b87b4ec936127f` 内614项通过（28.60秒），未注入模型凭证。作用域及资源的合成校准不代表I24/I25实测。
 
-[追加审计002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/bootstrap/i18-process-audit-002/process-audit.json)仅离线读取41份明确旧manifest：37份快照健康通过，OpenClaw三轮browser因异常退出失败，cancel002因OOM失败；旧记录没有额外独立身份pin，完整进程结论保持unknown或failed。旧verdict未覆盖并留存原字节哈希。001因旧DSH索引格式不同在准备清单时失败，未启动Docker或模型。I18完成调研步骤，保留正式7/15及取消OOM异常，不能表述为全能力通过。
+追加审计002（`bootstrap/i18-process-audit-002`）仅离线读取41份明确旧manifest：37份快照健康通过，OpenClaw三轮browser因异常退出失败，cancel002因OOM失败；旧记录没有额外独立身份pin，完整进程结论保持unknown或failed。旧verdict未覆盖并留存原字节哈希。001因旧DSH索引格式不同在准备清单时失败，未启动Docker或模型。I18完成调研步骤，保留正式7/15及取消OOM异常，不能表述为全能力通过。

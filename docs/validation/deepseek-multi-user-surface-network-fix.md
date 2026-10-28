@@ -2,7 +2,7 @@
 
 日期：2026-10-21。本轮仅编写源码和离线测试，**未执行测试、编译、Docker、SDK或模型**。原失败基线001/002及此前冻结清单不修改；后续必须使用新材料与新trial。
 
-基线002的 [原始surface记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/scope-baseline/i24-dsh-baseline-101-002-main-a/trusted/surface-container.json) 显示同一个网络名 `harness-lab-i24-dsh-baseline-101-002-a`、别名 `surface-a`：创建态 `network_id` 为空，退出态补全为 `393a44e9de23f735cc50dd5079d5c9f3e6154c6222e8175052b998487f8af902`。校准进程退出0且确切容器删除已记录。原验收将两个网络字典整份比较，错误拒绝了该创建态到退出态的正常补全；此记录不等于基线或Agent任务通过。
+基线002的 原始surface记录（`i24-dsh-baseline-101-002-main-a/trusted`） 显示同一个网络名 `harness-lab-i24-dsh-baseline-101-002-a`、别名 `surface-a`：创建态 `network_id` 为空，退出态补全为 `393a44e9de23f735cc50dd5079d5c9f3e6154c6222e8175052b998487f8af902`。校准进程退出0且确切容器删除已记录。原验收将两个网络字典整份比较，错误拒绝了该创建态到退出态的正常补全；此记录不等于基线或Agent任务通过。
 
 最小修订位于DSH工具面路径：
 

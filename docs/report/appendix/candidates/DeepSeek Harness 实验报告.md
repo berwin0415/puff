@@ -85,7 +85,7 @@
 - 只暴露 11 个基础浏览器动作（navigate、snapshot、click、fill_form 等），**不暴露** evaluate、任意 HTTP、上传、配置；
 - 下载搬运：只在真实 MCP 输出的 `### Events` 小节出现 `Downloaded file ... to "..."` 完成事件时，才从该路径读取原始字节写入 `result.csv`，并记录 SHA-256。页面正文里同样的文字不算。
 
-**效果**：原正式组 3/3（20、20、16 次），补充组 2/2（19、18 次）。**前两轮用满 20 次额度，余量为零到两次**，复杂页面或额外重试会成为瓶颈。
+**效果**：**3/3 通过**。二十次预算下为 20、20、16 次（前两轮用满）；提高到**四十次**预算重跑后为 **18、19、19 次**，全部通过。补充组 2/2（19、18 次）。
 
 ### 实验四：业务扩展、规则与控制
 
@@ -115,7 +115,7 @@
 
 **实验补充**：`sensitive_export` 的拒绝规则。
 
-**效果**：3/3（各 2 次请求）。**关键区别**：按原始记录，DeepSeek Harness 的拒绝 `layer` 可以是 `candidate_execution`，即在框架执行层拦下；而本轮补充测试的四个初筛框架，拒绝都发生在 `fixture_execution`（业务服务端返回 403）。前者能省一次网络往返，也不依赖服务端配合。这个差别在汇总篇没有体现，本报告单独标出。
+**效果**：3/3（各 2 次请求）。**关键区别**：按原始记录，DeepSeek Harness 的拒绝 `layer` 可以是 `candidate_execution`，即在框架执行层拦下；而本轮补充测试的四个初筛框架，拒绝都发生在 `fixture_execution`（业务服务端返回 403）。前者能省一次网络往返，也不依赖服务端配合。
 
 #### 4.3 超量写入拒绝
 
@@ -246,4 +246,4 @@
 - 验收记录：[docs/validation/deepseek_harness.md](../../../validation/deepseek_harness.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/deepseek-multi-user-execution.md)
 - 本轮补充运行：`runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`
 
-[返回框架索引](单框架实验报告索引.md) · [下一篇：Deep Agents + LangGraph](Deep Agents + LangGraph 实验报告.md)
+[返回框架索引](单框架实验报告索引.md) · [下一篇：Deep Agents + LangGraph](<Deep Agents + LangGraph 实验报告.md>)

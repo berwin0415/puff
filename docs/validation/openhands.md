@@ -40,4 +40,4 @@
 
 HTTP桥、身份绑定、Docker编排、模型预算和外部判定由本仓库提供，应计入自研投入。没有可靠人工工时，不将自动运行秒数倒算开发工时。
 
-证据根：`/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openhands/`。`runtime/`保存三个构建版本，`tools/`保存失败探针、正式预算和两轮真实任务。复现入口为`scripts/lab.py build/run --candidate openhands`及公共预算探针；每次使用新run ID。材料说明见[adapter README](../../adapters/openhands/README.md)。
+证据根：`runs/2026-10-20/openhands/`。`runtime/`保存三个构建版本，`tools/`保存失败探针、正式预算和两轮真实任务。复现入口为`scripts/lab.py build/run --candidate openhands`及公共预算探针；每次使用新run ID。材料说明见[adapter README](../../adapters/openhands/README.md)。

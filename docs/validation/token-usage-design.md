@@ -10,7 +10,7 @@
 
 最初结构审计只读取固定源码、已登记旧 run 的 JSON/JSONL 和已有 `model-calls.json`，当时未运行 Docker、SQL、模型、构建或测试，未读取 `old/`，也没有读取当时正在执行的新 DSH 正式矩阵。下表是该次历史审计，不是当前提取数量。
 
-历史审计入口是[外部enrollment-006库存](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-006/inventory.json)：238 项预算库登记，文件 SHA-256 为 `594709056edf9f12bb8160b340e4e9ff40b75f42c54b8752a86038fb682caabe`。下表只计算四条详细路线、`upstream_kind=remote`、按 `run_path` 去重后的目录；多个用户共用一个 trial 目录时仍只算一个目录。仓库中的[当前库存](research-usage-inventory.json)已更新为010，旧006、008与009原件未覆盖。
+历史审计入口是外部enrollment-006库存（`runtime/research-usage-enrollment-006`）：238 项预算库登记，文件 SHA-256 为 `594709056edf9f12bb8160b340e4e9ff40b75f42c54b8752a86038fb682caabe`。下表只计算四条详细路线、`upstream_kind=remote`、按 `run_path` 去重后的目录；多个用户共用一个 trial 目录时仍只算一个目录。仓库中的[当前库存](research-usage-inventory.json)已更新为010，旧006、008与009原件未覆盖。
 
 | 候选 | 已登记远程 run 目录 | 至少发现一个非空 usage 对象的目录 | 解释 |
 | --- | ---: | ---: | --- |
@@ -44,7 +44,7 @@
 
 过去008截点原件仍保留：235项四候选登记、213目录、1637份去重观察，1624份输入/输出/总量已知；已知输入6,770,088、输出446,260、总量7,216,348、缓存读取4,335,360、推理计数112,293。008的13份未知观察、11个无可用usage单元及金额/请求关联限制没有被009覆盖。009只在008的271项库存后追加已结束的DA正式24格；新业务失败同样计量，未重跑候选补齐旧用量。
 
-过去009截点也单独保留：259项四候选登记、237目录、1785份去重观察，1772份输入/输出/总量已知；已知输入7,256,969、输出512,333、总量7,769,302、缓存读取4,591,360、推理计数147,498。缓存写入仅215份明确报告0，其余1570份未知；13份输入/输出/总量未知观察、11个无可用usage单元及请求关联限制原样保留。[009 token原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-enrollment-009/token-usage-summary.json)hash为`1e750235ffbda0ca4f0fbf161d66e401f1ec1c6a3e39484bcf466807bd5ea233`。010仅在保留009全部295项原对象字节和顺序后，追加48项已完整结束的I23固定阶段；没有覆盖009原件、重跑候选或改判失败。
+过去009截点也单独保留：259项四候选登记、237目录、1785份去重观察，1772份输入/输出/总量已知；已知输入7,256,969、输出512,333、总量7,769,302、缓存读取4,591,360、推理计数147,498。缓存写入仅215份明确报告0，其余1570份未知；13份输入/输出/总量未知观察、11个无可用usage单元及请求关联限制原样保留。009 token原件（`runtime/token-usage-enrollment-009`）hash为`1e750235ffbda0ca4f0fbf161d66e401f1ec1c6a3e39484bcf466807bd5ea233`。010仅在保留009全部295项原对象字节和顺序后，追加48项已完整结束的I23固定阶段；没有覆盖009原件、重跑候选或改判失败。
 
 本版只读取窄范围主来源：Deep Agents仅取模型updates，不恢复没有模型update的usage-only chunk；SDK仅支持可信scope内的transport wire原件，忽略合成响应ID和默认零。I24按冻结登记及retired Worker确定预期attempt文件，缺文件应报原件缺口；I25只支持已登记baseline/active/wake/fault，不支持后续inactive-wake/rotation。当前17个未登记预算库未查询，其中DSH I24七条及N5八条新格式见[未支持格式说明](research-usage-unenrolled-formats.json)，另有旧DA I24两库留在SQL快照缺口中；不扩建reader或伪装旧格式补齐本轮。旧格式、无scope、原件变化和未支持结构保持未知。新实验必须结束并登记新截点，不能用重跑填补历史缺失。
 
@@ -133,9 +133,9 @@
 
 ## 5. 本次落地与验收
 
-已实现独立离线提取器 [summarize_token_usage.py](../../scripts/summarize_token_usage.py) 及 [校准用例](../../tests/test_token_usage.py)，完成源码审查与容器校准。固定bench `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`的[313项校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-rotation-check-001/host.json)通过，覆盖token、实例计划、完整轮换与采样审计四份测试；这是工具验收，不代表真实轮换实验已运行。
+已实现独立离线提取器 [summarize_token_usage.py](../../scripts/summarize_token_usage.py) 及 [校准用例](../../tests/test_token_usage.py)，完成源码审查与容器校准。固定bench `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`的313项校准（`runtime/token-rotation-check-001`）通过，覆盖token、实例计划、完整轮换与采样审计四份测试；这是工具验收，不代表真实轮换实验已运行。
 
-随后[本次实际提取](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json)在Docker中断网、无模型key，只读挂载冻结库存与已结束原件，未挂载预算库，使用独立输出目录；实际退出0、健康终态、无OOM且确切清理通过。没有恢复Agent、调用模型或重跑任务。当前活动材料必须先结束并明确登记，才进入下一截点。
+随后本次实际提取（`runtime/token-usage-check-010`）在Docker中断网、无模型key，只读挂载冻结库存与已结束原件，未挂载预算库，使用独立输出目录；实际退出0、健康终态、无OOM且确切清理通过。没有恢复Agent、调用模型或重跑任务。当前活动材料必须先结束并明确登记，才进入下一截点。
 
 提取器只输出数字白名单、原生身份的哈希、来源相对路径/行号或 JSON pointer、原文件 SHA-256、缺失及冲突原因。禁止将整个原生 message、事件或异常对象复制进结果。读取范围由库存和可信 plan 的精确绑定限定，拒绝符号链接、路径穿越、`old/` 及未登记扩张路径。
 

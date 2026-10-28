@@ -17,7 +17,7 @@
 
 ## 1. 启动前先核对
 
-所有命令在 `/Users/hanbowen01/repo/puff`、`harness-lab` 分支运行。I22 使用相同 Docker 项目与串行锁；**必须等 I22 当前链结束、清理完成后再开始 I23**，不能并行启动候选或改写其镜像。
+所有命令在仓库根目录、`harness-lab` 分支运行。I22 使用相同 Docker 项目与串行锁；**必须等 I22 当前链结束、清理完成后再开始 I23**，不能并行启动候选或改写其镜像。
 
 | 检查项 | 本轮固定输入或处理 |
 | --- | --- |
@@ -74,7 +74,7 @@ docker run --rm --platform linux/arm64 --network none --read-only --memory 512m 
 DSH 边界测试要检查**候选镜像中已经烘焙的 adapter**，而非宿主的另一份源码。只挂载一份测试文件供 Node 读取：
 
 ```sh
-docker run --rm --platform linux/arm64 --network none --read-only --memory 512m --cpus 0.5 --pids-limit 128 --tmpfs /tmp:size=128m --workdir /opt/materials/sources/main --mount type=bind,src=/Users/hanbowen01/repo/puff/tests/execution/deepseek_fault_recovery.test.mjs,dst=/calibration/deepseek_fault_recovery.test.mjs,readonly -e DSH_FAULT_ADAPTER_SOURCE=/opt/materials/harness-lab --entrypoint node harness-lab-deepseek-harness:i23-fault-20261020-001 --import tsx/esm --experimental-test-module-mocks --test /calibration/deepseek_fault_recovery.test.mjs
+docker run --rm --platform linux/arm64 --network none --read-only --memory 512m --cpus 0.5 --pids-limit 128 --tmpfs /tmp:size=128m --workdir /opt/materials/sources/main --mount type=bind,src=$PWD/repo/puff/tests/execution/deepseek_fault_recovery.test.mjs,dst=/calibration/deepseek_fault_recovery.test.mjs,readonly -e DSH_FAULT_ADAPTER_SOURCE=/opt/materials/harness-lab --entrypoint node harness-lab-deepseek-harness:i23-fault-20261020-001 --import tsx/esm --experimental-test-module-mocks --test /calibration/deepseek_fault_recovery.test.mjs
 ```
 
 该测试使用假的 native API，并禁止网络调用。若校准失败，留存失败输出、修正材料、换新镜像标签后重做；不得直接进入真实批次。
@@ -163,7 +163,7 @@ DA `i23-da-baseline101-001` 两模式完整通过，分别6/8次模型请求，�
 
 先说结论：修正后的实验接线和判定已完成本轮无模型校准，并已执行第9节的新实际基线；**校准不是让真实Agent经历故障并恢复，也不能代替四种故障矩阵。** 旧DSH失败格没有因此改成通过。
 
-[i23-images-native-notice-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-images-native-notice-001/builds.json)串行构建了notice修订DSH和第一版结果判定bench；[i23-evidence-image-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-evidence-image-001/build.json)随后构建metadata错误归类修订bench。第9节observed轮实际使用的镜像如下；后续新材料见第10、11节，不能把第2、4节旧命令模板直接当作新轮固定值：
+i23-images-native-notice-001（`runtime/i23-images-native-notice-001`）串行构建了notice修订DSH和第一版结果判定bench；i23-evidence-image-001（`runtime/i23-evidence-image-001`）随后构建metadata错误归类修订bench。第9节observed轮实际使用的镜像如下；后续新材料见第10、11节，不能把第2、4节旧命令模板直接当作新轮固定值：
 
 | 角色 | observed轮标签 | 完整镜像ID |
 | --- | --- | --- |
@@ -172,13 +172,13 @@ DA `i23-da-baseline101-001` 两模式完整通过，分别6/8次模型请求，�
 | DA候选，沿用原材料 | `harness-lab-deepagents-langgraph:fault-recovery` | `sha256:44ea561ae5a135809cd23811a777b61be4f916d533957d2f2a236c88e5ec28f9` |
 | I23 services，沿用原材料 | `harness-lab-services:fault-recovery` | `sha256:1814a728fb3d9e89e48541b8df9ac7b035227f4005072226847340c00ed00efb` |
 
-DSH新的adapter export为`26c94e406fd5b1cb937db0024782e295161aacf1187adfa31fbeb7ef22f42c68`，位于独立`deepseek_harness-fault-native-notice`上下文；旧目录、镜像及失败记录保留。修订要分清官方Goal完成时的收尾notice和真实外部并发输入，后者仍应拒绝。[i23-native-notice-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i23-native-notice-check-001/host.json)在上述DSH镜像中 **49项通过、0跳过**，network none、无模型/远程key、退出0、非OOM、确切校准容器清理通过。这里使用假的native API验证接入边界；真实基线结果见第9节，不能据这49项校准认定实际收尾问题已解决。
+DSH新的adapter export为`26c94e406fd5b1cb937db0024782e295161aacf1187adfa31fbeb7ef22f42c68`，位于独立`deepseek_harness-fault-native-notice`上下文；旧目录、镜像及失败记录保留。修订要分清官方Goal完成时的收尾notice和真实外部并发输入，后者仍应拒绝。i23-native-notice-check-001（`runtime/i23-native-notice-check-001`）在上述DSH镜像中 **49项通过、0跳过**，network none、无模型/远程key、退出0、非OOM、确切校准容器清理通过。这里使用假的native API验证接入边界；真实基线结果见第9节，不能据这49项校准认定实际收尾问题已解决。
 
 | 公共判定校准 | 实际bench | 结果 | 如何理解 |
 | --- | --- | --- | --- |
-| [i23-native-outcome-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-native-outcome-check-001/host.json) | `sha256:96b22f3b09fd7affdfca57101d98ed6417f2fca662eab0341677828d85eea04e` | 336 passed、1 skipped，46.42秒 | metadata补充前的结果/受控退出校准；不是最终来源 |
-| [i23-native-outcome-check-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-native-outcome-check-002/host.json) | `sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e` | 351 passed、9 skipped、2 failed，48.34秒 | 两个故意损坏物理metadata的反例被拒，但JSON解码错误没有带上约定的metadata归类文案，断言失败；退出1，原件保留 |
-| [i23-native-outcome-check-003](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-native-outcome-check-003/host.json) | `sha256:5cea5c30f7075e50d73935eab456ff638a4c83ff6a6fb571468a20ff2328e012` | **353 passed、9 skipped，41.88秒** | 补充统一错误归类后，新bench重验通过；没有覆盖002 |
+| i23-native-outcome-check-001（`runtime/i23-native-outcome-check-001`） | `sha256:96b22f3b09fd7affdfca57101d98ed6417f2fca662eab0341677828d85eea04e` | 336 passed、1 skipped，46.42秒 | metadata补充前的结果/受控退出校准；不是最终来源 |
+| i23-native-outcome-check-002（`runtime/i23-native-outcome-check-002`） | `sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e` | 351 passed、9 skipped、2 failed，48.34秒 | 两个故意损坏物理metadata的反例被拒，但JSON解码错误没有带上约定的metadata归类文案，断言失败；退出1，原件保留 |
+| i23-native-outcome-check-003（`runtime/i23-native-outcome-check-003`） | `sha256:5cea5c30f7075e50d73935eab456ff638a4c83ff6a6fb571468a20ff2328e012` | **353 passed、9 skipped，41.88秒** | 补充统一错误归类后，新bench重验通过；没有覆盖002 |
 
 003已结束，宿主固定证据确认512 MiB/0.5 CPU、network none、未调用模型/远程key、退出0、PID0、非OOM、无Docker Error且确切容器清理成功。9项跳过是DSH参数下的1项DA物理checkpoint边界和8项DA metadata合并边界用例，不计作通过，不能称362项全部通过。`host.json` SHA-256为`463c97b8cb0fc581ab4596fb352afae96b7688f96f07c6a8aa66c9df94c94ddf`；最新构建记录SHA-256为`720bcf22819d2a7afad0ce560f071cccb49cefb88e432e1c5c02eb31e3964aaa`。
 
@@ -197,7 +197,7 @@ DSH新的adapter export为`26c94e406fd5b1cb937db0024782e295161aacf1187adfa31fbeb
 
 四格的其他8项外层检查均通过：独立账本、累计模型预算、完整工具审计、操作来源、注入窗口、宿主生命周期、精确进程/控制/挂载、资源配额。四格均未重发已经提交的操作。DSH实际原件均为包装层`status=incomplete`、`native_status=completed`；外层`native_terminal`报`fault_native_completion_missing`。后续定位到第10节的Goal入队时序误判，不把这一结果解释成DSH原生恢复能力缺陷；原来的失败记录继续保留。
 
-批次原件为[DA observed基线](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i23-da-observed-baseline-101-001/batch.json)和[DSH observed基线](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i23-dsh-observed-baseline-101-001/batch.json)。两者均为`phase=baseline-101`、`status=completed`、`passed=false`；`completed`只表示两格已有效结束，不表示能力通过。对应SHA-256分别为：
+批次原件为DA observed基线（`runtime/i23-da-observed-baseline-101-001`）和DSH observed基线（`runtime/i23-dsh-observed-baseline-101-001`）。两者均为`phase=baseline-101`、`status=completed`、`passed=false`；`completed`只表示两格已有效结束，不表示能力通过。对应SHA-256分别为：
 
 - DA：`b233eb2abde2d26ea728598b5733de86d18bb9d116ac1748e13393e07750d40a`。
 - DSH：`3da5810b10573c97fde65da6b537e2d373375cdbcf9566922b8e1dcd69c4619d`。
@@ -208,7 +208,7 @@ DSH新的adapter export为`26c94e406fd5b1cb937db0024782e295161aacf1187adfa31fbeb
 
 ## 10. DA冒烟停止点与两处待验证修复
 
-[DA observed冒烟批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i23-da-observed-smoke-001/batch.json)实际为`status=stopped`、`passed=false`，不是四格全部完成。前三格的独立判定有效，第四格停止在实验判定环节：
+DA observed冒烟批次（`runtime/i23-da-observed-smoke-001`）实际为`status=stopped`、`passed=false`，不是四格全部完成。前三格的独立判定有效，第四格停止在实验判定环节：
 
 | 非幂等101格 | 实际结果 | 当前可得结论 |
 | --- | --- | --- |
@@ -217,20 +217,20 @@ DSH新的adapter export为`26c94e406fd5b1cb937db0024782e295161aacf1187adfa31fbeb
 | `drop_receipt_once` | `capability_failed`；业务仅`all_pages_read`失败，九项外层检查通过 | 写后丢回执窗口已执行，已提交操作未重发；完整业务仍失败 |
 | `kill_before_write` | `integrity_stopped`；已真实强杀A并完成清理，未形成完整恢复判定 | 实验判定器受阻，不能据此判候选不能恢复，也不能算恢复通过 |
 
-写前强杀格的原件位于[原链目录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/fault-recovery/i23-da-observed-smoke-kill_before_write-nonid-101)。[断网状态结构诊断](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-da-checkpoint-shape-002/test-output.txt)确认，本次LangGraph把消息保存在DeltaChannel增量结构中；六份原始checkpoint的`channel_values`均没有直接的`messages`字段。旧判定器按完整消息快照读取，因而未生成恢复绑定所需材料。**字段不存在不等于原任务没有持久化。** 当前已补增量消息重建及快照投影处理，后续新bench校准与物理状态探针见第11节；不修改旧checkpoint、原评分或停止记录，真实故障新链仍须单独验收。
+写前强杀格的原件位于原链目录（`deepagents_langgraph/fault-recovery`）。断网状态结构诊断（`runtime/i23-da-checkpoint-shape-002`）确认，本次LangGraph把消息保存在DeltaChannel增量结构中；六份原始checkpoint的`channel_values`均没有直接的`messages`字段。旧判定器按完整消息快照读取，因而未生成恢复绑定所需材料。**字段不存在不等于原任务没有持久化。** 当前已补增量消息重建及快照投影处理，后续新bench校准与物理状态探针见第11节；不修改旧checkpoint、原评分或停止记录，真实故障新链仍须单独验收。
 
-DSH的另一处问题也已定位：官方先把下一轮放入队列，再更新“已经启动的轮数”；接入观察器提前要求两个计数相等，把正常Goal轮次误判成外部并发输入。第8节49项假的native API校准没有覆盖这个真实顺序，因此旧校准不能证明此问题已解决。[轮次顺序修订构建](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-round-order-image-001/build.json)已成功，标签`harness-lab-deepseek-harness:fault-round-order`，完整ID为`sha256:45a417649165b795c927c22cff98360c45a1849247d7ba9d19cc2574202af73d`。**构建成功仅说明新材料可构建；新镜像边界校准及真实无故障基线仍待执行。**
+DSH的另一处问题也已定位：官方先把下一轮放入队列，再更新“已经启动的轮数”；接入观察器提前要求两个计数相等，把正常Goal轮次误判成外部并发输入。第8节49项假的native API校准没有覆盖这个真实顺序，因此旧校准不能证明此问题已解决。轮次顺序修订构建（`runtime/i23-round-order-image-001`）已成功，标签`harness-lab-deepseek-harness:fault-round-order`，完整ID为`sha256:45a417649165b795c927c22cff98360c45a1849247d7ba9d19cc2574202af73d`。**构建成功仅说明新材料可构建；新镜像边界校准及真实无故障基线仍待执行。**
 
 修订材料、校准和真实新链分开留存，不能覆盖这次停止及已发生调用。第1–4节是先前执行模板，不能直接用旧context或标签启动修订轮。正式三种子、补普通基线和最终路线补验均未因此完成，I23保持进行中。
 
 ## 11. Delta修订材料、校准与新基线
 
-[recovery-lifecycle-images-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/recovery-lifecycle-images-001/builds.json)已构建新bench `harness-lab-bench:recovery-lifecycle`，完整ID为`sha256:aa0fb8cce18aa18b9876fe6cdabaecd6e20af0519f7894cc6f6869b35463c771`。DA候选及I23 services仍沿用第8节原镜像；这里修订的是保护侧读取与判定，不把新bench冒充候选能力改造。
+recovery-lifecycle-images-001（`runtime/recovery-lifecycle-images-001`）已构建新bench `harness-lab-bench:recovery-lifecycle`，完整ID为`sha256:aa0fb8cce18aa18b9876fe6cdabaecd6e20af0519f7894cc6f6869b35463c771`。DA候选及I23 services仍沿用第8节原镜像；这里修订的是保护侧读取与判定，不把新bench冒充候选能力改造。
 
-- [i23-delta-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-delta-check-001/host.json)：**376 passed、9 skipped，64.03秒**。按路线跳过的9项不算通过；断网、无模型/远程key，健康退出及确切容器清理通过。
-- [i23-da-delta-physical-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i23-da-delta-physical-check-001/host.json)：只读挂载原kill状态，在私有SQLite副本中用`ancestor_delta_writes`读取6份checkpoint、5条消息和4条pending writes；原件未改，未导入候选、未调用模型，断网健康退出及清理通过。它说明判定器能读这份真实故障状态，不等于已让B恢复成功。
+- i23-delta-check-001（`runtime/i23-delta-check-001`）：**376 passed、9 skipped，64.03秒**。按路线跳过的9项不算通过；断网、无模型/远程key，健康退出及确切容器清理通过。
+- i23-da-delta-physical-check-001（`runtime/i23-da-delta-physical-check-001`）：只读挂载原kill状态，在私有SQLite副本中用`ancestor_delta_writes`读取6份checkpoint、5条消息和4条pending writes；原件未改，未导入候选、未调用模型，断网健康退出及清理通过。它说明判定器能读这份真实故障状态，不等于已让B恢复成功。
 
-[新无故障基线批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/runtime/i23-da-delta-baseline101-001/batch.json)已结束，`status=completed`、`passed=false`。幂等/非幂等两模式分别4/6次真实模型请求，共10次；两格均为`capability_failed`，仅业务分页规则失败，预算、原生终态和进程等外层检查无异常。这个失败照实保留，不为取得成功结果反复重跑。
+新无故障基线批次（`runtime/i23-da-delta-baseline101-001`）已结束，`status=completed`、`passed=false`。幂等/非幂等两模式分别4/6次真实模型请求，共10次；两格均为`capability_failed`，仅业务分页规则失败，预算、原生终态和进程等外层检查无异常。这个失败照实保留，不为取得成功结果反复重跑。
 
 新批次`i23-da-delta-smoke-001`已开始真实故障冒烟；当前没有将活动批次预填成通过。下一步核对其完整原件，尤其真实kill后B是否用原状态、原预算空输入继续及是否重发。DSH仍须先完成轮次顺序新镜像校准和无故障基线，再进入故障阶段。
 
@@ -249,7 +249,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ## 2026-10-21：DSH四故障冒烟完成
 
-[i23-dsh-round-smoke-001批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-smoke-001/batch.json)已结束，4/4完整通过，均为seed101、非幂等服务，候选为`fault-round-order`、bench为`recovery-paths`；镜像和冻结材料以批次原件为准。
+i23-dsh-round-smoke-001批次（`runtime/i23-dsh-round-smoke-001`）已结束，4/4完整通过，均为seed101、非幂等服务，候选为`fault-round-order`、bench为`recovery-paths`；镜像和冻结材料以批次原件为准。
 
 | 故障 | reservation | 实际判定 |
 | --- | --- | --- |
@@ -262,15 +262,15 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ## 2026-10-21：Deep Agents Send修订真实验证
 
-新`fault-send`候选、`recovery-paths` bench下，[baseline101批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-baseline101-001/batch.json)两模式0/2完整通过，各5次模型；两者均为业务失败，外层来源/预算/进程等检查有效，没有完整性中止。
+新`fault-send`候选、`recovery-paths` bench下，baseline101批次（`runtime/i23-da-send-baseline101-001`）两模式0/2完整通过，各5次模型；两者均为业务失败，外层来源/预算/进程等检查有效，没有完整性中止。
 
-[四故障冒烟](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-send-smoke-001/batch.json)已结束：超时8条reservation（含本地注入）、工具失败8条均完整通过；写后丢回执6条、写前kill5条因分页业务失败。四条均无已提交操作重发、预算/注入/过程有效。最关键的kill链`original_native_crash_recovery`等11项独立检查全部通过：真实杀A、删除、绑定B、从原状态/原预算继续；Send诊断不再中止。原生恢复成立与完整业务失败同时保留，不把两者合为一个成功结论。
+四故障冒烟（`runtime/i23-da-send-smoke-001`）已结束：超时8条reservation（含本地注入）、工具失败8条均完整通过；写后丢回执6条、写前kill5条因分页业务失败。四条均无已提交操作重发、预算/注入/过程有效。最关键的kill链`original_native_crash_recovery`等11项独立检查全部通过：真实杀A、删除、绑定B、从原状态/原预算继续；Send诊断不再中止。原生恢复成立与完整业务失败同时保留，不把两者合为一个成功结论。
 
 新冒烟合计27条reservation，四条全清理完成；正式矩阵和最终关键种子仍待执行。旧delta-smoke的完整性中止不覆盖。
 
 ## 2026-10-21：DSH正式矩阵因采样完整性停止
 
-[i23-dsh-round-formal-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-formal-001/batch.json)已经停止，24格中仅首格形成有效完整通过。首格`model_timeout/id/101`为12条请求计数；第二格`model_timeout/id/202`为13条，业务、注入、原生终态和预算等检查通过，但`resource_limits`因`fault_resource_sampling_gap`失败。第二格不计候选能力成败，原批次停止状态及原verdict保留。
+i23-dsh-round-formal-001（`runtime/i23-dsh-round-formal-001`）已经停止，24格中仅首格形成有效完整通过。首格`model_timeout/id/101`为12条请求计数；第二格`model_timeout/id/202`为13条，业务、注入、原生终态和预算等检查通过，但`resource_limits`因`fault_resource_sampling_gap`失败。第二格不计候选能力成败，原批次停止状态及原verdict保留。
 
 第二格原始`resource-samples.jsonl`第9→10行，时间从`03:43:25.070916Z`到`03:43:30.186996Z`，相隔**5.116080秒**，超过5秒标准。两行均处于`worker-a_active`，四容器stats完整、error为null、无生命周期过渡；Worker直到`03:43:46.425Z`才正常退出。当前证据无法把这次间隔归因于退出、删除或某一条Docker命令。
 
@@ -278,11 +278,11 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### 新诊断校准及四容器连续采样
 
-诊断第一版已构建但未执行模型实验；代码复核发现独立诊断文件写入失败可能让采样线程退出而未上报。第二版补上固定错误类型的内存标记及主线程收尾核验：诊断IO错误不覆盖原始采样写入异常，任何采样线程异常或未结束都使主链完整性失败。新bench为`harness-lab-bench:fault-sampling-closed`，完整ID `sha256:3811a47d6f11a337cf604579ac14285361de9c5aa118c32bab28f6f00d389cbc`，见[构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-sampling-closed-images-001/build.json)。
+诊断第一版已构建但未执行模型实验；代码复核发现独立诊断文件写入失败可能让采样线程退出而未上报。第二版补上固定错误类型的内存标记及主线程收尾核验：诊断IO错误不覆盖原始采样写入异常，任何采样线程异常或未结束都使主链完整性失败。新bench为`harness-lab-bench:fault-sampling-closed`，完整ID `sha256:3811a47d6f11a337cf604579ac14285361de9c5aa118c32bab28f6f00d389cbc`，见构建记录（`runtime/fault-sampling-closed-images-001`）。
 
-[fault-sampling-closed-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-sampling-closed-check-001/host.json)在Docker内断网、无key运行五个相关模块，**279 passed、9按路线跳过**。覆盖正常顺序、四个命令分别迟延、timeout、锁等待、原文件写入延迟、诊断文件open/write/close失败、原采样异常、线程异常及泄密反例；超过5秒仍由原判定拒绝。
+fault-sampling-closed-check-001（`runtime/fault-sampling-closed-check-001`）在Docker内断网、无key运行五个相关模块，**279 passed、9按路线跳过**。覆盖正常顺序、四个命令分别迟延、timeout、锁等待、原文件写入延迟、诊断文件open/write/close失败、原采样异常、线程异常及泄密反例；超过5秒仍由原判定拒绝。
 
-[fault-sampling-probe-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-sampling-probe-001/host-result.json)随后用相同`FaultLab.sample_with_reporting`观察四个断网、无挂载、无key的空闲Python容器60秒，配额合计2.75 GiB/1.75 CPU，没有运行候选或模型。形成30条原始采样，覆盖59.342秒；完整ID正常终止及确切删除均通过。独立bench断网只读验收也通过，见[原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-sampling-probe-001/grade-proof/summary.json)。
+fault-sampling-probe-001（`runtime/fault-sampling-probe-001`）随后用相同`FaultLab.sample_with_reporting`观察四个断网、无挂载、无key的空闲Python容器60秒，配额合计2.75 GiB/1.75 CPU，没有运行候选或模型。形成30条原始采样，覆盖59.342秒；完整ID正常终止及确切删除均通过。独立bench断网只读验收也通过，见原判定（`fault-sampling-probe-001/grade-proof`）。
 
 | 实测项目 | 均值 | 最大值 |
 | --- | ---: | ---: |
@@ -294,13 +294,13 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 本轮未复现5秒缺口，只证明新诊断在四个空闲进程下可用。不能用它倒推旧5.116秒的原因，也不能推断真实Agent活动时不会再次出现。后续付费批次使用新bench和新prefix；原正式首批停止及所有失败继续保留。
 
-新[i23-dsh-timing-formal-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-timing-formal-001/batch.json)按原24格完整计划串行执行，候选与services不变，bench为上表的新诊断镜像。它是新材料下的独立正式阶段，没有从旧批次挑剩余格续跑；本批后来在第19格停止，结果见下。
+新i23-dsh-timing-formal-001（`runtime/i23-dsh-timing-formal-001`）按原24格完整计划串行执行，候选与services不变，bench为上表的新诊断镜像。它是新材料下的独立正式阶段，没有从旧批次挑剩余格续跑；本批后来在第19格停止，结果见下。
 
 ### 新正式批：18格有效结束，第19格采样错误停止
 
 前18格涵盖模型超时、工具首次失败和写后丢回执，各含两种写入模式及三个种子；17格完整通过，`fail_once/id/303`仅业务`all_pages_read`未通过。该失败格报告、实际写入、预算、原生终态及其他外层检查通过，原业务失败保留。18格均无已提交操作重发，不将幂等服务防重视为框架独有能力。
 
-第19格[kill_before_write/id/101原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/fault-recovery/i23-dsh-timing-001-formal-kill_before_write-id-101/verdict.json)业务通过、原生换容器恢复通过，但`resource_limits`为`fault_resource_sample_error`，本批按完整性规则停止。该格不计候选能力成败；余5格未运行，不能补成失败或零消耗。batch中该格verdict指针为null，实际独立原verdict存在，应以原件留存。19条链均结束并清理，当前无本实验残留容器。
+第19格kill_before_write/id/101原判定（`fault-recovery/i23-dsh-timing-001-formal-kill_before_write-id-101`）业务通过、原生换容器恢复通过，但`resource_limits`为`fault_resource_sample_error`，本批按完整性规则停止。该格不计候选能力成败；余5格未运行，不能补成失败或零消耗。batch中该格verdict指针为null，实际独立原verdict存在，应以原件留存。19条链均结束并清理，当前无本实验残留容器。
 
 安全耗时原件显示第9次采样的`inventory_ps`返回0，随后`inventory_batch_inspect`返回1、错误类型为`CalledProcessError`；不是本次诊断文件IO失败，`sampling_failures=[]`。源码中kill后的`docker rm(A)`在采样锁外，可能与采样的ps→inspect交叉；实际删除时间与本次inspect失败窗口高度吻合。诊断未记录命令对象ID及stderr，不能严格认定该返回1必定由A消失造成，更不能据此重判旧原件。
 
@@ -308,16 +308,16 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### 删除互斥修订与后续窗口
 
-宿主I23脚本SHA-256为`921acb1bb7ba0e88bd1a3ad5f0812f5ff0900346179606f958baaf72d4e9ae77`。新bench `4dd8a37e…` 已构建；[I23独立校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/fault-remove-isolated-check-001/host.json)为287项通过、9项依赖DA物理解码材料的用例按路线跳过，断网、无凭证、健康退出且确切清理通过。先前组合校准有14项DSH新接线或兼容性用例失败，原件保留；不能把本次I23独立通过扩大为DSH多用户校准通过。
+宿主I23脚本SHA-256为`921acb1bb7ba0e88bd1a3ad5f0812f5ff0900346179606f958baaf72d4e9ae77`。新bench `4dd8a37e…` 已构建；I23独立校准（`runtime/fault-remove-isolated-check-001`）为287项通过、9项依赖DA物理解码材料的用例按路线跳过，断网、无凭证、健康退出且确切清理通过。先前组合校准有14项DSH新接线或兼容性用例失败，原件保留；不能把本次I23独立通过扩大为DSH多用户校准通过。
 
-[真实删除探针](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i23-exact-remove-probe-001/host-result.json)复用未替换的生产采样/清单方法，使用已固定的旧bench `3811a47d…` 承载无模型Python进程；20次均实际完成ps→批量inspect→rm→确切ID及名称不存在核验。22个样本最长相邻间隔2.010177秒，无采样错误，正常exit0/非OOM及全部清理通过。探针最多1 GiB/1 CPU，未运行Agent、模型、SIGKILL或原生恢复，也没有执行独立I23评分；它只验证这处删除互斥，不证明真实Agent正式阶段稳定。
+真实删除探针（`runtime/i23-exact-remove-probe-001`）复用未替换的生产采样/清单方法，使用已固定的旧bench `3811a47d…` 承载无模型Python进程；20次均实际完成ps→批量inspect→rm→确切ID及名称不存在核验。22个样本最长相邻间隔2.010177秒，无采样错误，正常exit0/非OOM及全部清理通过。探针最多1 GiB/1 CPU，未运行Agent、模型、SIGKILL或原生恢复，也没有执行独立I23评分；它只验证这处删除互斥，不证明真实Agent正式阶段稳定。
 
-随后在新bench与原DA Send候选/services下启动[DA首次正式矩阵](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-formal-001/batch.json)，固定24格、prefix `i23-da-removal-001`。本批已结束，结果见下；DSH停止批保留原状态。
+随后在新bench与原DA Send候选/services下启动DA首次正式矩阵（`runtime/i23-da-removal-formal-001`），固定24格、prefix `i23-da-removal-001`。本批已结束，结果见下；DSH停止批保留原状态。
 
 
 ### Deep Agents首次正式24格结束
 
-[本批原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-formal-001/batch.json)状态为`completed`，24/24格全部结束，完整通过10/24；14格业务失败均仅`all_pages_read`，不覆盖原失败。batch SHA-256为`7ee77a1ccb1cad5578f275aebf1df71e5052cb019f3803a88815a132262b85a1`。候选、bench及services为上表固定镜像，本批不与任何旧冒烟或停止批拼接成功率。
+本批原件（`runtime/i23-da-removal-formal-001`）状态为`completed`，24/24格全部结束，完整通过10/24；14格业务失败均仅`all_pages_read`，不覆盖原失败。batch SHA-256为`7ee77a1ccb1cad5578f275aebf1df71e5052cb019f3803a88815a132262b85a1`。候选、bench及services为上表固定镜像，本批不与任何旧冒烟或停止批拼接成功率。
 
 | 故障 | 完整通过 / 已结束 | 其余结果 |
 | --- | ---: | --- |
@@ -334,7 +334,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### DSH删除互斥修订后正式24格结束
 
-[i23-dsh-removal-formal-001原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-formal-001/batch.json)已`completed`，24/24格全部有效结束，**完整通过23/24**。批次SHA-256为`acc141a648168dc40e9dbb0f21d7646f96ad9412ffa1406ebab3c9d445c45ac8`。这是删除互斥修订后的独立固定正式阶段，不是把旧停止批的成功格留下、再补剩余格。
+i23-dsh-removal-formal-001原件（`runtime/i23-dsh-removal-formal-001`）已`completed`，24/24格全部有效结束，**完整通过23/24**。批次SHA-256为`acc141a648168dc40e9dbb0f21d7646f96ad9412ffa1406ebab3c9d445c45ac8`。这是删除互斥修订后的独立固定正式阶段，不是把旧停止批的成功格留下、再补剩余格。
 
 | 故障 | 完整通过 / 已结束 | 原判定说明 |
 | --- | ---: | --- |
@@ -343,7 +343,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 | 写成功后丢回执 | 6/6 | 业务及原外层检查通过，无已提交操作重发 |
 | 提交前杀Worker | 6/6 | 六条均原生换容器恢复，业务及原外层检查通过 |
 
-唯一失败为[model_timeout/non_idempotent/101原业务判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/fault-recovery/i23-dsh-removal-001-formal-model_timeout-nonid-101/business-verdict.json)的`all_pages_read=false`；报告可读且内容正确、实际写入准确、scope与审计等其余业务项均通过。外层`checks`全过不能覆盖这项业务失败，原批次`passed=false`保留。
+唯一失败为model_timeout/non_idempotent/101原业务判定（`fault-recovery/i23-dsh-removal-001-formal-model_timeout-nonid-101`）的`all_pages_read=false`；报告可读且内容正确、实际写入准确、scope与审计等其余业务项均通过。外层`checks`全过不能覆盖这项业务失败，原批次`passed=false`保留。
 
 逐格核对既有原件：24格外层`checks`全部通过，host `errors=[]`、`sampling_failures=[]`、`timed_out=false`；每格`cleanup.remaining=[]`。六条kill的`original_native_crash_recovery`均通过；每格`reissued_after_commit=0`。这证明本固定任务和入口下的恢复、预算、原生终态及观测链有效，不把幂等服务防重算成候选独有能力，也不外推生产可靠性。旧两批采样停止结果及其失败原文保持不变，成功率不合并。
 
@@ -353,7 +353,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### Deep Agents补普通基线202/303结束
 
-[i23-da-removal-baseline-rest-001原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-baseline-rest-001/batch.json)已`completed`，四格有效结束，**完整通过2/4**。批次SHA-256为`e736012dddfb51b63cfae5c2901f93abcffaad20829416552c2976817aadb90c`，均不注入故障。
+i23-da-removal-baseline-rest-001原件（`runtime/i23-da-removal-baseline-rest-001`）已`completed`，四格有效结束，**完整通过2/4**。批次SHA-256为`e736012dddfb51b63cfae5c2901f93abcffaad20829416552c2976817aadb90c`，均不注入故障。
 
 | 写入服务 | 种子 | 原判定 |
 | --- | --- | --- |
@@ -370,7 +370,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### DSH补普通基线202/303结束
 
-[i23-dsh-removal-baseline-rest-001原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-baseline-rest-001/batch.json)已`completed`且`passed=true`，四条无故障任务**完整4/4通过**。批次SHA-256为`a7aa22808d1c6d88d69c30ce9748d5e81d74468d67ef6b2ffd1444b39167951e`。
+i23-dsh-removal-baseline-rest-001原件（`runtime/i23-dsh-removal-baseline-rest-001`）已`completed`且`passed=true`，四条无故障任务**完整4/4通过**。批次SHA-256为`a7aa22808d1c6d88d69c30ce9748d5e81d74468d67ef6b2ffd1444b39167951e`。
 
 | 写入服务 | 种子 | 原模型计数记录 | 原判定 |
 | --- | --- | ---: | --- |
@@ -387,7 +387,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### Deep Agents最终关键故障404/505结束
 
-[i23-da-removal-final-001原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/runtime/i23-da-removal-final-001/batch.json)已`completed`，8/8格有效结束，**完整通过4/8**；批次SHA-256为`92d2a6b70b7341fd4780f4e8879c699af56f0ae33895043f5c045280bac88306`。候选、bench、services沿用DA补基线及首次正式矩阵的固定镜像，最终种子单列，不与前述基线或正式组拼成一个通过率。
+i23-da-removal-final-001原件（`runtime/i23-da-removal-final-001`）已`completed`，8/8格有效结束，**完整通过4/8**；批次SHA-256为`92d2a6b70b7341fd4780f4e8879c699af56f0ae33895043f5c045280bac88306`。候选、bench、services沿用DA补基线及首次正式矩阵的固定镜像，最终种子单列，不与前述基线或正式组拼成一个通过率。
 
 | 故障 | 写入服务 | 种子 | 原完整判定 |
 | --- | --- | --- | --- |
@@ -406,7 +406,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 ### DSH最终关键故障404/505结束；I23调研收尾
 
-[i23-dsh-removal-final-001原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-removal-final-001/batch.json)已`completed`且`passed=true`，8/8格有效、完整通过：写前强杀和写后丢回执各四格，覆盖幂等/非幂等服务及404/505。批次SHA-256为`84a57b8942df276f2f8bd05df874e66aa07259675deb82b625baf20b2da689e1`，候选、bench及services沿用本路线正式矩阵与补基线的固定镜像。
+i23-dsh-removal-final-001原件（`runtime/i23-dsh-removal-final-001`）已`completed`且`passed=true`，8/8格有效、完整通过：写前强杀和写后丢回执各四格，覆盖幂等/非幂等服务及404/505。批次SHA-256为`84a57b8942df276f2f8bd05df874e66aa07259675deb82b625baf20b2da689e1`，候选、bench及services沿用本路线正式矩阵与补基线的固定镜像。
 
 逐格原件确认：八格外层`checks`全部通过，host `errors=[]`、`sampling_failures=[]`、`timed_out=false`，每格`cleanup.remaining=[]`；四条kill的`original_native_crash_recovery`均通过，每格`reissued_after_commit=0`。本次只读取已结束原件和SHA，没有重新评分、SQL、模型调用或在宿主合计预算。
 
@@ -418,7 +418,7 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 
 **I23约定调研已结束，能力结论包含失败与限制。** 两路线均有原生恢复和不重发已提交操作的证据；DSH在本固定任务中的完整业务更稳定，DA没有故障时也会出现分页失败，因此不能把其故障组同类失败都归于恢复机制。不据这些小样本给出生产可靠性承诺，不将不同阶段或旧停止批合为一个成功率。
 
-010已完成独立断网Docker [SQL验收](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)及[token验收](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json)，均无key、退出0、清理通过。当前343库共2485条reservation：2416条远程200、36条模拟、28条本地注入、4条远程未确认、1条在途未知；未闭合及别名列表为空，仍有17个未登记来源未查询、不补0。token覆盖307项/285目录，2266份观察输入/输出/总量已知、13份未知；已知输入9,590,870、输出662,533、总量10,253,403，11个材料单元无可用usage。没有请求级join、完整账单或金额结论，I26本轮未完成。
+010已完成独立断网Docker SQL验收（`runtime/research-usage-check-010`）及token验收（`runtime/token-usage-check-010`），均无key、退出0、清理通过。当前343库共2485条reservation：2416条远程200、36条模拟、28条本地注入、4条远程未确认、1条在途未知；未闭合及别名列表为空，仍有17个未登记来源未查询、不补0。token覆盖307项/285目录，2266份观察输入/输出/总量已知、13份未知；已知输入9,590,870、输出662,533、总量10,253,403，11个材料单元无可用usage。没有请求级join、完整账单或金额结论，I26本轮未完成。
 
 | 已结束阶段 | 010安全分组中的请求分类 |
 | --- | --- |
@@ -428,6 +428,6 @@ DSH新基线批已结束：`i23-dsh-round-baseline101-001`两模式2/2完整通�
 | DA最终8格 | 50条远程200 |
 | DSH最终8格 | 95条远程200 |
 
-上述分类来自已通过并清理的Docker分组验收，只读原SQL安全摘要，未在宿主打开数据库或合计；[分组原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-enrollment-010/proof/fault-phase-usage.json)。010清单SHA-256为`3d424d716689b10179dc59f16ca95bd11c7066aa3140e2d68652d0c53f1d14c3`，SQL安全摘要为`69d2a174beb4f73f8defc9b154ad4313968eb8a63d5a038354f732326c0c44b1`，token安全摘要为`ee30a30d4914e74a5716372bcc7aa26adb003345bda063dd381aaf43bf981131`。009及更早原件全部保留；前述各阶段“未纳入009/待SQL”是当时截点记录，现由010追加，不改写历史。
+上述分类来自已通过并清理的Docker分组验收，只读原SQL安全摘要，未在宿主打开数据库或合计；分组原件（`research-usage-enrollment-010/proof`）。010清单SHA-256为`3d424d716689b10179dc59f16ca95bd11c7066aa3140e2d68652d0c53f1d14c3`，SQL安全摘要为`69d2a174beb4f73f8defc9b154ad4313968eb8a63d5a038354f732326c0c44b1`，token安全摘要为`ee30a30d4914e74a5716372bcc7aa26adb003345bda063dd381aaf43bf981131`。009及更早原件全部保留；前述各阶段“未纳入009/待SQL”是当时截点记录，现由010追加，不改写历史。
 
 本轮I24/I25的未完成项另按真实缺口收尾，不为了全部通过继续扩建实验台；I27条件化建议已交付，不证明生产迁移或线上省钱。

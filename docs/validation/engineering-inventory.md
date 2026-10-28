@@ -30,10 +30,10 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 | 候选 | adapter manifest | export SHA-256 前缀 |
 | --- | --- | --- |
-| DSH | [DSH 清单](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/LAB_ADAPTER_MANIFEST.json) | `0b2bc9379bf5…` |
-| OpenClaw | [OpenClaw 清单](/Users/hanbowen01/repo/puff/external/build-context/openclaw/LAB_ADAPTER_MANIFEST.json) | `3163a626178f…` |
-| Deep Agents / LangGraph | [Deep Agents 清单](/Users/hanbowen01/repo/puff/external/build-context/deepagents_langgraph/LAB_ADAPTER_MANIFEST.json) | `9a3eb6a5c33c…` |
-| OpenAI Agents SDK | [Agents SDK 清单](/Users/hanbowen01/repo/puff/external/build-context/openai_agents_sdk/LAB_ADAPTER_MANIFEST.json) | `b57d1de9087b…` |
+| DSH | [DSH 清单](../../external/build-context/deepseek_harness/LAB_ADAPTER_MANIFEST.json) | `0b2bc9379bf5…` |
+| OpenClaw | [OpenClaw 清单](../../external/build-context/openclaw/LAB_ADAPTER_MANIFEST.json) | `3163a626178f…` |
+| Deep Agents / LangGraph | [Deep Agents 清单](../../external/build-context/deepagents_langgraph/LAB_ADAPTER_MANIFEST.json) | `9a3eb6a5c33c…` |
+| OpenAI Agents SDK | [Agents SDK 清单](../../external/build-context/openai_agents_sdk/LAB_ADAPTER_MANIFEST.json) | `b57d1de9087b…` |
 
 非代码部分如下，不能把自动生成锁文件的行数记成业务研发代码：
 
@@ -48,7 +48,7 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 ### DSH
 
-适配目录为 [adapters/deepseek_harness/](/Users/hanbowen01/repo/puff/adapters/deepseek_harness)。
+适配目录为 [adapters/deepseek_harness/](../../adapters/deepseek_harness)。
 
 | 代码文件 | 行数 | 作用 |
 | --- | ---: | --- |
@@ -65,7 +65,7 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 ### OpenClaw
 
-适配目录为 [adapters/openclaw/](/Users/hanbowen01/repo/puff/adapters/openclaw)。
+适配目录为 [adapters/openclaw/](../../adapters/openclaw)。
 
 | 代码文件 | 行数 | 作用 |
 | --- | ---: | --- |
@@ -83,7 +83,7 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 ### Deep Agents / LangGraph
 
-适配目录为 [adapters/deepagents_langgraph/](/Users/hanbowen01/repo/puff/adapters/deepagents_langgraph)。
+适配目录为 [adapters/deepagents_langgraph/](../../adapters/deepagents_langgraph)。
 
 | 代码文件 | 行数 | 作用 |
 | --- | ---: | --- |
@@ -97,11 +97,11 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 候选及其官方配套提供 `create_deep_agent`、HarnessProfile、ChatOpenAI、`astream/aget_state`、AsyncSqliteSaver、ToolRuntime/Command、RunControl/GraphDrained。HTTP/MCP 桥、业务 reducer、观察结构和实验控制证据属于本仓库接入；drain 的合作停止语义应与立即取消分开评价。
 
-独立锁共85包；[LOCK_I19_CHANGES.json](/Users/hanbowen01/repo/puff/adapters/deepagents_langgraph/LOCK_I19_CHANGES.json) 记录浏览器接入时由70增至85包，已有包版本未改变、增加15包。这是一次已记录的依赖材料调整，不是候选框架升级兼容性实验。未来还需维护 Deep Agents、LangGraph、LangChain、SQLite saver 和 MCP 配套版本之间的关系。
+独立锁共85包；[LOCK_I19_CHANGES.json](../../adapters/deepagents_langgraph/LOCK_I19_CHANGES.json) 记录浏览器接入时由70增至85包，已有包版本未改变、增加15包。这是一次已记录的依赖材料调整，不是候选框架升级兼容性实验。未来还需维护 Deep Agents、LangGraph、LangChain、SQLite saver 和 MCP 配套版本之间的关系。
 
 ### OpenAI Agents SDK
 
-适配目录为 [adapters/openai_agents_sdk/](/Users/hanbowen01/repo/puff/adapters/openai_agents_sdk)。
+适配目录为 [adapters/openai_agents_sdk/](../../adapters/openai_agents_sdk)。
 
 | 代码文件 | 行数 | 作用 |
 | --- | ---: | --- |
@@ -130,7 +130,7 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 | Deep Agents / LangGraph | 38 | 83 | 35 |
 | OpenAI Agents SDK | 34 | 69 | 30 |
 
-文件分别位于 [compose/candidates/](/Users/hanbowen01/repo/puff/compose/candidates)、[scripts/](/Users/hanbowen01/repo/puff/scripts) 的 `stage_<candidate>.py`、[configs/candidates/](/Users/hanbowen01/repo/puff/configs/candidates)。
+文件分别位于 [compose/candidates/](../../compose/candidates)、[scripts/](../../scripts) 的 `stage_<candidate>.py`、[configs/candidates/](../../configs/candidates)。
 
 还有四个候选专用的实验判定/触发文件：Deep Agents 的 `runner/deepagents_control.py` 213行、`scripts/native_triggers.py` 56行；OpenClaw 的 `runner/openclaw_control.py` 366行、`scripts/openclaw_trigger.py` 65行，合计700行。这些是外部实验验证与触发，不是框架运行循环。DSH/SDK 部分专用判定和触发仍写在公共 `runner/detailed.py`、`scripts/run_detailed.py` 内，本次没有强行拆分或把整份公共文件归给某个候选。
 
@@ -158,7 +158,7 @@ DSH 的 README 为217行，没有列入其 staged 材料；其他三条路线的
 
 ### 本仓库的历史接入 diff
 
-[OpenClaw BUSINESS_EXTENSION.patch](/Users/hanbowen01/repo/puff/adapters/openclaw/BUSINESS_EXTENSION.patch) 共451物理行，新增238行、删除32行，目标为本仓库的适配入口、插件、README、Dockerfile 和 staging 脚本共8处，没有上游源码目标。它保存当时的接入改造差异，不是候选上游核心 fork，也不是当前全部改造的累计差异。描述过的代码已经计入现有文件，不能再把238行加到当前代码量里。
+[OpenClaw BUSINESS_EXTENSION.patch](../../adapters/openclaw/BUSINESS_EXTENSION.patch) 共451物理行，新增238行、删除32行，目标为本仓库的适配入口、插件、README、Dockerfile 和 staging 脚本共8处，没有上游源码目标。它保存当时的接入改造差异，不是候选上游核心 fork，也不是当前全部改造的累计差异。描述过的代码已经计入现有文件，不能再把238行加到当前代码量里。
 
 ### 官方配置覆盖
 
@@ -178,7 +178,7 @@ DSH 的两份 `cordis.patch.yml` 使用官方 profile 配置机制；官方源�
 | OpenClaw | `matrix-js-sdk@43.0.0` | 199 |
 | OpenClaw | `vitest@5.0.3` | 758 |
 
-DSH 合计1项/32行，OpenClaw 合计6项/1688行。依据为各 staged 上游根目录的 [DSH workspace](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/sources/main/pnpm-workspace.yaml)、[DSH lock](/Users/hanbowen01/repo/puff/external/build-context/deepseek_harness/sources/main/pnpm-lock.yaml)、[OpenClaw workspace](/Users/hanbowen01/repo/puff/external/build-context/openclaw/sources/main/pnpm-workspace.yaml) 和 [OpenClaw lock](/Users/hanbowen01/repo/puff/external/build-context/openclaw/sources/main/pnpm-lock.yaml)，patch 原文件保留在各自 `patches/` 目录。它们列在完整安装图中，不代表当前业务任务运行了所有相关功能。
+DSH 合计1项/32行，OpenClaw 合计6项/1688行。依据为各 staged 上游根目录的 [DSH workspace](../../external/build-context/deepseek_harness/sources/main/pnpm-workspace.yaml)、[DSH lock](../../external/build-context/deepseek_harness/sources/main/pnpm-lock.yaml)、[OpenClaw workspace](../../external/build-context/openclaw/sources/main/pnpm-workspace.yaml) 和 [OpenClaw lock](../../external/build-context/openclaw/sources/main/pnpm-lock.yaml)，patch 原文件保留在各自 `patches/` 目录。它们列在完整安装图中，不代表当前业务任务运行了所有相关功能。
 
 Deep Agents 和 Agents SDK 使用已核验的固定源码及独立 Python 锁构建 wheel；当前接入未发现另行应用的自研上游核心补丁。这次统计也没有对全部第三方 wheel 做补丁或源码差异审计。
 
@@ -191,7 +191,7 @@ Deep Agents 和 Agents SDK 使用已核验的固定源码及独立 Python 锁构
 3. 明确升级实验尚未开展。要评价升级成本，需另选版本，在同样任务下核对依赖、接口、状态格式及迁移行为；本次的固定版本重建和锁文件调整不能代替。
 4. 在业务场景确定后，评估产品所需的最小接入及剩余研发量。当前实验目录行数和公共设施规模不足以推导生产交付工期。
 
-真实能力、资源和模型用量仍以各候选实验报告及原始证据为准： [DSH](/Users/hanbowen01/repo/puff/docs/validation/deepseek_harness.md)、[OpenClaw](/Users/hanbowen01/repo/puff/docs/validation/openclaw.md)、[Deep Agents](/Users/hanbowen01/repo/puff/docs/validation/deepagents_langgraph.md)、[Agents SDK](/Users/hanbowen01/repo/puff/docs/validation/openai_agents_sdk.md)。本文不新增执行进度入口，实际状态继续回写根目录实施计划。
+真实能力、资源和模型用量仍以各候选实验报告及原始证据为准： [DSH](deepseek_harness.md)、[OpenClaw](openclaw.md)、[Deep Agents](deepagents_langgraph.md)、[Agents SDK](openai_agents_sdk.md)。本文不新增执行进度入口，实际状态继续回写根目录实施计划。
 
 ## 8. I22实施中的新增维护面
 
@@ -220,9 +220,9 @@ I23–I25使用与上述固定I22镜像分开的材料。其后已发生Docker�
 | 独立物理审计与过程判定 | `runner/fault_recovery.py`、`fault_outcome.py`、`tests/test_fault_native.py`及故障系列测试 | bench只读重建DeltaChannel祖先链、pending writes和固定serializer的Send形态，与实际Graph/saver观察逐值比较；DSH独立核原日志提交前缀及原生修复。格式、来源或完整性不符仍停止，不由候选自报恢复成功 |
 | 注入、编排和材料冻结 | `scripts/run_fault_recovery.py`、`run_fault_batch.py`、`stage_fault_bridges.py`、`execution/tools/fault_gate.py` | 公共实验设施负责四故障、真实kill/删A/新B、幂等和非幂等账本、预算连续、清理、冻结材料；这些不是框架原生运行服务，也不必全部进入产品 |
 
-当前DSH `fault-round-order`新两模式基线2/2、四故障非幂等冒烟4/4；Deep Agents `fault-send`新两模式基线0/2、四故障冒烟2/4，未通过部分为业务分页失败。两路线真实kill换B原生恢复已有证据，DA kill链11项外层检查全过；旧Delta/Send投影中止保留。[DSH旧正式24格批](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-round-formal-001/batch.json)首格通过、第二格因`fault_resource_sampling_gap`完整性停止，仅1/24有效，第二格不计候选成败。旧证据没有逐命令耗时，不能倒推具体慢点或预判候选缺陷，也不用业务通过豁免资源证据。
+当前DSH `fault-round-order`新两模式基线2/2、四故障非幂等冒烟4/4；Deep Agents `fault-send`新两模式基线0/2、四故障冒烟2/4，未通过部分为业务分页失败。两路线真实kill换B原生恢复已有证据，DA kill链11项外层检查全过；旧Delta/Send投影中止保留。DSH旧正式24格批（`runtime/i23-dsh-round-formal-001`）首格通过、第二格因`fault_resource_sampling_gap`完整性停止，仅1/24有效，第二格不计候选成败。旧证据没有逐命令耗时，不能倒推具体慢点或预判候选缺陷，也不用业务通过豁免资源证据。
 
-新增分阶段耗时诊断的第一版在review发现IO异常可能静默结束采样线程，随后修订材料经279项容器校准和四容器无模型probe，再执行独立[新正式矩阵](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepseek_harness/runtime/i23-dsh-timing-formal-001/batch.json)。前18格有效结束，17格完整通过，工具首次失败/幂等/303保留分页业务失败；第19格kill/幂等/101因采样inspect返回1产生`fault_resource_sample_error`而完整性停止。其原业务和原生恢复通过不能抵消观测错误，第19格不计候选成败，余5格未运行、不补失败或零消耗。batch判定指针null不能当成实际原verdict缺失。该问题属于实验观测维护面，5秒门槛不变。删除与清单互斥修订经287项容器校准、20次真实无模型删除探针后，DA首次正式24格已全部结束，完整10/24；14格仅分页失败，6条kill原生恢复全部通过，24格已提交操作重发均为0，原外层检查、host与清理均有效。
+新增分阶段耗时诊断的第一版在review发现IO异常可能静默结束采样线程，随后修订材料经279项容器校准和四容器无模型probe，再执行独立新正式矩阵（`runtime/i23-dsh-timing-formal-001`）。前18格有效结束，17格完整通过，工具首次失败/幂等/303保留分页业务失败；第19格kill/幂等/101因采样inspect返回1产生`fault_resource_sample_error`而完整性停止。其原业务和原生恢复通过不能抵消观测错误，第19格不计候选成败，余5格未运行、不补失败或零消耗。batch判定指针null不能当成实际原verdict缺失。该问题属于实验观测维护面，5秒门槛不变。删除与清单互斥修订经287项容器校准、20次真实无模型删除探针后，DA首次正式24格已全部结束，完整10/24；14格仅分页失败，6条kill原生恢复全部通过，24格已提交操作重发均为0，原外层检查、host与清理均有效。
 
 **I23本轮两路线的formal、baseline-rest及final固定阶段现已全部结束，业务失败保留。** DSH删除修订后的独立正式24格完整23/24，唯一失败为模型超时/非幂等/101的分页检查；正常基线rest为DSH4/4、DA2/4，最终404/505关键故障为DSH8/8、DA4/8，未完整通过均仅`all_pages_read`失败。早先101普通基线DSH2/2、DA0/2仍保留，两套bench分层，不拼为同一完整镜像组合批次，也不合并旧停止批成功率。两路线正式各6条kill及最终各4条kill均原生换容器恢复，所有阶段已提交操作重发均为0、外层检查有效、清理剩余为空。这完成本轮固定故障验证，不证明所有业务或生产故障窗口都已覆盖；人工阅读、接入、调试和维护投入仍未知。固定材料、原判定及调试过程见[故障报告](fault-recovery-execution.md)。
 
@@ -238,9 +238,9 @@ I23–I25使用与上述固定I22镜像分开的材料。其后已发生Docker�
 
 旧`i24-da-fresh-smoke-101-001`完整执行，但两主任务业务和一条`transition_terminal_not_healthy`退出采样失败，原整体false保留。原件定位到已登记精确ID在正常退出、删除过程中被inspect为`removing/Dead`；新分支保留该原始快照，健康终态只能来自先前独立`after_stop`，其余字段必须一致，并额外执行精确ID inspect证明实际不存在。补充inspect后刷新短锁内的该ID登记，避免使用删除完成前的旧快照；Docker调用仍在锁外，原采样时限不放宽。另新增逐对象和网络的正向清理材料，未知错误不能当成已删除。
 
-新bench `sha256:96fe603525839efe1c30a67246a0090c7bdc0c4c96674136ada24a7da6762397`、services `sha256:a68a4e1815cc529ff0ffa3b6c40ffba2e9b3a8dc1eec236326deb2f2567fe06d`的351项Docker断网校准通过，Worker不变；[新removal101轮](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/scope-verdict.json)已结束：边界/真实重叠/重连及实际资源/生命周期两项通过，A主任务与两取消通过，仅B主任务失败，整体仍false。host passed=true，采样/超额/errors均为空；独立[cleanup-result](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/cleanup-result.json)正向通过，同trial容器与网络最终均为空。这不覆盖旧fresh失败。
+新bench `sha256:96fe603525839efe1c30a67246a0090c7bdc0c4c96674136ada24a7da6762397`、services `sha256:a68a4e1815cc529ff0ffa3b6c40ffba2e9b3a8dc1eec236326deb2f2567fe06d`的351项Docker断网校准通过，Worker不变；新removal101轮（`scope/i24-da-removal-101-001`）已结束：边界/真实重叠/重连及实际资源/生命周期两项通过，A主任务与两取消通过，仅B主任务失败，整体仍false。host passed=true，采样/超额/errors均为空；独立cleanup-result（`scope/i24-da-removal-101-001`）正向通过，同trial容器与网络最终均为空。这不覆盖旧fresh失败。
 
-相同pins、独立新状态的[removal202](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/scope-verdict.json)和[removal303](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-303-001/scope-verdict.json)均已结束，CLI0；每组两个主任务各6次模型、两个取消各4次，共20次。两组scope/host/cleanup均passed=true，host errors、sampling_errors、resource_overages为空，同trial容器及网络清空。新三组产品边界/并发/重连、实际资源生命周期、两取消和正向清理均通过，整组结果2/3，101的B业务失败继续保留；取消仍是superstep边界协作drain，`immediate_cancel=false`。DSH专用接线与真实基线/双用户冒烟已执行，结果另记下文；浏览器使用期隔离与同Worker复用本轮未完成，resident成本入口也不能借本入口结果获得I24通过。见[多用户报告](multi-user-design.md)。
+相同pins、独立新状态的removal202（`scope/i24-da-removal-202-001`）和removal303（`scope/i24-da-removal-303-001`）均已结束，CLI0；每组两个主任务各6次模型、两个取消各4次，共20次。两组scope/host/cleanup均passed=true，host errors、sampling_errors、resource_overages为空，同trial容器及网络清空。新三组产品边界/并发/重连、实际资源生命周期、两取消和正向清理均通过，整组结果2/3，101的B业务失败继续保留；取消仍是superstep边界协作drain，`immediate_cancel=false`。DSH专用接线与真实基线/双用户冒烟已执行，结果另记下文；浏览器使用期隔离与同Worker复用本轮未完成，resident成本入口也不能借本入口结果获得I24通过。见[多用户报告](multi-user-design.md)。
 
 DSH专用入口在新bench中完成430项断网容器校准；新基线003真实9次模型、3笔正确写入，业务、原生、预算、0.75CPU配额、host和清理全部通过。双用户smoke已结束但整组失败：两主任务通过，两取消在模型结果在途/未知门禁停止评分，有效工具并发窗口未命中；B旧Worker删除中采样时确切ID仍存在，约21毫秒后才确认删除，不能用未来删除补判。正向清理通过，正式三种子尚未开始。维护面还包括零调用工具面允许合法空预算，以及从可信创建登记绑定启动后补全的完整网络ID；这些修订不改变原失败，也不替代候选能力验证。见[DSH执行记录](deepseek-multi-user-execution.md)。
 
@@ -258,11 +258,11 @@ DSH专用入口在新bench中完成430项断网容器校准；新基线003真实
 
 观察器调试是公共实验设施投入：同名控制文件原子替换在实际宿主挂载中出现stat可见而open报`FileNotFoundError`，单descriptor读取校准通过也未解决实际挂载。现改为连续12位序号的不可变新文件，观察器逐号消费，reply绑定序号/phase/kind/nonce；仍要求同descriptor、普通单链接文件、NOFOLLOW和4096字节上限，保留8秒probe限制。348项容器校准及真实挂载63条控制/60探针零错误，随后baseline004观察/采样/配额/状态/关闭/清理通过；其5次模型/3笔写入仍因分页业务失败而整体未通过，旧失败全部保留。
 
-同材料seed101的[两用户按需](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-od-101-001/protected/flow-verdict.json)与[常驻配对](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-101-001/protected/flow-verdict.json)均已完整执行，各五个可评分业务3/5、分别33/34条请求计数；按需active-B、常驻active-A及双方fault-B分页失败，故障A无结果且未恢复。原业务态在新容器冷读或常驻对象保留后核对通过，两新任务唤醒、实际并发及杀A后B原生进展成立；原观察、空闲采样、资源、关闭和清理检查保留，业务和故障复合失败仍保留。
+同材料seed101的两用户按需（`i25-da-od-101-001/protected`）与常驻配对（`i25-da-resident-101-001/protected`）均已完整执行，各五个可评分业务3/5、分别33/34条请求计数；按需active-B、常驻active-A及双方fault-B分页失败，故障A无结果且未恢复。原业务态在新容器冷读或常驻对象保留后核对通过，两新任务唤醒、实际并发及杀A后B原生进展成立；原观察、空闲采样、资源、关闭和清理检查保留，业务和故障复合失败仍保留。
 
-补审计发现旧采样判分只约束空闲窗口节奏，没有要求启动、控制、关闭等全部阶段的间隔不超过5秒。新[按需审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)在136份样本中发现18处超时，最大相邻开始间隔23.670秒；[常驻审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json)在140份中发现14处，最大23.598秒。单份采样跨度、时钟顺序、control绑定及完整JSON行均通过，但旧样本无连续序号，采样线程完成/总行数、完整起止和首尾边界无证据，继续为null。两份新审计整体均失败，不补边界0秒，不改旧verdict，也不能从旧均值推完整峰值或覆盖率。
+补审计发现旧采样判分只约束空闲窗口节奏，没有要求启动、控制、关闭等全部阶段的间隔不超过5秒。新按需审计（`i25-legacy-sampling-audits-001/proof`）在136份样本中发现18处超时，最大相邻开始间隔23.670秒；常驻审计（`i25-legacy-sampling-audits-001/proof`）在140份中发现14处，最大23.598秒。单份采样跨度、时钟顺序、control绑定及完整JSON行均通过，但旧样本无连续序号，采样线程完成/总行数、完整起止和首尾边界无证据，继续为null。两份新审计整体均失败，不补边界0秒，不改旧verdict，也不能从旧均值推完整峰值或覆盖率。
 
-新[313项Docker校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-rotation-check-001/host.json)已通过，覆盖token用量、实例计划、完整轮换及离线审计四份测试；断网、无模型或远程key，512 MiB/0.5 CPU，实际健康退出且清理通过。它只说明代码及反例边界通过，不能代替真实观测门禁。后续生命周期短锁、确切ID登记及服务Init修订已完成405项断网容器校准；真实无模型probe001因辅助服务实际退出137失败，probe002因评分入口导入失败，原失败保留。helper修正导入后，全新probe003的35份样本、23项独立检查、评分健康和精确清理全部通过，0模型/业务，不等于业务成本通过。按需N5轮换随后已真实执行，结果单列下方。默认旧两用户流程保持不变，显式轮换是新变体，常驻N5/N10仍按完整固定分配预拒绝。
+新313项Docker校准（`runtime/token-rotation-check-001`）已通过，覆盖token用量、实例计划、完整轮换及离线审计四份测试；断网、无模型或远程key，512 MiB/0.5 CPU，实际健康退出且清理通过。它只说明代码及反例边界通过，不能代替真实观测门禁。后续生命周期短锁、确切ID登记及服务Init修订已完成405项断网容器校准；真实无模型probe001因辅助服务实际退出137失败，probe002因评分入口导入失败，原失败保留。helper修正导入后，全新probe003的35份样本、23项独立检查、评分健康和精确清理全部通过，0模型/业务，不等于业务成本通过。按需N5轮换随后已真实执行，结果单列下方。默认旧两用户流程保持不变，显式轮换是新变体，常驻N5/N10仍按完整固定分配预拒绝。
 
 按需N5固定101轮换已执行、独立评分和清理完成，7个可评分业务4/7；此前未活跃用户003/004首次业务均通过。active001、wake001、fault002均只因`page_size=100`违反每页最多5条失败，报告、实际写入和scope仍正确。故障实际只杀A且退出137、非OOM，B之后仍有原生进展；复合故障项因B业务分页失败而false，不能写成误杀或B停止。
 

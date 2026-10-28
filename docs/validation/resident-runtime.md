@@ -77,12 +77,12 @@ python scripts/run_instance_cost.py plan \
 以下变量先设置为本轮已经冻结的**完整 image ID**和模型名；不要从 `.env` 整体导出。新候选镜像必须来自包含 resident 入口的 `external/build-context/deepagents_langgraph-instance-runtime`，不能拿 I22/I23 镜像代替，不能挂载宿主 adapter。`I25_PROBE_ROOT` 必须是新的空目录，失败后换目录保留原件。
 
 ```bash
-I25_PROBE_ROOT=/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/native-probe-NEW_ID
+I25_PROBE_ROOT=runs/2026-10-20/deepagents_langgraph/instance-cost/native-probe-NEW_ID
 mkdir -p "$I25_PROBE_ROOT"
 docker run --rm --platform linux/arm64 --network none --read-only \
   --memory 512m --cpus 0.5 --pids-limit 128 --tmpfs /tmp:size=128m \
   --mount type=bind,src="$I25_PROBE_ROOT",dst=/trial \
-  --mount type=bind,src=/Users/hanbowen01/repo/puff/tests/integration/deepagents_resident_probe.py,dst=/calibration/probe.py,readonly \
+  --mount type=bind,src=$PWD/tests/integration/deepagents_resident_probe.py,dst=/calibration/probe.py,readonly \
   --entrypoint python "$I25_BENCH_IMAGE" /calibration/probe.py prepare-materials \
   --candidate-image "$I25_CANDIDATE_IMAGE" --bench-image "$I25_BENCH_IMAGE" \
   --model-name "$I25_MODEL_NAME"
@@ -99,7 +99,7 @@ docker create --name hl-i25-native-probe-NEW_ID --platform linux/arm64 \
   --mount type=bind,src="$I25_PROBE_ROOT/users/user-001/workspace",dst=/workspace \
   --mount type=bind,src="$I25_PROBE_ROOT/users/user-001/evidence",dst=/evidence \
   --mount type=bind,src="$I25_PROBE_ROOT/probe",dst=/probe \
-  --mount type=bind,src=/Users/hanbowen01/repo/puff/tests/integration/deepagents_resident_probe.py,dst=/calibration/probe.py,readonly \
+  --mount type=bind,src=$PWD/tests/integration/deepagents_resident_probe.py,dst=/calibration/probe.py,readonly \
   --entrypoint /opt/venv/bin/python "$I25_CANDIDATE_IMAGE" /calibration/probe.py probe \
   > "$I25_PROBE_ROOT/protected/candidate-container.id"
 I25_PROBE_CONTAINER="$(cat "$I25_PROBE_ROOT/protected/candidate-container.id")"
@@ -117,12 +117,12 @@ docker rm "$I25_PROBE_CONTAINER"
 
 ## 7. 本次实际执行到哪里
 
-[lifecycle-images-001构建](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/lifecycle-images-001/builds.json)成功。真实resident候选镜像为`sha256:46a03db9203b0facef1399eaa590ba31640e28a15c2a0410c8b037d3a95575ed`（`harness-lab-deepagents-langgraph:instance-runtime`），adapter export `1b39616294eb6895726ef22330239d85a620b10ba32281d7326d1c589128f8f2`；bench为`sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e`。候选入口来自镜像内固定材料，不挂宿主adapter。
+lifecycle-images-001构建（`runtime/lifecycle-images-001`）成功。真实resident候选镜像为`sha256:46a03db9203b0facef1399eaa590ba31640e28a15c2a0410c8b037d3a95575ed`（`harness-lab-deepagents-langgraph:instance-runtime`），adapter export `1b39616294eb6895726ef22330239d85a620b10ba32281d7326d1c589128f8f2`；bench为`sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e`。候选入口来自镜像内固定材料，不挂宿主adapter。
 
-[i25-cost-check-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-cost-check-002/host.json)100项校准通过（0.52秒），network none、未用远程key、退出0、无OOM且清理成功。001在收集阶段因`run_instance_cost.py`少右花括号而失败，原件保留；校准通过不提供资源均值或成本收益。
+i25-cost-check-002（`runtime/i25-cost-check-002`）100项校准通过（0.52秒），network none、未用远程key、退出0、无OOM且清理成功。001在收集阶段因`run_instance_cost.py`少右花括号而失败，原件保留；校准通过不提供资源均值或成本收益。
 
-[native-probe-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-native-probe-host-001/host.json)失败于bench准备：探针从`/calibration`执行时`runner`不在模块路径，退出1，尚未进入候选阶段。prepare补上镜像内`/app`的`sys.path`后，用新目录执行[native-probe-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-native-probe-host-002/host.json)，准备及候选两个容器均退出0、PID0、非OOM、无Docker Error且确切对象清理成功；全部network none、未注入供应商key。准备bench为512 MiB/0.5 CPU，真实候选为2 GiB/0.75 CPU。
+native-probe-001（`runtime/i25-native-probe-host-001`）失败于bench准备：探针从`/calibration`执行时`runner`不在模块路径，退出1，尚未进入候选阶段。prepare补上镜像内`/app`的`sys.path`后，用新目录执行native-probe-002（`runtime/i25-native-probe-host-002`），准备及候选两个容器均退出0、PID0、非OOM、无Docker Error且确切对象清理成功；全部network none、未注入供应商key。准备bench为512 MiB/0.5 CPU，真实候选为2 GiB/0.75 CPU。
 
-002使用的探针文件SHA-256为`d2fd79f809d1123f9b7f9349fed643cab6d165543cbe1647bf532d63f22ca2e1`。同一候选容器中，PID7准备历史后关闭，PID11从同一SQLite读回同一checkpoint后关闭；两次均为实际框架对象，未运行模型/业务命令。[verdict](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/native-probe-002/probe/verdict.json) passed=true，仍明确业务未完成、未测成本/容量、未验证I24隔离、`i25_complete=false`。
+002使用的探针文件SHA-256为`d2fd79f809d1123f9b7f9349fed643cab6d165543cbe1647bf532d63f22ca2e1`。同一候选容器中，PID7准备历史后关闭，PID11从同一SQLite读回同一checkpoint后关闭；两次均为实际框架对象，未运行模型/业务命令。verdict（`native-probe-002/probe`） passed=true，仍明确业务未完成、未测成本/容量、未验证I24隔离、`i25_complete=false`。
 
 现在可以说“真实对象能够准备、落盘、换进程读回并关闭”。不能说“云端常驻/按需策略已经省钱”或“两个真实用户互不干扰”。后续顺序仍是同入口单任务小配额基线，再验证双任务、结束后回收、第二次唤醒和单Worker故障影响；完整状态见[成本流程](instance-cost-flow.md#6-本次实际材料校准和断网探针)。

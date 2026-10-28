@@ -91,13 +91,13 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 ## 6. 本次实际材料、校准和断网探针
 
-[lifecycle-images-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/lifecycle-images-001/builds.json)已串行构建：候选`harness-lab-deepagents-langgraph:instance-runtime`完整ID为`sha256:46a03db9203b0facef1399eaa590ba31640e28a15c2a0410c8b037d3a95575ed`，bench `harness-lab-bench:lifecycle-checks`为`sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e`。候选来自独立`deepagents_langgraph-instance-runtime`上下文，adapter export `1b39616294eb6895726ef22330239d85a620b10ba32281d7326d1c589128f8f2`；不是I24的multi-user Worker镜像。真实业务所需services尚未在本探针中启动，不能借构建成功认定在线工具已经可用。
+lifecycle-images-001（`runtime/lifecycle-images-001`）已串行构建：候选`harness-lab-deepagents-langgraph:instance-runtime`完整ID为`sha256:46a03db9203b0facef1399eaa590ba31640e28a15c2a0410c8b037d3a95575ed`，bench `harness-lab-bench:lifecycle-checks`为`sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e`。候选来自独立`deepagents_langgraph-instance-runtime`上下文，adapter export `1b39616294eb6895726ef22330239d85a620b10ba32281d7326d1c589128f8f2`；不是I24的multi-user Worker镜像。真实业务所需services尚未在本探针中启动，不能借构建成功认定在线工具已经可用。
 
-[i25-cost-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-cost-check-001/host.json)在收集期失败：`scripts/run_instance_cost.py`容器清单投影缺右花括号，两个测试模块报语法错误、退出2。修复并换新bench后，[i25-cost-check-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-cost-check-002/host.json) **100项通过，0.52秒**；原001保留。002为512 MiB/0.5 CPU、network none、无远程key/模型调用，退出0、PID0、无OOM/error，确切容器清理通过。它校准代码和判定边界，不产出真实成本数据。
+i25-cost-check-001（`runtime/i25-cost-check-001`）在收集期失败：`scripts/run_instance_cost.py`容器清单投影缺右花括号，两个测试模块报语法错误、退出2。修复并换新bench后，i25-cost-check-002（`runtime/i25-cost-check-002`） **100项通过，0.52秒**；原001保留。002为512 MiB/0.5 CPU、network none、无远程key/模型调用，退出0、PID0、无OOM/error，确切容器清理通过。它校准代码和判定边界，不产出真实成本数据。
 
-第一次[native-probe-001宿主记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-native-probe-host-001/host.json)只跑到bench准备阶段：从`/calibration`执行探针时找不到`runner`包，prepare退出1，尚未启动候选原生阶段。给prepare补上镜像内`/app`的`sys.path`后，使用新目录运行[native-probe-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i25-native-probe-host-002/host.json)，原001未覆盖。
+第一次native-probe-001宿主记录（`runtime/i25-native-probe-host-001`）只跑到bench准备阶段：从`/calibration`执行探针时找不到`runner`包，prepare退出1，尚未启动候选原生阶段。给prepare补上镜像内`/app`的`sys.path`后，使用新目录运行native-probe-002（`runtime/i25-native-probe-host-002`），原001未覆盖。
 
-002先在固定bench准备两份用户材料，再只启动user-001的真实候选。候选容器内两个独立子进程（PID7、11）依次准备应用历史、关闭、从同一SQLite冷读、关闭；实际加载`ChatOpenAI`、`HttpTools`、`CompiledStateGraph`和`AsyncSqliteSaver`，读到同一checkpoint，均退出0。候选为2 GiB/0.75 CPU；bench和候选都network none、无远程key、无OOM/error，确切容器清理通过。[原生探针verdict](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/native-probe-002/probe/verdict.json)为passed=true，SHA-256 `7fc6028899a2ac4a1a8b7db32f7178d72d1753fa99f51fce683a97267cf3afed`。
+002先在固定bench准备两份用户材料，再只启动user-001的真实候选。候选容器内两个独立子进程（PID7、11）依次准备应用历史、关闭、从同一SQLite冷读、关闭；实际加载`ChatOpenAI`、`HttpTools`、`CompiledStateGraph`和`AsyncSqliteSaver`，读到同一checkpoint，均退出0。候选为2 GiB/0.75 CPU；bench和候选都network none、无远程key、无OOM/error，确切容器清理通过。原生探针verdict（`native-probe-002/probe`）为passed=true，SHA-256 `7fc6028899a2ac4a1a8b7db32f7178d72d1753fa99f51fce683a97267cf3afed`。
 
 说人话：新入口确实能装载真实框架对象，保存准备的历史，换进程读回并正常关闭。它发出的模型/业务执行命令为0，明确`business_task_completed=false`、`cost_or_capacity_measured=false`、`i24_isolation_verified=false`、`i25_complete=false`。它没有验证在线工具、真正完成业务后的保留、双用户并发、60秒资源窗口、回收/唤醒或故障影响。后续同入口0.75 CPU单任务基线已尝试两次，均未整体通过，见第7节；不能从探针通过推算节省比例。
 
@@ -105,15 +105,15 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 | 基线 | 实际发生了什么 | 当前判定 |
 | --- | --- | --- |
-| `i25-da-baseline-101-001` | 启动时缺必需模型环境配置，在预检阶段停止，未执行真实业务 | 基线未通过；[原错误记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/i25-da-baseline-101-001/protected/flow-host-error.json)保留 |
-| `i25-da-baseline-101-002` | 只执行`baseline-user-001`，5次真实模型请求均收到200，原cap=20；原生正常完成，3次写请求、3条实际写入 | 业务仅`all_pages_read`未通过，观察器及资源采样也未通过；[原独立判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/i25-da-baseline-101-002/protected/baseline-verdict.json)为`cost_subset_passed=false` |
-| `i25-da-baseline-101-003` | 仍未通过完整业务；新诊断保存67条控制文件读取错误，原始来源为`read_probe/read_phase`，不是原生任务事件配对失败 | [原独立判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-baseline-101-003/protected/baseline-verdict.json)中业务和`no_observer_errors`失败；其余配额、原生历史、进程、正常关闭和采样检查通过，清理无遗留；整体仍失败 |
+| `i25-da-baseline-101-001` | 启动时缺必需模型环境配置，在预检阶段停止，未执行真实业务 | 基线未通过；原错误记录（`i25-da-baseline-101-001/protected`）保留 |
+| `i25-da-baseline-101-002` | 只执行`baseline-user-001`，5次真实模型请求均收到200，原cap=20；原生正常完成，3次写请求、3条实际写入 | 业务仅`all_pages_read`未通过，观察器及资源采样也未通过；原独立判定（`i25-da-baseline-101-002/protected`）为`cost_subset_passed=false` |
+| `i25-da-baseline-101-003` | 仍未通过完整业务；新诊断保存67条控制文件读取错误，原始来源为`read_probe/read_phase`，不是原生任务事件配对失败 | 原独立判定（`i25-da-baseline-101-003/protected`）中业务和`no_observer_errors`失败；其余配额、原生历史、进程、正常关闭和采样检查通过，清理无遗留；整体仍失败 |
 
 002的报告内容、准确写入、scope、审计和敏感操作限制均通过；原业务checkpoint可读回，消息非空，没有待执行任务。它不是无业务的空壳探针，但分页失败必须保留，不能凭写入正确就算完整任务成功。本轮没有注入故障、没有恢复A，也没有执行两策略比较。
 
 实验观测同样没有过关：原判定的`no_observer_errors=false`、`no_resource_sampling_errors=false`。只有启动阶段留下5份资源样本，实际业务及关闭阶段均无有效资源样本；**不能用启动期样本推算任务成本、峰值或资源节省。** 当前应先修正观察器/采样，再在新材料、新目录下校准并重跑基线。
 
-清理和评分进程本身有有效证据：[清理记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/i25-da-baseline-101-002/protected/flow-cleanup.json)为`unconfirmed_resources=[]`；原判定确认已测配额、独立用户历史、确切Worker/服务非OOM、无遗留容器及正常关闭检查通过。[独立评分进程完整性](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/instance-cost/i25-da-baseline-101-002/protected/grade-flow-process-integrity.json)为`passed=true`，包含确切容器/镜像/配额、实际退出、非OOM及CLI/Docker退出与原失败判定一致。说人话：评分进程可靠地给出了失败结果，不是业务或成本流程通过。
+清理和评分进程本身有有效证据：清理记录（`i25-da-baseline-101-002/protected`）为`unconfirmed_resources=[]`；原判定确认已测配额、独立用户历史、确切Worker/服务非OOM、无遗留容器及正常关闭检查通过。独立评分进程完整性（`i25-da-baseline-101-002/protected`）为`passed=true`，包含确切容器/镜像/配额、实际退出、非OOM及CLI/Docker退出与原失败判定一致。说人话：评分进程可靠地给出了失败结果，不是业务或成本流程通过。
 
 因此002仍保持`i25_complete=false`、`i24_isolation_verified_by_this_entry=false`、`product_backend_measured=false`、`savings_percent=null`。001、002及断网探针均保留原状；当前没有可报告的成本收益比例，双策略、三组配对和第2节所列缺口继续待验证。
 
@@ -128,17 +128,17 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 003把问题定位到宿主传递phase/probe的文件检查。随后改为同一descriptor读取、完整reply发布，新bench `observer-snapshot`为`sha256:86af6bf0e8b77ad43f4ae9ae91e748b4e718d77dca4bd8837b6e90dcc51de5cb`，125项容器校准通过。但真实宿主目录挂载测试001、002仍失败，不能把这项修复写成已解决。
 
-[mount-check-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/observer-control-mount-check-002/host.json)记录旧、新reader分别3804、3805次错误，成功36、35次。错误瞬间路径stat为普通文件、links=1、size=45，而紧接的open为`FileNotFoundError`。它证明此挂载下反复同名原子替换存在可见性问题；没有证据证明此前基线的错误瞬间也是相同metadata，不倒推link count为0。
+mount-check-002（`runtime/observer-control-mount-check-002`）记录旧、新reader分别3804、3805次错误，成功36、35次。错误瞬间路径stat为普通文件、links=1、size=45，而紧接的open为`FileNotFoundError`。它证明此挂载下反复同名原子替换存在可见性问题；没有证据证明此前基线的错误瞬间也是相同metadata，不倒推link count为0。
 
-改用每次新的不可变文件名后，[mount-check-003](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/observer-control-mount-check-003/host.json)在真实挂载中300/300条完整读取、0错误，断网、无模型、健康退出并清理。这仅验证了传递方式，完整phase/nonce绑定、观察器和真实基线还要用新镜像验证。任何错误仍使本轮失败，8秒probe和资源采样要求不变。
+改用每次新的不可变文件名后，mount-check-003（`runtime/observer-control-mount-check-003`）在真实挂载中300/300条完整读取、0错误，断网、无模型、健康退出并清理。这仅验证了传递方式，完整phase/nonce绑定、观察器和真实基线还要用新镜像验证。任何错误仍使本轮失败，8秒probe和资源采样要求不变。
 
 ### 追加：新控制协议和第四条真实基线
 
-[control-protocol-images-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/control-protocol-images-001/builds.json)固定新bench `sha256:910594f3c628614a18866fa22b14297dada17b03dbbb8b370f21fd4b5b0682fe`。每条控制以独立12位连续序号文件一次发布，内容同时绑定阶段、任务类型和可选nonce；观察器按顺序消费，宿主严格核对四项reply绑定。不可变文件仍要求nlink=1、普通文件、NOFOLLOW和4096字节上限；8秒probe不变。
+control-protocol-images-001（`runtime/control-protocol-images-001`）固定新bench `sha256:910594f3c628614a18866fa22b14297dada17b03dbbb8b370f21fd4b5b0682fe`。每条控制以独立12位连续序号文件一次发布，内容同时绑定阶段、任务类型和可选nonce；观察器按顺序消费，宿主严格核对四项reply绑定。不可变文件仍要求nlink=1、普通文件、NOFOLLOW和4096字节上限；8秒probe不变。
 
-348项容器校准通过；[实际挂载完整协议校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/observer-protocol-mount-check-001/host.json)的63条控制、60探针、三阶段往返全部绑定正确，零观察错误，断网无模型，正常退出并清理。
+348项容器校准通过；实际挂载完整协议校准（`runtime/observer-protocol-mount-check-001`）的63条控制、60探针、三阶段往返全部绑定正确，零观察错误，断网无模型，正常退出并清理。
 
-[baseline004原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-baseline-101-004/protected/baseline-verdict.json)中，除`all_actual_business_tasks_passed`外其余七项均通过：观察/资源采样无错误，配额/真实历史/非OOM进程/正常关闭/无遗留有效。单任务原生自然完成、5次远程模型请求、3笔写入，但`all_pages_read`仍失败；不能把观察器修复当作业务通过。清理`unconfirmed_resources=[]`。
+baseline004原判定（`i25-da-baseline-101-004/protected`）中，除`all_actual_business_tasks_passed`外其余七项均通过：观察/资源采样无错误，配额/真实历史/非OOM进程/正常关闭/无遗留有效。单任务原生自然完成、5次远程模型请求、3笔写入，但`all_pages_read`仍失败；不能把观察器修复当作业务通过。清理`unconfirmed_resources=[]`。
 
 当前完整业务基线未通过。后续只允许进入明确标记的生命周期/资源探索子轮，规则如下；I25保持进行中，`i25_complete=false`、`product_backend_measured=false`、`savings_percent=null`；后续不得仅为挑成功重复同材料/种子。
 
@@ -150,7 +150,7 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 ## 8. 两用户按需探索的实际结果
 
-[i25-da-od-101-001原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-od-101-001/protected/flow-verdict.json)已生成，宿主退出1，独立评分进程验收通过，清理`unconfirmed_resources=[]`。固定候选为`46a03db9…`、bench为`910594f3…`、services为`1814a728…`，均用完整image ID启动。
+i25-da-od-101-001原判定（`i25-da-od-101-001/protected`）已生成，宿主退出1，独立评分进程验收通过，清理`unconfirmed_resources=[]`。固定候选为`46a03db9…`、bench为`910594f3…`、services为`1814a728…`，均用完整image ID启动。
 
 - 两个用户确有真实模型/工具活动交集及交集内原始采样；活跃和唤醒阶段均为8个容器。
 - 初始与回收后的两个60秒空闲窗口均无Worker，只保留Fixture和观察器。真实业务checkpoint在新容器从原SQLite读回，2/2核对通过。
@@ -169,7 +169,7 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 ### 同材料常驻配对与固定配额边界
 
-[i25-da-resident-101-001原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-101-001/protected/flow-verdict.json)与按需轮使用同一组完整image ID、种子101和pair `i25-da-101`。宿主退出1，独立评分完整性通过，清理无遗留。
+i25-da-resident-101-001原判定（`i25-da-resident-101-001/protected`）与按需轮使用同一组完整image ID、种子101和pair `i25-da-101`。宿主退出1，独立评分完整性通过，清理无遗留。
 
 同样是五个可评分结果3/5通过：active-B、wake-A/B通过；active-A与fault-B漏读分页。六任务累计34条模型请求计数，A被杀任务原件保留、不恢复。原业务对象在回收后的常驻容器内保持并读回；观察、采样、配额、正常关闭、实际并发、两项唤醒及杀A后B进展检查通过。完整业务和要求B业务成功的故障复合检查失败，与按需轮分开留存，不修改原判定。
 
@@ -183,7 +183,7 @@ python scripts/run_instance_cost_full.py run-baseline \
 
 常驻四阶段有效样本分别30、12、29、16，零采样/观察错误。这个单种子探索说明：保留两个已加载Agent对象会增加空闲常驻内存，按需则要支付启动等待；活跃阶段的整套内存接近。它不证明十用户容量、成功任务经济性、生产API延迟或现网收益，`i25_complete=false`、`savings_percent=null`保持不变。
 
-常驻[N=5拒绝记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-5-refusal-101-001/protected/refusal.json)和[N=10拒绝记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-resident-10-refusal-101-001/protected/refusal.json)已分别生成，CLI均退出2：按冻结的每Worker配额与总预算，启动前拒绝，`Docker_started=false`、`observed_RSS=null`。这不是实测OOM或框架最大用户数。按需5/10、其他种子、未活跃用户轮换、DSH及第2节缺口仍待验证。
+常驻N=5拒绝记录（`i25-da-resident-5-refusal-101-001/protected`）和N=10拒绝记录（`i25-da-resident-10-refusal-101-001/protected`）已分别生成，CLI均退出2：按冻结的每Worker配额与总预算，启动前拒绝，`Docker_started=false`、`observed_RSS=null`。这不是实测OOM或框架最大用户数。按需5/10、其他种子、未活跃用户轮换、DSH及第2节缺口仍待验证。
 
 ## 9. 待验证的新变体：让原来没执行任务的用户真正醒一次
 
@@ -205,7 +205,7 @@ N=5/N=10常驻策略仍按N个Worker计算完整固定分配，并在超过6 GiB
 
 ### 交给后续串行执行的任务
 
-DSH的I23正式批 `i23-dsh-timing-formal-001` 已因采样完整性停止并清理，DA首次24格正式矩阵已结束，专项结果见[故障报告](fault-recovery-execution.md)；两路线I23仍未全部完成。此前在DSH停止批清理后，串行构建了独立bench `harness-lab-bench:token-rotation`（完整ID `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`），断网、无模型凭证完成token及实例成本四文件校准，共313项通过，健康退出并确切清理。见[校准记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-rotation-check-001/host.json)。该313项和后续350项只证明各自版本代码校准通过。probe001真实执行失败后，服务Init最小修订已通过新bench六文件405项校准；probe002因独立grader导入失败、无verdict而未通过，其独立副本23项离线诊断通过但不改原失败。全新003完整观测门禁已通过；按需N5 `i25-da-rotation-n5-101-001`已完整结束、成本子轮未通过，N10暂停。
+DSH的I23正式批 `i23-dsh-timing-formal-001` 已因采样完整性停止并清理，DA首次24格正式矩阵已结束，专项结果见[故障报告](fault-recovery-execution.md)；两路线I23仍未全部完成。此前在DSH停止批清理后，串行构建了独立bench `harness-lab-bench:token-rotation`（完整ID `sha256:bbd604f4fb4177dec7b77b6f2cfc050a3d859961505bdbe869869fc4c7d8c186`），断网、无模型凭证完成token及实例成本四文件校准，共313项通过，健康退出并确切清理。见校准记录（`runtime/token-rotation-check-001`）。该313项和后续350项只证明各自版本代码校准通过。probe001真实执行失败后，服务Init最小修订已通过新bench六文件405项校准；probe002因独立grader导入失败、无verdict而未通过，其独立副本23项离线诊断通过但不改原失败。全新003完整观测门禁已通过；按需N5 `i25-da-rotation-n5-101-001`已完整结束、成本子轮未通过，N10暂停。
 
 | 步骤 | 内容 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
@@ -218,7 +218,7 @@ DSH的I23正式批 `i23-dsh-timing-formal-001` 已因采样完整性停止并清
 
 ### 旧两轮的全阶段采样审计结果
 
-按需[新审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)检查136个样本，发现18处相邻采样起点间隔超过5秒，最大23.670秒；常驻[新审计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json)检查140个样本，发现14处，最大23.598秒。长空档包含启动、关闭、唤醒和故障等阶段。因此前文原评分中的“采样通过”只按旧判定范围理解，不能扩为全流程满足5秒或未漏资源峰值。
+按需新审计（`i25-legacy-sampling-audits-001/proof`）检查136个样本，发现18处相邻采样起点间隔超过5秒，最大23.670秒；常驻新审计（`i25-legacy-sampling-audits-001/proof`）检查140个样本，发现14处，最大23.598秒。长空档包含启动、关闭、唤醒和故障等阶段。因此前文原评分中的“采样通过”只按旧判定范围理解，不能扩为全流程满足5秒或未漏资源峰值。
 
 两轮的单样本跨度、已记录时钟、控制绑定、完整JSON行及无样本错误检查通过；样本连续序号、全流程首尾、采样线程完成和实际落盘行数缺原件，仍为`null`，不补造。两份审计自身均退出1、`passed=false`；其宿主记录确认这个预期退出、非OOM及确切清理，不把“审计程序按预期结束”写成“采样通过”。旧业务判定和观察到的内存数字保留，但不足以计算完整峰值、成功任务经济性或收益比例。
 
@@ -242,29 +242,29 @@ python scripts/audit_instance_cost_sampling.py \
 
 ### 当前生命周期修订：probe003门禁通过，N5探索失败，N10暂停
 
-独立[构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/lifecycle-dsh-review-images-001/build.json)固定新bench为`sha256:fe7a98caf582514178bc0492dba35a4df30b0cda15513f79b0508f0500909c68`。生命周期采样修订源码已冻结并完成独立静态复核，当前五测试文件在该镜像内[350项通过](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/instance-lifecycle-check-001/host.json)；断网、无模型key、exit0且清理通过。初版313项和两份旧采样失败审计继续保留，不使用新校准改写旧verdict。
+独立构建记录（`runtime/lifecycle-dsh-review-images-001`）固定新bench为`sha256:fe7a98caf582514178bc0492dba35a4df30b0cda15513f79b0508f0500909c68`。生命周期采样修订源码已冻结并完成独立静态复核，当前五测试文件在该镜像内350项通过（`runtime/instance-lifecycle-check-001`）；断网、无模型key、exit0且清理通过。初版313项和两份旧采样失败审计继续保留，不使用新校准改写旧verdict。
 
-350项只证明当时的合成边界和代码校准通过。真实无模型[probe001结果](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-001/protected/probe-result.json)为失败：11个Worker正常关闭，共留下42份样本，第42份在额外Fixture停止阶段记录ValueError，未完成独立grade；清理`cleanup_confirmed=true`。原[stop命令677](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-001/protected/commands/command-000677.json)持续约10.177秒；其后[同ID inspect728](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-001/protected/commands/command-000728.stdout)显示实际exit137、PID0、非OOM。普通服务只接受0/143，故终态登记和采样严格拒绝；stats的0B读数或top已停止错误不能把137解释为健康。原generic错误码不补写，原失败和冻结材料保留。
+350项只证明当时的合成边界和代码校准通过。真实无模型probe001结果（`i25-native-lifecycle-sampling-probe-001/protected`）为失败：11个Worker正常关闭，共留下42份样本，第42份在额外Fixture停止阶段记录ValueError，未完成独立grade；清理`cleanup_confirmed=true`。原stop命令677（`protected/commands`）持续约10.177秒；其后同ID inspect728（`protected/commands`）显示实际exit137、PID0、非OOM。普通服务只接受0/143，故终态登记和采样严格拒绝；stats的0B读数或top已停止错误不能把137解释为健康。原generic错误码不补写，原失败和冻结材料保留。
 
 最小修订只给新轮换的服务容器加`--init`，让初始化进程转发停止信号，并在初创建inspect中记录真实`HostConfig.Init`，登记前及独立评分均要求布尔true；Worker创建入口、旧全局清单投影与退出策略不改，未知137仍失败。见[修订说明](instance-cost-service-init-revision.md)、[新修订SHA清单](instance-cost-service-init-source-freeze.sha256)，[原冻结清单](instance-cost-lifecycle-source-freeze.sha256)不覆盖。
 
-新bench完整ID为`sha256:863b70d9c145cd69c760e57418afbc9189054401ead63c29c073ea716e944b3d`，源码SHA与修订冻结一致，独立review已通过。[六文件405项校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/instance-service-init-check-001/host.json)在断网、无模型key条件下完成，测试容器exit0、非OOM且清理确认；[原测试输出](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/instance-service-init-check-001/test-output.txt)保留。它证明合成边界通过，**不证明真实5秒采样、服务停止、业务或成本已经通过**。
+新bench完整ID为`sha256:863b70d9c145cd69c760e57418afbc9189054401ead63c29c073ea716e944b3d`，源码SHA与修订冻结一致，独立review已通过。六文件405项校准（`runtime/instance-service-init-check-001`）在断网、无模型key条件下完成，测试容器exit0、非OOM且清理确认；原测试输出（`runtime/instance-service-init-check-001`）保留。它证明合成边界通过，**不证明真实5秒采样、服务停止、业务或成本已经通过**。
 
-使用新bench的真实无模型[probe002结果](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-002/protected/probe-result.json)已收尾，`probe_passed=false`、`grade_passed=false`、`cleanup_confirmed=true`。它使用真实DA resident、Fixture和observer，Worker断网、不注入模型密钥、不发业务任务；[采样线程记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-002/protected/rotation-sampler-status.json)为35份样本、`completed=true`，原JSONL没有采样错误行。
+使用新bench的真实无模型probe002结果（`i25-native-lifecycle-sampling-probe-002/protected`）已收尾，`probe_passed=false`、`grade_passed=false`、`cleanup_confirmed=true`。它使用真实DA resident、Fixture和observer，Worker断网、不注入模型密钥、不发业务任务；采样线程记录（`i25-native-lifecycle-sampling-probe-002/protected`）为35份样本、`completed=true`，原JSONL没有采样错误行。
 
-失败发生在独立评分入口：[命令710原stderr](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-002/protected/commands/command-000710.stderr)显示`/probe.py`导入`runner.instance_cost`时抛出`ModuleNotFoundError: No module named 'runner'`，grader退出1，未生成`protected/probe-verdict.json`。宿主随后读取该缺失文件，才记录`FileNotFoundError`。该次原执行没有完成独立评分，35份零错误样本和清理成功均不改变本轮失败。原件和原结果保留。
+失败发生在独立评分入口：命令710原stderr（`protected/commands`）显示`/probe.py`导入`runner.instance_cost`时抛出`ModuleNotFoundError: No module named 'runner'`，grader退出1，未生成`protected/probe-verdict.json`。宿主随后读取该缺失文件，才记录`FileNotFoundError`。该次原执行没有完成独立评分，35份零错误样本和清理成功均不改变本轮失败。原件和原结果保留。
 
-随后在独立材料副本上追加离线诊断。[i25-probe002-independent-audit-check-001宿主记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-probe002-independent-audit-check-001/host.json)确认断网、无模型调用，评分容器exit0、`passed=true`、`cleanup=true`；[副本verdict](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-probe002-independent-audit-001/input/protected/probe-verdict.json)的23项检查全过，35份样本、最多2个Worker，完整登记区间的配额峰值为5100273664字节/2.25 CPU。原002的2748个文件SHA全未变。该诊断定位到评分入口导入接线，**不能给原002补判通过，也不能代替新探针的实际执行、评分和清理验收**。
+随后在独立材料副本上追加离线诊断。i25-probe002-independent-audit-check-001宿主记录（`runtime/i25-probe002-independent-audit-check-001`）确认断网、无模型调用，评分容器exit0、`passed=true`、`cleanup=true`；副本verdict（`input/protected`）的23项检查全过，35份样本、最多2个Worker，完整登记区间的配额峰值为5100273664字节/2.25 CPU。原002的2748个文件SHA全未变。该诊断定位到评分入口导入接线，**不能给原002补判通过，也不能代替新探针的实际执行、评分和清理验收**。
 
 修订helper SHA256为`a2a615652404cbe7879cc4031beb6d63ca51145bb990c8f7701f282758366d52`，仅为最终独立grader补`PYTHONPATH=/app`、保存原执行证据并明确缺verdict即失败。见[评分入口修订说明](instance-cost-probe-import-revision.md)及[修订冻结清单](instance-cost-probe-import-source-freeze.sha256)。
 
-全新trial `i25-native-lifecycle-sampling-probe-003`已实际结束、exit0。[原结果](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-003/protected/probe-result.json)为`probe_passed=true`、`grade_passed=true`、`cleanup_confirmed=true`、`host_error_type=null`；[原verdict](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-003/protected/probe-verdict.json)保存35份样本、23项检查全过，最多2个Worker、登记配额峰值5100273664字节/2.25 CPU。[独立评分进程完整性](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-003/protected/probe-grade-process-integrity.json)为`passed=true`、CLI及Docker exit0；[确切清理](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-003/protected/probe-cleanup.json)的`unconfirmed_resources=[]`、无遗留容器。至此003完整观测门禁通过，001/002原失败不改。
+全新trial `i25-native-lifecycle-sampling-probe-003`已实际结束、exit0。原结果（`i25-native-lifecycle-sampling-probe-003/protected`）为`probe_passed=true`、`grade_passed=true`、`cleanup_confirmed=true`、`host_error_type=null`；原verdict（`i25-native-lifecycle-sampling-probe-003/protected`）保存35份样本、23项检查全过，最多2个Worker、登记配额峰值5100273664字节/2.25 CPU。独立评分进程完整性（`i25-native-lifecycle-sampling-probe-003/protected`）为`passed=true`、CLI及Docker exit0；确切清理（`i25-native-lifecycle-sampling-probe-003/protected`）的`unconfirmed_resources=[]`、无遗留容器。至此003完整观测门禁通过，001/002原失败不改。
 
 003提交0个业务任务、没有模型调用，只证明该轮生命周期观测、评分和清理可靠；真实业务与完整资源计量仍由后续轮次分别验收。
 
 ### N5本轮探索结果与N10门禁
 
-按需N5 `i25-da-rotation-n5-101-001`已完整执行，CLI返回1。[原独立判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json)为`cost_subset_passed=false`；[评分进程完整性](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/grade-flow-process-integrity.json)通过，CLI与实际Docker退出码均为预期的1；[清理](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-cleanup.json)为`unconfirmed_resources=[]`。148份采样无sample error、无observer error，全阶段5秒、精确生命周期登记、真实双活跃、原历史和业务状态回收后读回等检查通过。
+按需N5 `i25-da-rotation-n5-101-001`已完整执行，CLI返回1。原独立判定（`i25-da-rotation-n5-101-001/protected`）为`cost_subset_passed=false`；评分进程完整性（`i25-da-rotation-n5-101-001/protected`）通过，CLI与实际Docker退出码均为预期的1；清理（`i25-da-rotation-n5-101-001/protected`）为`unconfirmed_resources=[]`。148份采样无sample error、无observer error，全阶段5秒、精确生命周期登记、真实双活跃、原历史和业务状态回收后读回等检查通过。
 
 | 未通过项 | 原件说明了什么 |
 | --- | --- |
@@ -272,10 +272,10 @@ python scripts/audit_instance_cost_sampling.py \
 | `only_one_exact_worker_fault_and_B_progress` | 这是复合条件，最后还要求B的`fault-user-002`业务任务通过；该任务因上述大页查询失败。A完整ID绑定、实际137且非OOM、只有一个Worker故障均有原件；独立的`unaffected_B_native_progress_after_actual_kill=true`，因此不能把复合false解释成B停止或误杀 |
 | `recycled-idle_rotation_resources_complete` | 回收后空闲阶段29份资源完整、1份不完整；阶段资源均值、峰值和进程总量保持不可用。采样无error、节奏通过，不代表资源总量完整 |
 
-业务判定来源为[分页规则](/Users/hanbowen01/repo/puff/runner/grading.py:123)和[故障复合条件](/Users/hanbowen01/repo/puff/runner/instance_cost_full.py:811)。大页查询的可信工具原件分别见[active001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-001/trusted/active/tool-events.jsonl:1)、[wake001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-001/trusted/wake/tool-events.jsonl:1)、[fault002](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/users/user-002/trusted/fault/tool-events.jsonl:1)。本轮是大页越过分页约束，不能沿用旧轮“漏读分页”的原因。
+业务判定来源为[分页规则](../../runner/grading.py:123)和[故障复合条件](../../runner/instance_cost_full.py:811)。大页查询的可信工具原件分别见active001（`trusted/active`）、wake001（`trusted/wake`）、fault002（`trusted/fault`）。本轮是大页越过分页约束，不能沿用旧轮“漏读分页”的原因。
 
-资源缺口在[第82份原样本](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-resource-samples.jsonl:82)：样本开始时仍标记`recycled-idle`，前清单只有Fixture和observer，两者stats/top均正常；采样过程中空闲60秒结束，主线程进入业务状态冷读，后清单多出新的user001冷读Worker `9343bf9cd4621f5372b09ec348cfce068f642b064b9f77f0e4b93d175cac0803`。该Worker没有本份stats/top，前后对象集合不同，因此[资源完整性规则](/Users/hanbowen01/repo/puff/runner/instance_cost_lifecycle.py:359)正确标记false。第83份已属于冷读阶段并资源完整。
+资源缺口在第82份原样本（`i25-da-rotation-n5-101-001/protected`）：样本开始时仍标记`recycled-idle`，前清单只有Fixture和observer，两者stats/top均正常；采样过程中空闲60秒结束，主线程进入业务状态冷读，后清单多出新的user001冷读Worker `9343bf9cd4621f5372b09ec348cfce068f642b064b9f77f0e4b93d175cac0803`。该Worker没有本份stats/top，前后对象集合不同，因此[资源完整性规则](../../runner/instance_cost_lifecycle.py:359)正确标记false。第83份已属于冷读阶段并资源完整。
 
-[执行顺序](/Users/hanbowen01/repo/puff/scripts/run_instance_cost_full.py:626)在空闲结束后立即进入冷读，没有等待旧阶段的在途采样落盘；[采样入口](/Users/hanbowen01/repo/puff/scripts/instance_cost_lifecycle.py:306)只在开始时取得阶段标签，清单前后检查之间允许真实生命周期推进。于是空闲尾样本跨入新Worker启动，原评分又按标签要求空闲阶段每份资源完整，失败成立。
+[执行顺序](../../scripts/run_instance_cost_full.py:626)在空闲结束后立即进入冷读，没有等待旧阶段的在途采样落盘；[采样入口](../../scripts/instance_cost_lifecycle.py:306)只在开始时取得阶段标签，清单前后检查之间允许真实生命周期推进。于是空闲尾样本跨入新Worker启动，原评分又按标签要求空闲阶段每份资源完整，失败成立。
 
 **N10当前暂停。** 保留N5为本次探索结果，不删除82、不改原标签、不补零，也不以29份完整样本替代整个空闲阶段。后续是否修订既有阶段交接边界另行决定；本次不扩建实验台、不修改评分或重跑。`i25_complete=false`、`savings_percent=null`，不能报告成本节省比例。

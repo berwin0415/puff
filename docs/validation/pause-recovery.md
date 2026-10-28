@@ -21,7 +21,7 @@
 | 宿主/容器时钟因果增量校准 | `infrastructure/runtime/i22-grader-check-005`，74/74；镜像 `a04a2e8a…` | 新链以同宿主单调时钟的完整工具、原生和控制事件前缀证明先读取、再发信号；不比较宿主与VM的UTC，不增加时间容差。旧链保持原判定 |
 | 最终checkpoint与恢复会话头增量校准 | `infrastructure/runtime/i22-grader-check-008`，77/77；镜像 `53fad51f…` | 完成的LangGraph不得残留任务数组；DSH会话头只接受固定JSONL formatter补入的默认delegationDepth=0，其他字段、事件前缀及seed marker仍严格核对 |
 
-原始证据根为 `/Users/hanbowen01/harness-lab-data/runs/2026-10-20/`，表中路径相对此目录。完整镜像 ID、构建日志与退出状态在各记录中。
+原始证据根为 `runs/2026-10-20/`，表中路径相对此目录。完整镜像 ID、构建日志与退出状态在各记录中。
 
 已保留两类实施失败：DSH 首次构建因复制上下文未保留符号链接而被来源校验拒绝，修正复制后重建通过；首次新 bench 检查 700 通过、20 失败，原因是旧冷读测试加载器未导入新增 helper，补全加载器后 720 通过。两者均未绕过来源或能力验收。
 

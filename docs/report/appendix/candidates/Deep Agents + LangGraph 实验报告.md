@@ -61,7 +61,7 @@
 
 ### 实验三：网页操作
 
-**效果**：原正式组 3/3（18、20、17 次），补充 2/2（18、20 次）。**后两轮均用满 20 次额度**，余量比 DSH 更紧张。
+**效果**：**3/3 通过**。二十次预算下为 18、20、17 次（第 2 组正好用满）；提高到**四十次**预算重跑后为 **20、20、18 次**。补充组 2/2（18、20 次）。
 
 ### 实验四：业务扩展、规则与控制
 
@@ -212,4 +212,4 @@
 - 接入说明：[adapters/deepagents_langgraph/README.md](../../../../adapters/deepagents_langgraph/README.md)
 - 验收记录：[docs/validation/deepagents_langgraph.md](../../../validation/deepagents_langgraph.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/multi-user-design.md)、[实例成本](../../../validation/instance-cost-flow.md)
 
-[上一篇：DeepSeek Harness](DeepSeek Harness 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：OpenClaw](OpenClaw 实验报告.md)
+[上一篇：DeepSeek Harness](<DeepSeek Harness 实验报告.md>) · [返回框架索引](单框架实验报告索引.md) · [下一篇：OpenClaw](<OpenClaw 实验报告.md>)

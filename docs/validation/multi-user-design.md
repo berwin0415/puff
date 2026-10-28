@@ -232,7 +232,7 @@ uv run --offline python scripts/run_multi_user.py --trial-id i24-da-smoke-101-00
 
 ## 11. 本次已完成的构建和无模型校准
 
-[lifecycle-images-001构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/lifecycle-images-001/builds.json)串行构建成功，实际固定材料如下：
+lifecycle-images-001构建记录（`runtime/lifecycle-images-001`）串行构建成功，实际固定材料如下：
 
 | 角色 | 实际标签 | 完整镜像ID |
 | --- | --- | --- |
@@ -240,17 +240,17 @@ uv run --offline python scripts/run_multi_user.py --trial-id i24-da-smoke-101-00
 | I24 services | `harness-lab-services:multi-user` | `sha256:6396aee4242a1e644687e632fcc46d984769344c52b3dc9e4cdaecbac7aeccf1` |
 | 校准bench | `harness-lab-bench:lifecycle-checks` | `sha256:5ac51f8ecc0407aadb0e69cbd33bb9aa7d6e2bb20d727f398a030671a223442e` |
 
-首轮入口的[pins文件](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/lifecycle-images-001/i24-material-pins.json)SHA-256为`4f299c3f6c0a4ced15babeda25e09e36187533bfaf57b9717810a7c392074a17`。它固定上述三镜像、模型`deepseek-v4-flash`、上游export `dbd26083214e82cfd957ec6a8eaa3077e73d28cfa4f62d8e3185a6f58f81b17c`、multi-user adapter export `2e7bb73c447242150185c509706ecd0f0b6aac298d927e08f43e53a1c5985f57`和helper hash，不含凭证。这是第12节失败基线使用的历史材料；修订轮`--pins-file`改用第13节新文件，不修改旧pins。
+首轮入口的pins文件（`runtime/lifecycle-images-001`）SHA-256为`4f299c3f6c0a4ced15babeda25e09e36187533bfaf57b9717810a7c392074a17`。它固定上述三镜像、模型`deepseek-v4-flash`、上游export `dbd26083214e82cfd957ec6a8eaa3077e73d28cfa4f62d8e3185a6f58f81b17c`、multi-user adapter export `2e7bb73c447242150185c509706ecd0f0b6aac298d927e08f43e53a1c5985f57`和helper hash，不含凭证。这是第12节失败基线使用的历史材料；修订轮`--pins-file`改用第13节新文件，不修改旧pins。
 
-首轮[i24-control-check-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i24-control-check-001/host.json)失败：`scripts/run_multi_user.py`的容器清单投影少一个右花括号，pytest收集即语法错误、退出2，尚未进行真实候选任务。修复并构建新bench后，[i24-control-check-002](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i24-control-check-002/host.json) **191项通过，3.02秒**；原001日志和失败状态保留。
+首轮i24-control-check-001（`runtime/i24-control-check-001`）失败：`scripts/run_multi_user.py`的容器清单投影少一个右花括号，pytest收集即语法错误、退出2，尚未进行真实候选任务。修复并构建新bench后，i24-control-check-002（`runtime/i24-control-check-002`） **191项通过，3.02秒**；原001日志和失败状态保留。
 
 002使用上述bench、512 MiB/0.5 CPU、`network none`，未调用模型、未用远程key；宿主证据确认退出0、PID0、无OOM/error，确切校准容器清理成功。它验证的是身份路由、控制及判定的正反例，包括新连接拒绝、短容器退出过渡和单任务基线限制；**还没有让真实A/B两用户按完整流程跑一遍**。后续首次真实基线未通过，见第12节；不能用191项校准关闭I24。
 
 ## 12. 首次真实单任务基线：业务完成，整体验收未过
 
-`i24-da-baseline-101-001`已在同一I24入口、2 GiB / 0.75 CPU Worker档位执行完毕，证据保存在[原trial目录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/scope-baseline/i24-da-baseline-101-001)。本次只执行`task-a`，业务结果完成；B、取消子任务和替换Worker未执行，不能评价双用户隔离、重连、控制或复用。
+`i24-da-baseline-101-001`已在同一I24入口、2 GiB / 0.75 CPU Worker档位执行完毕，证据保存在原trial目录（`deepagents_langgraph/scope-baseline`）。本次只执行`task-a`，业务结果完成；B、取消子任务和替换Worker未执行，不能评价双用户隔离、重连、控制或复用。
 
-[独立基线判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/scope-baseline/i24-da-baseline-101-001/baseline-verdict.json)实际为`passed=false`、`baseline_only=true`、`i24_capability_verified=false`：
+独立基线判定（`scope-baseline/i24-da-baseline-101-001`）实际为`passed=false`、`baseline_only=true`、`i24_capability_verified=false`：
 
 | 检查 | 实际结果 | 如何理解 |
 | --- | --- | --- |
@@ -258,22 +258,22 @@ uv run --offline python scripts/run_multi_user.py --trial-id i24-da-smoke-101-00
 | B、取消及替换未执行 | 通过 | 只证明基线没有偷跑其他试验，不是隔离能力通过 |
 | 同镜像/0.75 CPU及宿主执行采样 | 未通过，`host_execution_or_sampling_failed` | 缺完整采样和退出健康证据，不能给整体验收通过 |
 
-[宿主记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/scope-baseline/i24-da-baseline-101-001/host-result.json)虽有`passed=true`、`errors=[]`、`resource_overages=[]`，仍记录5次采样`RuntimeError`：准备阶段1次、业务阶段3次、评分阶段1次。这个宿主汇总布尔值不能覆盖独立基线失败。实际还暴露Init接线及服务退出137问题；服务被强制结束不等于健康关闭。
+宿主记录（`scope-baseline/i24-da-baseline-101-001`）虽有`passed=true`、`errors=[]`、`resource_overages=[]`，仍记录5次采样`RuntimeError`：准备阶段1次、业务阶段3次、评分阶段1次。这个宿主汇总布尔值不能覆盖独立基线失败。实际还暴露Init接线及服务退出137问题；服务被强制结束不等于健康关闭。
 
 当前窄修针对原生来源字段核对、Init/服务关闭和采样处理，修订材料已完成第13节的新镜像Docker校准，**全新trial的真实基线仍待验证**。第11节旧pins、镜像、原日志与失败verdict全部保留；不把校准写成真实基线已经通过。基线整体通过后才进入两用户101冒烟，I24保持进行中。
 
 ## 13. 修订镜像与第三次无模型校准
 
-[recovery-lifecycle-images-001构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/recovery-lifecycle-images-001/builds.json)已成功构建新bench及multi-user services：
+recovery-lifecycle-images-001构建记录（`runtime/recovery-lifecycle-images-001`）已成功构建新bench及multi-user services：
 
 | 角色 | 新标签 | 完整镜像ID |
 | --- | --- | --- |
 | bench | `harness-lab-bench:recovery-lifecycle` | `sha256:aa0fb8cce18aa18b9876fe6cdabaecd6e20af0519f7894cc6f6869b35463c771` |
 | I24 services | `harness-lab-services:multi-user-init` | `sha256:7efae0475998cfa0d71065b7ddffdb581b1d44d552935f2dc6b0127cfa4e8c52` |
 
-Worker仍使用第11节固定镜像。[新pins文件](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/recovery-lifecycle-images-001/i24-material-pins.json)SHA-256为`03b01d4cfe8f80ee5b354b21b128db0f01a84aeb3c77df0215ae1d1952de9eaa`；后续执行必须绑定这轮完整材料，不能改写第11节旧pins。
+Worker仍使用第11节固定镜像。新pins文件（`runtime/recovery-lifecycle-images-001`）SHA-256为`03b01d4cfe8f80ee5b354b21b128db0f01a84aeb3c77df0215ae1d1952de9eaa`；后续执行必须绑定这轮完整材料，不能改写第11节旧pins。
 
-[i24-control-check-003](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/i24-control-check-003/host.json)在新bench中 **256项通过，4.21秒**，断网、无模型/远程key，健康退出及确切容器清理通过。这是接线与判定边界校准；实际服务是否健康关闭、资源采样是否完整，仍须由新真实基线自身证明。两用户101冒烟及三种子正式实验未因此通过或开始。
+i24-control-check-003（`runtime/i24-control-check-003`）在新bench中 **256项通过，4.21秒**，断网、无模型/远程key，健康退出及确切容器清理通过。这是接线与判定边界校准；实际服务是否健康关闭、资源采样是否完整，仍须由新真实基线自身证明。两用户101冒烟及三种子正式实验未因此通过或开始。
 
 
 ### 追加：第二条真实基线与退出采样
@@ -286,19 +286,19 @@ Worker仍使用第11节固定镜像。[新pins文件](/Users/hanbowen01/harness-
 
 ## 14. 首条双用户冒烟与恢复后的连接问题
 
-[i24-da-smoke-101-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepagents_langgraph/scope/i24-da-smoke-101-001/host-result.json)为`passed=false`。它已执行主任务并发、真实暂停、旧Worker退休、新Worker绑定；`main-resume`采集器轮流等待两用户时，第二条HTTP连接超过后端15秒空闲时限，收到`RemoteDisconnected`。这是本轮采集接线问题，不能评价为框架无法恢复，也不能凭前半段完成宣称完整隔离通过。中止清理还留下两条未事先登记过渡的采样错误，原错误保留，不豁免。
+i24-da-smoke-101-001（`scope/i24-da-smoke-101-001`）为`passed=false`。它已执行主任务并发、真实暂停、旧Worker退休、新Worker绑定；`main-resume`采集器轮流等待两用户时，第二条HTTP连接超过后端15秒空闲时限，收到`RemoteDisconnected`。这是本轮采集接线问题，不能评价为框架无法恢复，也不能凭前半段完成宣称完整隔离通过。中止清理还留下两条未事先登记过渡的采样错误，原错误保留，不豁免。
 
-修订为：等待每个用户恢复结果前，用相同身份创建新连接查询；已经接受的resume请求不重发。新材料由[recovery-path-images-001/pins](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/infrastructure/runtime/recovery-path-images-001/i24-material-pins.json)固定：Worker `3e4e2a2e…`、bench `8bd7f754…`、services `ad8daf31…`；相关`recovery-path-check-001`共330项通过、9项按路线跳过，未调用模型。新真实基线`i24-da-reconnect-baseline-101-001`开始于2026-10-21，完成后再决定是否进入新双用户冒烟；校准不替代这两项真实验收。
+修订为：等待每个用户恢复结果前，用相同身份创建新连接查询；已经接受的resume请求不重发。新材料由recovery-path-images-001/pins（`runtime/recovery-path-images-001`）固定：Worker `3e4e2a2e…`、bench `8bd7f754…`、services `ad8daf31…`；相关`recovery-path-check-001`共330项通过、9项按路线跳过，未调用模型。新真实基线`i24-da-reconnect-baseline-101-001`开始于2026-10-21，完成后再决定是否进入新双用户冒烟；校准不替代这两项真实验收。
 
 ## 15. 新材料基线的业务结果与后续边界
 
-[i24-da-mount-baseline-101-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope-baseline/i24-da-mount-baseline-101-001/baseline-verdict.json)仍因原业务任务失败而整体未通过；其余两项均通过，host错误/采样错误/资源超额全部为空。Mounts顺序误判未再出现，原候选同镜像、同0.75 CPU配额的模型/工具/状态/退出轨道可用。此前baseline003完整成功保留，不用新业务失败推翻已验证的运行轨道。
+i24-da-mount-baseline-101-001（`scope-baseline/i24-da-mount-baseline-101-001`）仍因原业务任务失败而整体未通过；其余两项均通过，host错误/采样错误/资源超额全部为空。Mounts顺序误判未再出现，原候选同镜像、同0.75 CPU配额的模型/工具/状态/退出轨道可用。此前baseline003完整成功保留，不用新业务失败推翻已验证的运行轨道。
 
 执行口径补充：若基线只剩业务结果失败、模型/工具接线与来源/预算/资源/退出检查均通过，可以继续独立隔离控制的探索轮，验证HTTP归属、跨用户拒绝、实际暂停和换Worker；各主任务业务继续原标准评分，整轮失败仍失败。这是为了区分任务完成质量和隔离控制，不能据探索轮宣布完整I24通过，不为获得成功重复基线。
 
 ## 16. 新双用户探索轮已经完整执行
 
-[i24-da-fresh-smoke-101-001原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-fresh-smoke-101-001/scope-verdict.json)整体`passed=false`。新bench `5c6c0ea9…`、services `ea24a2ec…`的256项容器校准通过后，本轮完整执行主任务和独立取消子任务。
+i24-da-fresh-smoke-101-001原判定（`scope/i24-da-fresh-smoke-101-001`）整体`passed=false`。新bench `5c6c0ea9…`、services `ea24a2ec…`的256项容器校准通过后，本轮完整执行主任务和独立取消子任务。
 
 | 验证项 | 本轮实际结果 |
 | --- | --- |
@@ -316,9 +316,9 @@ Worker仍使用第11节固定镜像。[新pins文件](/Users/hanbowen01/harness-
 
 新接线保留中间原件，再独立inspect同一个完整ID，只有精确的不存在响应才形成absence证明；核对原停止记录、删除请求、完整字段和时序。确认后短锁重新读取登记，避免错用inspect前的旧快照；已存在字段若变化仍拒绝。正常终态来源始终是原始`after_stop`，不放宽137/OOM或未知Docker错误，不补造CPU/内存数据，5秒采样要求不变。清理新增`cleanup-result.json`，记录创建返回的确切ID、停止/删除/缺失证明、网络ID及最终同trial库存；查询失败或所有权不明仍失败，不按发现列表扩大删除范围。
 
-[scope-removal构建材料](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/scope-removal-images-001/builds.json)固定bench `sha256:96fe603525839efe1c30a67246a0090c7bdc0c4c96674136ada24a7da6762397`、services `sha256:a68a4e1815cc529ff0ffa3b6c40ffba2e9b3a8dc1eec236326deb2f2567fe06d`，Worker仍为`3e4e2a2e…`。[351项Docker校准](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/scope-removal-check-001/host.json)通过，覆盖删除交错、精确ID、异常终态、拒删foreign、删除未生效及费用闭合反例；断网、无模型、健康退出并清理。
+scope-removal构建材料（`runtime/scope-removal-images-001`）固定bench `sha256:96fe603525839efe1c30a67246a0090c7bdc0c4c96674136ada24a7da6762397`、services `sha256:a68a4e1815cc529ff0ffa3b6c40ffba2e9b3a8dc1eec236326deb2f2567fe06d`，Worker仍为`3e4e2a2e…`。351项Docker校准（`runtime/scope-removal-check-001`）通过，覆盖删除交错、精确ID、异常终态、拒删foreign、删除未生效及费用闭合反例；断网、无模型、健康退出并清理。
 
-[i24-da-removal-101-001原判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/scope-verdict.json)已结束，CLI退出1：
+i24-da-removal-101-001原判定（`scope/i24-da-removal-101-001`）已结束，CLI退出1：
 
 | 验证项 | 新101轮实际结果 |
 | --- | --- |
@@ -327,14 +327,14 @@ Worker仍使用第11节固定镜像。[新pins文件](/Users/hanbowen01/harness-
 | B主任务 | `original_business_task_failed`，保留失败；全量请求由费用台账另计 |
 | A/B自己的取消 | 均通过，分别3/4次模型调用 |
 | 实际资源、生命周期、采样 | 通过，host的errors/采样错误/超额全部为空 |
-| 清理 | [正向清理原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-101-001/cleanup-result.json)为passed=true、failures=[]；本trial容器及网络最终库存均为空 |
+| 清理 | 正向清理原件（`scope/i24-da-removal-101-001`）为passed=true、failures=[]；本trial容器及网络最终库存均为空 |
 
 本轮消除了已定位的实验台误判，同时仍给出业务失败，不能据此宣布整个I24通过。正式其余种子、DSH、浏览器使用期数据和同Worker复用继续是缺口；本轮每用户独立Worker不证明共享Worker的安全边界。
 
 ### 同材料第二、三组：202及303完整通过
 
-[i24-da-removal-202-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/scope-verdict.json)使用第17节相同pins、全新状态和seed202。`scope-verdict.json`与`host-result.json`均为passed=true；两个原业务任务均通过，各6次模型，两个取消子任务各4次，共20次。产品边界/并发/重连与实际资源生命周期检查均通过，host errors、sampling_errors、resource_overages均为空。
+i24-da-removal-202-001（`scope/i24-da-removal-202-001`）使用第17节相同pins、全新状态和seed202。`scope-verdict.json`与`host-result.json`均为passed=true；两个原业务任务均通过，各6次模型，两个取消子任务各4次，共20次。产品边界/并发/重连与实际资源生命周期检查均通过，host errors、sampling_errors、resource_overages均为空。
 
-[cleanup-result.json](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-202-001/cleanup-result.json)为passed=true、failures为空，最终同trial容器及网络库存均为空。取消语义仍是原生superstep边界协作drain，`immediate_cancel=false`；未验证浏览器隔离，不支持同Worker换用户复用。这些边界没有因业务通过而改变。
+cleanup-result.json（`scope/i24-da-removal-202-001`）为passed=true、failures为空，最终同trial容器及网络库存均为空。取消语义仍是原生superstep边界协作drain，`immediate_cancel=false`；未验证浏览器隔离，不支持同Worker换用户复用。这些边界没有因业务通过而改变。
 
-相同pins的第三组[i24-da-removal-303-001](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/scope/i24-da-removal-303-001/scope-verdict.json)已完整通过，两个主任务各6次模型、两个取消各4次，共20次；host无错误/采样错误/超额，正向cleanup通过、同trial容器网络最终为空。三组中两组整体通过、101组B业务失败；三组边界/并发/重连、资源生命周期与清理均通过。第一组101及所有历史完整性失败继续保留，不以新成功替换。
+相同pins的第三组i24-da-removal-303-001（`scope/i24-da-removal-303-001`）已完整通过，两个主任务各6次模型、两个取消各4次，共20次；host无错误/采样错误/超额，正向cleanup通过、同trial容器网络最终为空。三组中两组整体通过、101组B业务失败；三组边界/并发/重连、资源生命周期与清理均通过。第一组101及所有历史完整性失败继续保留，不以新成功替换。

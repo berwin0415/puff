@@ -4,7 +4,7 @@
 
 ## 1. 已有证据能确认什么
 
-原实验目录：`/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-001`。
+原实验目录：`runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-001`。
 
 | 原件 | 直接记录 |
 | --- | --- |

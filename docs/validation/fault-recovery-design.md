@@ -130,7 +130,7 @@
 | 选中候选的上述 HTTP 桥、options 与入口 | 仅 I23 prewrite 接线和已经证明可用的原生 crash/resume 分支；固定到新镜像，来源摘要随之更新 |
 | `tests/fixtures/test_fault_gate.py`、`tests/execution/test_fault_recovery.py`（拟新增） | Docker 校准：故障未命中、错 scope/attempt、栅栏提前放行、伪 kill、预算重置、幂等拦重冒充不重发、非幂等重复、结果未知冒充成功等反例 |
 
-证据留在当前 `/Users/hanbowen01/harness-lab-data` 下，用 `paths_for("fault-recovery", chain_id, candidate, "alice", "main", chain_id, case="fault-recovery")` 生成路径。fault、write_mode、seed 写入唯一 chain_id 和私有 chain 配置；不同格子绝不复用状态、账本或预算。
+证据留在配置的 `data_root` 下，用 `paths_for("fault-recovery", chain_id, candidate, "alice", "main", chain_id, case="fault-recovery")` 生成路径。fault、write_mode、seed 写入唯一 chain_id 和私有 chain 配置；不同格子绝不复用状态、账本或预算。
 
 ```text
 runs/<date>/<candidate>/fault-recovery/<chain>/

@@ -90,7 +90,7 @@ Agent 循环、原生事件、官方模型适配和 SQLite session 由 ADK 及�
 
 ## 证据与复现
 
-证据根目录为 `/Users/hanbowen01/harness-lab-data/runs/2026-10-20/google_adk/`。`runtime/i12-adk-build-001/` 保存构建日志和镜像 ID；两个工具 run 保存完整容器/挂载 manifest、独立判定、模型请求、工具审计、业务账本、资源采样，以及 `candidate/` 下原始事件、原生结果、来源和 session 快照。预算 run 另存两个候选与代理身份、模拟上游账本和全部断言。候选原生 SQLite 位于对应独立 state 目录。
+证据根目录为 `runs/2026-10-20/google_adk/`。`runtime/i12-adk-build-001/` 保存构建日志和镜像 ID；两个工具 run 保存完整容器/挂载 manifest、独立判定、模型请求、工具审计、业务账本、资源采样，以及 `candidate/` 下原始事件、原生结果、来源和 session 快照。预算 run 另存两个候选与代理身份、模拟上游账本和全部断言。候选原生 SQLite 位于对应独立 state 目录。
 
 复现时使用新 run ID，保留成功、失败和保护拒绝记录：
 

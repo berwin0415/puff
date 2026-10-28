@@ -4,7 +4,7 @@
 
 ## 1. probe002 为什么没有完成评分
 
-原实验目录：`/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-002`。
+原实验目录：`runs/2026-10-21/infrastructure/runtime/i25-native-lifecycle-sampling-probe-002`。
 
 | 原件 | 直接记录 |
 | --- | --- |
