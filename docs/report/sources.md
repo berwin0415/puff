@@ -2,7 +2,7 @@
 
 本次阶段性分享的资料截至 **2026-10-21 15:29:07（北京时间）**。以下列出实验来源、统计范围和原始记录，供核对设计与结论。
 
-调研有三个出发点：研究已有 DeepSeek Harness 客户端上云的工作，围绕现有 OpenClaw 云端业务反馈寻找改善方向，以及探索更多 Agent 框架的云端能力和适用条件。首轮验证围绕官方开源框架展开，自有客户端的代码盘点和实际迁移仍需另行开展。
+三个出发点：DeepSeek Harness 客户端上云、OpenClaw 云端业务改善、更多框架的云端能力探索。**首轮只验证了官方开源框架**，自有客户端的代码盘点和迁移仍需另行开展。
 
 ## 实际受测版本与构建方式
 
@@ -13,9 +13,9 @@
 | DeepSeek Harness | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | 0.1.2-alpha.3 | `dd6322d604e00eec1ba5e0c8541159906a21094a` |
 | OpenClaw | [openclaw/openclaw](https://github.com/openclaw/openclaw) | 2026.10.5 | `b6e0872bdb7228e22fac7608345e0529a35ec46e` |
 
-两份源码导出清单均记录官方仓库地址、与配置相同的实际提交，以及导出时工作区无改动。DeepSeek Harness 共导出 9044 个源码条目，OpenClaw 为 57891 个。上游源码与实验接入文件分别登记，不能把本仓库增加的工具、业务规则、状态扩展和控制逻辑全部算成官方默认功能。
+导出清单记录了官方仓库、与配置一致的提交、以及导出时工作区无改动（DSH 9044 个条目，OpenClaw 57891 个）。**上游源码与实验接入文件分开登记**——本仓库增加的工具、业务规则、状态扩展和控制逻辑不算官方默认功能。
 
-这里的“官方版本”指源码来源。镜像从固定的基础运行环境自行构建，并非直接使用官方预制产品镜像；OpenClaw 构建还调整了并发和内存参数。DeepSeek Harness 的不同实验使用官方 SDK 或运行接口、官方插件配合实验代码，OpenClaw 则通过官方后台服务与插件接口接入任务。具体能力结论应绑定各自的实验入口、配置和接入方式。
+"官方版本"仅指源码来源：镜像由本仓库从固定基础环境自建，不是官方预制镜像（OpenClaw 构建还调整了并发与内存参数）。能力结论应绑定各自的实验入口、配置和接入方式。
 
 | 核对环节 | DeepSeek Harness | OpenClaw |
 | --- | --- | --- |
@@ -24,7 +24,7 @@
 | 镜像怎样构建 | [构建文件](../../compose/candidates/deepseek_harness/Dockerfile)、[接入说明](../../adapters/deepseek_harness/README.md) | [构建文件](../../compose/candidates/openclaw/Dockerfile)、[接入说明](../../adapters/openclaw/README.md) |
 | 既有构建与运行核对样本 | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-build-004/build.json)、[实际运行来源记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-smoke-001/candidate/entrypoint.json) | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-build-002/build.json)、[正式批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-formal-batch-001/batch.json) |
 
-DeepSeek Harness 的构建记录与实际源码清单哈希一致，抽查的初筛、详细运行记录也保存了同一官方提交和源码摘要。OpenClaw 的源码清单、构建文件与既有构建记录相符，正式批次使用对应的实验镜像。这些材料共同确定了实验所用源码、接入方式和运行镜像的对应关系。
+两者的构建记录与源码清单哈希一致，抽查的运行记录保留同一提交和源码摘要，正式批次使用对应镜像。
 
 ## 背景、设计与主要结果来自哪里
 

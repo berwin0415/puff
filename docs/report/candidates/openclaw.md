@@ -16,7 +16,7 @@
 
 **入口是官方 Gateway + agent/session 请求**，不是 CLI 一次性运行。当前是**单任务 Gateway 容器变体**——方便先核对材料、模型、工具和计数，**不代表 OpenClaw 必须为每个用户建容器**。源码允许一个 Gateway 跑多个 Agent，共享 Gateway 的权限与成本要另做实验。
 
-**构建上有一个值得记录的问题**：首次构建时 tsdown 第二次编译被 SIGKILL。查源码 `scripts/tsdown-build.mts:625` 后确认，完整 runtime graph 实测至少需要 4352 MB heap、峰值约 4730 MiB，原生 rolldown 分配不受 V8 heap 限制。修正方式是在构建 RUN 里把 heap 设为 4352 MB、原生线程设为 1，并只向官方支持的 tsdown 调用追加 `--concurrency 1`，**不改上游源码**。这是本机源构建的资源问题，不是 Agent 能力失败。
+**构建曾失败一次：** tsdown 第二次编译被 SIGKILL。查源码 `scripts/tsdown-build.mts:625` 后确认，完整 runtime graph 实测至少需要 4352 MB heap、峰值约 4730 MiB，原生 rolldown 分配不受 V8 heap 限制。修正方式是在构建 RUN 里把 heap 设为 4352 MB、原生线程设为 1，并只向官方支持的 tsdown 调用追加 `--concurrency 1`，**不改上游源码**。这是本机源构建的资源问题，不是 Agent 能力失败。
 
 ---
 
@@ -75,7 +75,7 @@
 
 **所以失败的性质是**：业务产物与任务终态分离。订单提交了，程序却因额度用尽报错退出。按判定标准必须保留失败——因为用户看到的是“失败”，而系统里已经有了一笔订单。
 
-**一个可能影响用量的细节**：原始工具事件里有 2 次参数验证拒绝——模型用了 `ref`，而 MCP 原始 schema 要求 `target`，表单还要求 `name/type`。模型随后改正了。接入保留了原 schema，这些试错可能增加用量；但单轮材料不足以把全部超额归因于此。
+**可能影响用量的一点：** 工具事件里有 2 次参数验证拒绝——模型用了 `ref`，而 MCP 原始 schema 要求 `target`，表单还要求 `name/type`。模型随后改正了。接入保留了原 schema，这些试错可能增加用量；但单轮材料不足以把全部超额归因于此。
 
 **这条结论的边界**：这是当前入口、任务和预算组合下的失败，**不等于 OpenClaw 不能操作浏览器**。
 
@@ -127,7 +127,7 @@
 
 **首版（cancel-smoke-001）：5/9 项，整项失败**
 
-根因不是“OpenClaw 不支持取消”，而是**我们用错了入口**：任务通过 `/v1/chat/completions` 发起，却对那个 HTTP run 调用了另一套 RPC 的 `chat.abort`。停止请求返回 `ok=true / aborted=true / runIds=[]`——`runIds` 是空的。之后独立工具审计仍在记录 3 次 write，最终自然 `stop`。
+根因不是“OpenClaw 不支持取消”，而是**入口用错了**：任务通过 `/v1/chat/completions` 发起，却对那个 HTTP run 调用了另一套 RPC 的 `chat.abort`。停止请求返回 `ok=true / aborted=true / runIds=[]`——`runIds` 是空的。之后独立工具审计仍在记录 3 次 write，最终自然 `stop`。
 
 **修正版（cancel-smoke-002）：原始判定 9/9，但整轮仍失败**
 
