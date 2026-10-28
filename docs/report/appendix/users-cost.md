@@ -1,6 +1,6 @@
-# 实验七至九：多人使用、运行资源与模型用量
+# 附录：实验七至九详细结果
 
-[返回实验设计总览](../02-experiment-design.md) · [上一篇：暂停与故障](02-pause-and-failure.md) · [查看首轮结果](../03-progress.md)
+[返回分享文档](../README.md) · [附录索引](README.md) · [上一篇：实验五、六](recovery.md)
 
 本文说明实验七至九的设计和实际结果，依据截至 **2026-10-21 15:29:07（北京时间）** 的首轮材料。首轮已经收尾，多人边界、实例成本和完整计量三项目标仍有缺口。它们在原实施任务表中对应 I24、I25、I26。“本轮未完成”表示结论尚不充分，不表示实验仍在运行。
 
@@ -213,4 +213,3 @@ Deep Agents 的取消采用原生执行步边界的协作停止：等待当前�
 
 最终[请求统计执行原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)与[token提取执行原件](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json)均记录独立断网只读执行及清理结果；[首轮收尾记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-closeout-001/documents.json)保存最终文档核验。项目容器和网络已清理，镜像、状态、预算及失败证据保留。
 
-[返回实验设计总览](../02-experiment-design.md) · [上一篇：暂停与故障](02-pause-and-failure.md) · [查看首轮结果](../03-progress.md)

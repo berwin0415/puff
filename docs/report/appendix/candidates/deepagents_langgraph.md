@@ -4,7 +4,7 @@
 **本轮深度** 详细四类 + 暂停 + 故障矩阵 + 多人 + 成本
 **定位** 图状态与公开控制接口最完整，但业务约束要靠外部解决
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -208,8 +208,8 @@
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/deepagents_langgraph.yaml](../../../configs/candidates/deepagents_langgraph.yaml)
-- 接入说明：[adapters/deepagents_langgraph/README.md](../../../adapters/deepagents_langgraph/README.md)
-- 验收记录：[docs/validation/deepagents_langgraph.md](../../validation/deepagents_langgraph.md)、[暂停](../../validation/pause-recovery.md)、[故障](../../validation/fault-recovery-execution.md)、[多人](../../validation/multi-user-design.md)、[实例成本](../../validation/instance-cost-flow.md)
+- 候选配置：[configs/candidates/deepagents_langgraph.yaml](../../../../configs/candidates/deepagents_langgraph.yaml)
+- 接入说明：[adapters/deepagents_langgraph/README.md](../../../../adapters/deepagents_langgraph/README.md)
+- 验收记录：[docs/validation/deepagents_langgraph.md](../../../validation/deepagents_langgraph.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/multi-user-design.md)、[实例成本](../../../validation/instance-cost-flow.md)
 
 [上一篇：DeepSeek Harness](deepseek_harness.md) · [返回框架索引](README.md) · [下一篇：OpenClaw](openclaw.md)

@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 会话服务齐全，本轮分页约束表现最稳的一条
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -141,9 +141,9 @@ ADK 是四条补齐路线里唯一**十五项全部通过、无任何失败格**
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/google_adk.yaml](../../../configs/candidates/google_adk.yaml)
-- 接入说明：[adapters/google_adk/README.md](../../../adapters/google_adk/README.md)
-- 初筛记录：[docs/validation/google_adk.md](../../validation/google_adk.md)
+- 候选配置：[configs/candidates/google_adk.yaml](../../../../configs/candidates/google_adk.yaml)
+- 接入说明：[adapters/google_adk/README.md](../../../../adapters/google_adk/README.md)
+- 初筛记录：[docs/validation/google_adk.md](../../../validation/google_adk.md)
 - 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/google_adk/`
   - `sensitive/supp-case-google_adk-151432`（通过）
   - `tools/supp-tools-google_adk-202-151842`（通过）

@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 原生 CLI 能力最强，输出上限是已知缺口
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -171,9 +171,9 @@
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/codex_sdk.yaml](../../../configs/candidates/codex_sdk.yaml)
-- 接入说明：[adapters/codex_sdk/README.md](../../../adapters/codex_sdk/README.md)
-- 初筛记录：[docs/validation/codex_sdk.md](../../validation/codex_sdk.md)
+- 候选配置：[configs/candidates/codex_sdk.yaml](../../../../configs/candidates/codex_sdk.yaml)
+- 接入说明：[adapters/codex_sdk/README.md](../../../../adapters/codex_sdk/README.md)
+- 初筛记录：[docs/validation/codex_sdk.md](../../../validation/codex_sdk.md)
 - 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/codex_sdk/`
   - `sensitive/supp-case-codex_sdk-151553`（通过）
   - `tools/supp-tools-codex_sdk-202-152231`（通过）

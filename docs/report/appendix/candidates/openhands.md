@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 会话持久设计最完整，但本轮只测了核心库入口
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -151,10 +151,10 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/openhands.yaml](../../../configs/candidates/openhands.yaml)
-- 接入说明：[adapters/openhands/README.md](../../../adapters/openhands/README.md)
-- 初筛记录：[docs/validation/openhands.md](../../validation/openhands.md)
-- 来源锁定：[adapters/openhands/LOCK_PROVENANCE.json](../../../adapters/openhands/LOCK_PROVENANCE.json)
+- 候选配置：[configs/candidates/openhands.yaml](../../../../configs/candidates/openhands.yaml)
+- 接入说明：[adapters/openhands/README.md](../../../../adapters/openhands/README.md)
+- 初筛记录：[docs/validation/openhands.md](../../../validation/openhands.md)
+- 来源锁定：[adapters/openhands/LOCK_PROVENANCE.json](../../../../adapters/openhands/LOCK_PROVENANCE.json)
 - 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/openhands/`
   - `sensitive/supp-case-openhands-151514`（通过）
   - `tools/supp-tools-openhands-202-152032`（`all_pages_read` 失败）

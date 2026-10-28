@@ -1,6 +1,8 @@
-# 资料来源与统计范围
+# 附录：版本与来源
 
-本次阶段性分享的资料截至 **2026-10-21 15:29:07（北京时间）**。以下列出实验来源、统计范围和原始记录，供核对设计与结论。
+[返回分享文档](../README.md) · [附录索引](README.md)
+
+列出各路线固定版本、构建方式和核对入口。
 
 三个出发点：DeepSeek Harness 客户端上云、OpenClaw 云端业务改善、更多框架的云端能力探索。**首轮只验证了官方开源框架**，自有客户端的代码盘点和迁移仍需另行开展。
 
@@ -19,9 +21,9 @@
 
 | 核对环节 | DeepSeek Harness | OpenClaw |
 | --- | --- | --- |
-| 固定来源与版本配置 | [候选配置](../../configs/candidates/deepseek_harness.yaml) | [候选配置](../../configs/candidates/openclaw.yaml) |
-| 实际导出清单 | [源码清单](../../external/build-context/deepseek_harness/SOURCE_MANIFEST.json) | [源码清单](../../external/build-context/openclaw/SOURCE_MANIFEST.json) |
-| 镜像怎样构建 | [构建文件](../../compose/candidates/deepseek_harness/Dockerfile)、[接入说明](../../adapters/deepseek_harness/README.md) | [构建文件](../../compose/candidates/openclaw/Dockerfile)、[接入说明](../../adapters/openclaw/README.md) |
+| 固定来源与版本配置 | [候选配置](../../../configs/candidates/deepseek_harness.yaml) | [候选配置](../../../configs/candidates/openclaw.yaml) |
+| 实际导出清单 | [源码清单](../../../external/build-context/deepseek_harness/SOURCE_MANIFEST.json) | [源码清单](../../../external/build-context/openclaw/SOURCE_MANIFEST.json) |
+| 镜像怎样构建 | [构建文件](../../../compose/candidates/deepseek_harness/Dockerfile)、[接入说明](../../../adapters/deepseek_harness/README.md) | [构建文件](../../../compose/candidates/openclaw/Dockerfile)、[接入说明](../../../adapters/openclaw/README.md) |
 | 既有构建与运行核对样本 | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/runtime/i17-dsh-build-004/build.json)、[实际运行来源记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/deepseek_harness/tools/i17-dsh-tools-smoke-001/candidate/entrypoint.json) | [详细阶段构建记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-build-002/build.json)、[正式批次](/Users/hanbowen01/harness-lab-data/runs/2026-10-20/openclaw/runtime/i18-openclaw-formal-batch-001/batch.json) |
 
 两者的构建记录与源码清单哈希一致，抽查的运行记录保留同一提交和源码摘要，正式批次使用对应镜像。
@@ -30,17 +32,17 @@
 
 | 正文内容 | 来源 |
 | --- | --- |
-| 业务背景与目标 | [需求说明](../../REQUIREMENTS.md)，[背景与目标](01-background-and-goals.md)中的客户端上云、云端业务改善和更多框架探索三个出发点 |
-| 实验如何从问题展开、候选和比较约束 | [调研计划](../../RESEARCH_PLAN.md) |
-| 最新执行状态及追加记录 | [实施任务表](../../IMPLEMENTATION_PLAN.md) |
-| 八候选初筛及四路线基本任务 | [初筛记录](../validation/screening.md)、[横向比较](../validation/comparison.md) |
-| 暂停、删除旧容器、等待及继续任务 | [暂停实验](../validation/pause-recovery.md) |
-| 故障正式批次与失败原因 | [故障记录](../validation/fault-recovery-execution.md) |
-| Deep Agents 三组双用户结果 | [多用户实验](../validation/multi-user-design.md) |
-| DeepSeek Harness 单用户与双用户试跑 | [多用户接入记录](../validation/deepseek-multi-user-execution.md) |
-| 两种运行方式及五用户轮换 | [资源实验](../validation/instance-cost-flow.md)、实施任务表末尾追加记录 |
-| 请求和用量的统计范围 | [用量台账](../validation/costs.md)、[模型用量计量说明](../validation/token-usage-design.md) |
-| 能力来源、需要自建的部分与选择条件 | [工程工作清单](../validation/engineering-inventory.md)、[阶段建议](../validation/recommendation.md) |
+| 业务背景与目标 | [需求说明](../../../REQUIREMENTS.md)，[背景与目标](../README.md)中的客户端上云、云端业务改善和更多框架探索三个出发点 |
+| 实验如何从问题展开、候选和比较约束 | [调研计划](../../../RESEARCH_PLAN.md) |
+| 最新执行状态及追加记录 | [实施任务表](../../../IMPLEMENTATION_PLAN.md) |
+| 八候选初筛及四路线基本任务 | [初筛记录](../../validation/screening.md)、[横向比较](../../validation/comparison.md) |
+| 暂停、删除旧容器、等待及继续任务 | [暂停实验](../../validation/pause-recovery.md) |
+| 故障正式批次与失败原因 | [故障记录](../../validation/fault-recovery-execution.md) |
+| Deep Agents 三组双用户结果 | [多用户实验](../../validation/multi-user-design.md) |
+| DeepSeek Harness 单用户与双用户试跑 | [多用户接入记录](../../validation/deepseek-multi-user-execution.md) |
+| 两种运行方式及五用户轮换 | [资源实验](../../validation/instance-cost-flow.md)、实施任务表末尾追加记录 |
+| 请求和用量的统计范围 | [用量台账](../../validation/costs.md)、[模型用量计量说明](../../validation/token-usage-design.md) |
+| 能力来源、需要自建的部分与选择条件 | [工程工作清单](../../validation/engineering-inventory.md)、[阶段建议](../../validation/recommendation.md) |
 
 ## 首轮收尾结果与核对入口
 
@@ -58,18 +60,17 @@
 | 两用户旧资源记录复核 | [按需运行复核](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/on-demand.json)、[持续运行复核](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/i25-legacy-sampling-audits-001/proof/resident.json) | 两者都存在超过五秒的采样空档，旧均值只能描述已观测窗口 |
 | 五用户按需轮换 | [整轮判定](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-verdict.json)、[采样及执行状态](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/deepagents_langgraph/instance-cost/i25-da-rotation-n5-101-001/protected/flow-host.json) | 已结束，业务4/7；新增两个用户首次任务通过；空闲阶段一份样本不完整，整阶段资源均值和峰值未知。十用户未执行 |
 | 最终请求与用量核对 | [请求统计](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-usage-check-010/host.json)、[用量提取](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/token-usage-check-010/host.json) | 343个独立预算库、2485条记账；已知10,253,403 token。仍有17个预算库未查询，不是完整费用 |
-| 资料复核与收尾 | [收尾记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-closeout-001/documents.json)、[实施任务表](../../IMPLEMENTATION_PLAN.md) | 已停止本轮扩跑，保留未完成目标与原始失败，完成项目资源清理 |
+| 资料复核与收尾 | [收尾记录](/Users/hanbowen01/harness-lab-data/runs/2026-10-21/infrastructure/runtime/research-closeout-001/documents.json)、[实施任务表](../../../IMPLEMENTATION_PLAN.md) | 已停止本轮扩跑，保留未完成目标与原始失败，完成项目资源清理 |
 
 DSH 旧故障批次因采样问题中止的记录继续保留，包括“十八格有效、十七格完整通过”的历史批次；它们不与后来完整重跑的二十四格相加。早期专项说明和任务配置记录了当时的计划；实际完成范围以统计截止时间内的最终执行记录及原始批次为依据。
 
 最终调用记账包括2416条远程200记录、4条远程结果未确认、1条仅有预留记录、36条内网模拟和28条本地故障注入。模型用量中已知输入为9,590,870、输出662,533；缓存读取已包含在输入内，推理计数已包含在输出内，不再重复相加。请求数、响应观察数和材料目录数是不同统计单位，没有逐条关联就不能计算覆盖率或费用排名。
 
-完整设计和结果解释见[基本能力](experiments/01-basic-capabilities.md)、[暂停与故障](experiments/02-pause-and-failure.md)、[多人使用与成本](experiments/03-users-and-cost.md)。仓库内可读统计见[请求汇总](../validation/research-usage-summary.json)、[未登记材料](../validation/research-usage-unenrolled-formats.json)及[模型用量汇总](../validation/token-usage-summary.json)。
+完整设计和结果解释见[基本能力](basic.md)、[暂停与故障](recovery.md)、[多人使用与成本](users-cost.md)。仓库内可读统计见[请求汇总](../../validation/research-usage-summary.json)、[未登记材料](../../validation/research-usage-unenrolled-formats.json)及[模型用量汇总](../../validation/token-usage-summary.json)。
 
 ## 资料时间与历史记录
 
-[来源清单](sharing-source-snapshot.json)记录60份需求、计划、验证记录和任务/候选配置的路径、大小与内容指纹，用于识别统计截止时间所对应的资料版本。清单不包含源文件全文；来源文件后续变化时，可通过内容指纹区分。
+[来源清单](../sharing-source-snapshot.json)记录60份需求、计划、验证记录和任务/候选配置的路径、大小与内容指纹，用于识别统计截止时间所对应的资料版本。清单不包含源文件全文；来源文件后续变化时，可通过内容指纹区分。
 
-当前阶段的完成范围和结论见[首轮结果汇总](03-progress.md)。更早的时间截点记录已从工作区移除，如需追溯可从 git 历史取回。
+结论见[分享文档](../README.md)。更早的时间截点记录已从工作区移除，如需追溯可从 git 历史取回。
 
-[返回分享目录](README.md)

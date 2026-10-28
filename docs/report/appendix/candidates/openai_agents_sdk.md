@@ -4,7 +4,7 @@
 **本轮深度** 详细四类（未进入暂停、故障、多人、成本专项）
 **定位** 轻量、控制接口直接，但持久化与恢复需要大量补建
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -162,9 +162,9 @@ Agents SDK 没有进入暂停、故障、多人、成本四项专项。
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/openai_agents_sdk.yaml](../../../configs/candidates/openai_agents_sdk.yaml)
-- 接入说明：[adapters/openai_agents_sdk/README.md](../../../adapters/openai_agents_sdk/README.md)
-- 验收记录：[docs/validation/openai_agents_sdk.md](../../validation/openai_agents_sdk.md)
-- 详细结果：[docs/validation/detailed.md](../../validation/detailed.md)
+- 候选配置：[configs/candidates/openai_agents_sdk.yaml](../../../../configs/candidates/openai_agents_sdk.yaml)
+- 接入说明：[adapters/openai_agents_sdk/README.md](../../../../adapters/openai_agents_sdk/README.md)
+- 验收记录：[docs/validation/openai_agents_sdk.md](../../../validation/openai_agents_sdk.md)
+- 详细结果：[docs/validation/detailed.md](../../../validation/detailed.md)
 
 [上一篇：OpenClaw](openclaw.md) · [返回框架索引](README.md) · [下一篇：Pi Agent Core](pi_agent_core.md)

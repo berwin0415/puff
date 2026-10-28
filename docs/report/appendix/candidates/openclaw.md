@@ -4,7 +4,7 @@
 **本轮深度** 详细四类（未进入暂停、故障、多人、成本专项）
 **定位** 对应现有云端业务的反馈，插件面完整，但模型预算最吃紧
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -180,9 +180,9 @@ OpenClaw 未进入暂停、故障、多人、成本专项。这**不代表它不
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/openclaw.yaml](../../../configs/candidates/openclaw.yaml)
-- 接入说明：[adapters/openclaw/README.md](../../../adapters/openclaw/README.md)
-- 验收记录：[docs/validation/openclaw.md](../../validation/openclaw.md)
-- 详细结果：[docs/validation/detailed.md](../../validation/detailed.md)
+- 候选配置：[configs/candidates/openclaw.yaml](../../../../configs/candidates/openclaw.yaml)
+- 接入说明：[adapters/openclaw/README.md](../../../../adapters/openclaw/README.md)
+- 验收记录：[docs/validation/openclaw.md](../../../validation/openclaw.md)
+- 详细结果：[docs/validation/detailed.md](../../../validation/detailed.md)
 
 [上一篇：Deep Agents + LangGraph](deepagents_langgraph.md) · [返回框架索引](README.md) · [下一篇：OpenAI Agents SDK](openai_agents_sdk.md)

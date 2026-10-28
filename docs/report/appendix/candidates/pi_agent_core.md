@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 最轻的核心库：Agent 循环给你，其余全部要自己建
 
-[返回框架索引](README.md) · [总体实验设计](../02-experiment-design.md)
+[返回框架索引](README.md) · [总体实验设计](../design.md)
 
 ---
 
@@ -152,9 +152,9 @@
 
 ## 六、来源
 
-- 候选配置：[configs/candidates/pi_agent_core.yaml](../../../configs/candidates/pi_agent_core.yaml)
-- 接入说明：[adapters/pi_agent_core/README.md](../../../adapters/pi_agent_core/README.md)
-- 初筛记录：[docs/validation/pi_agent_core.md](../../validation/pi_agent_core.md)
+- 候选配置：[configs/candidates/pi_agent_core.yaml](../../../../configs/candidates/pi_agent_core.yaml)
+- 接入说明：[adapters/pi_agent_core/README.md](../../../../adapters/pi_agent_core/README.md)
+- 初筛记录：[docs/validation/pi_agent_core.md](../../../validation/pi_agent_core.md)
 - 本轮补充运行：`/Users/hanbowen01/harness-lab-data/runs/2026-10-27/pi_agent_core/`
   - `sensitive/supp-case-pi_agent_core-151359`（通过）
   - `tools/supp-tools-pi_agent_core-202-151707`（通过）
