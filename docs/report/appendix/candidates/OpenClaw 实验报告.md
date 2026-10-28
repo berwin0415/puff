@@ -4,7 +4,7 @@
 **本轮深度** 详细四类（未进入暂停、故障、多人、成本专项）
 **定位** 对应现有云端业务的反馈，插件面完整，但模型预算最吃紧
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -185,4 +185,4 @@ OpenClaw 未进入暂停、故障、多人、成本专项。这**不代表它不
 - 验收记录：[docs/validation/openclaw.md](../../../validation/openclaw.md)
 - 详细结果：[docs/validation/detailed.md](../../../validation/detailed.md)
 
-[上一篇：Deep Agents + LangGraph](deepagents_langgraph.md) · [返回框架索引](README.md) · [下一篇：OpenAI Agents SDK](openai_agents_sdk.md)
+[上一篇：Deep Agents + LangGraph](Deep Agents + LangGraph 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：OpenAI Agents SDK](OpenAI Agents SDK 实验报告.md)

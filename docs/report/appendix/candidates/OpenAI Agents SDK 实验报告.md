@@ -4,7 +4,7 @@
 **本轮深度** 详细四类（未进入暂停、故障、多人、成本专项）
 **定位** 轻量、控制接口直接，但持久化与恢复需要大量补建
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -167,4 +167,4 @@ Agents SDK 没有进入暂停、故障、多人、成本四项专项。
 - 验收记录：[docs/validation/openai_agents_sdk.md](../../../validation/openai_agents_sdk.md)
 - 详细结果：[docs/validation/detailed.md](../../../validation/detailed.md)
 
-[上一篇：OpenClaw](openclaw.md) · [返回框架索引](README.md) · [下一篇：Pi Agent Core](pi_agent_core.md)
+[上一篇：OpenClaw](OpenClaw 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：Pi Agent Core](Pi Agent Core 实验报告.md)

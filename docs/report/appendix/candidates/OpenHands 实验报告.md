@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 会话持久设计最完整，但本轮只测了核心库入口
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -160,4 +160,4 @@ OpenHands 有多个产品层次，本轮**只用了其中一个**：
   - `tools/supp-tools-openhands-202-152032`（`all_pages_read` 失败）
   - `tools/supp-tools-openhands-303-152128`（通过）
 
-[上一篇：Google ADK](google_adk.md) · [返回框架索引](README.md) · [下一篇：Codex SDK](codex_sdk.md)
+[上一篇：Google ADK](Google ADK 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：Codex SDK](Codex SDK 实验报告.md)

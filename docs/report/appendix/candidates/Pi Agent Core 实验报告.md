@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 最轻的核心库：Agent 循环给你，其余全部要自己建
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -160,4 +160,4 @@
   - `tools/supp-tools-pi_agent_core-202-151707`（通过）
   - `tools/supp-tools-pi_agent_core-303-151801`（`all_pages_read` 失败）
 
-[上一篇：OpenAI Agents SDK](openai_agents_sdk.md) · [返回框架索引](README.md) · [下一篇：Google ADK](google_adk.md)
+[上一篇：OpenAI Agents SDK](OpenAI Agents SDK 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：Google ADK](Google ADK 实验报告.md)

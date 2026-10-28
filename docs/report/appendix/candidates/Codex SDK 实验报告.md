@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 原生 CLI 能力最强，输出上限是已知缺口
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -179,4 +179,4 @@
   - `tools/supp-tools-codex_sdk-202-152231`（通过）
   - `tools/supp-tools-codex_sdk-303-152325`（通过）
 
-[上一篇：OpenHands](openhands.md) · [返回框架索引](README.md)
+[上一篇：OpenHands](OpenHands 实验报告.md) · [返回框架索引](单框架实验报告索引.md)

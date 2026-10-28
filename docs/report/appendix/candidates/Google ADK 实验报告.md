@@ -4,7 +4,7 @@
 **本轮深度** 初筛 + 详细五类（网页、扩展、两类规则已补齐）
 **定位** 会话服务齐全，本轮分页约束表现最稳的一条
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -149,4 +149,4 @@ ADK 是四条补齐路线里唯一**十五项全部通过、无任何失败格**
   - `tools/supp-tools-google_adk-202-151842`（通过）
   - `tools/supp-tools-google_adk-303-151936`（通过）
 
-[上一篇：Pi Agent Core](pi_agent_core.md) · [返回框架索引](README.md) · [下一篇：OpenHands](openhands.md)
+[上一篇：Pi Agent Core](Pi Agent Core 实验报告.md) · [返回框架索引](单框架实验报告索引.md) · [下一篇：OpenHands](OpenHands 实验报告.md)

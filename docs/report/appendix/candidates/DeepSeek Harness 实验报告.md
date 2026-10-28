@@ -4,7 +4,7 @@
 **本轮深度** 详细四类 + 暂停 + 故障矩阵 + 多人 + 成本
 **定位** 与现有客户端同源，本轮证据最完整的一条路线
 
-[返回框架索引](README.md) · [总体实验设计](../design.md)
+[返回框架索引](单框架实验报告索引.md) · [总体实验设计](../附录：实验设计与判定口径.md)
 
 ---
 
@@ -246,4 +246,4 @@
 - 验收记录：[docs/validation/deepseek_harness.md](../../../validation/deepseek_harness.md)、[暂停](../../../validation/pause-recovery.md)、[故障](../../../validation/fault-recovery-execution.md)、[多人](../../../validation/deepseek-multi-user-execution.md)
 - 本轮补充运行：`runs/2026-10-27/deepseek_harness/tools/supp-smoke-dsh-151236/`
 
-[返回框架索引](README.md) · [下一篇：Deep Agents + LangGraph](deepagents_langgraph.md)
+[返回框架索引](单框架实验报告索引.md) · [下一篇：Deep Agents + LangGraph](Deep Agents + LangGraph 实验报告.md)
