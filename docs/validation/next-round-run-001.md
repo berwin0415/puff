@@ -1,6 +1,6 @@
 # 下一轮实验运行记录 001
 
-日期：2026-10-28。状态：**M0、M1、E1 完成；E2/E3/E4 部分；E5/E6 未开始。**
+日期：2026-10-28。状态：**M0、M1、E1 完成；E2/E3/E4 部分（E4 五条单用户门禁已跑）；E5/E6 未开始。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。
 
@@ -36,6 +36,9 @@
 | OpenClaw cancel 单用户 | `i29-openclaw-cancel-101-001`：passed，3 次模型，原生 aborted 终态，取消后无新写入 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/cancel/i29-openclaw-cancel-101-001/` |
 | ADK tools 单用户门禁 | `i29-adk-tools-101-001`：passed，7 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/google_adk/tools/i29-adk-tools-101-001/` |
 | Agents SDK tools 单用户门禁 | `i29-agents-tools-101-001`：passed，5 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openai_agents_sdk/tools/i29-agents-tools-101-001/` |
+| OpenHands tools 单用户门禁 | `i29-openhands-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openhands/tools/i29-openhands-tools-101-001/` |
+| Pi tools 单用户门禁 | `i29-pi-tools-101-001`：passed，5 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/pi_agent_core/tools/i29-pi-tools-101-001/` |
+| Codex tools 单用户门禁 | `i29-codex-tools-101-001`：passed，7 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/codex_sdk/tools/i29-codex-tools-101-001/` |
 | 真实非流式 smoke | 200；input 88 / output 20 / total 108；reasoning 18；ledger `reported` | `/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-001/{smoke.json,ledger.jsonl}` |
 | 真实流式 smoke | 200；input 88 / output 14 / total 102；reasoning 12；ledger `reported` | `/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-002/{smoke.json,ledger.jsonl}` |
 

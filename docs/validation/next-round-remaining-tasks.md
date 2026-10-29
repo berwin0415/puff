@@ -1,6 +1,6 @@
 # 下一轮剩余任务与执行状态
 
-日期：2026-10-29。状态：**M0、M1、E1 完成；E2 单用户 tools/cancel 通过；E3 部分；E4 单用户能力门禁部分；E5/E6 未开始。**
+日期：2026-10-29。状态：**M0、M1、E1 完成；E2 单用户 tools/cancel 通过；E3 部分；E4 单用户能力门禁已覆盖 5 条候选；E5/E6 未开始。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。冻结计划：[next-round-plan.json](next-round-plan.json)。完成记录：[M0/M1/E1](next-round-m0-m1-close.md)。
 
@@ -23,7 +23,7 @@
 | R-E2-02 | OpenClaw 业务定制：加 1 工具 + 1 规则 + 1 状态字段；规则执行层拦截；重试/恢复后仍生效 | R-E2-01 | 未开始 |  |  |  | 定制 token/迭代单独记 |
 | R-E3-01 | Deep Agents 同场景复测：主任务、取消、恢复、重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | `i29-da-smoke-101-003`：A 通过、B 分页失败；A/B 取消、重叠、host、资源通过 | B 仍 `page_size=100`，保留旧失败 |
 | R-E4-01 | 第二层门禁：ADK、Agents SDK；过门禁且预算允许最多 1 条全量 | M1、token 代理 | 部分 | 2026-10-29 |  | ADK tools `i29-adk-tools-101-001`、Agents SDK tools `i29-agents-tools-101-001` 均通过 | 单用户能力门禁通过；多用户服务门禁未做 |
-| R-E4-02 | 第三层门禁：OpenHands、Pi、Codex；只做门禁/跳过记录 | M1、token 代理 | 未开始 |  |  |  | 通过也不默认全量；写清 skip 五要素 |
+| R-E4-02 | 第三层门禁：OpenHands、Pi、Codex；只做门禁/跳过记录 | M1、token 代理 | 部分 | 2026-10-29 |  | OpenHands/Pi/Codex tools 均通过 | 单用户能力门禁通过；多用户/服务门禁未做 |
 | R-E5-01 | 过程透明：OpenClaw vs DSH，3 类注入故障，诊断时间/步骤/token/原生证据 | E2、E1 | 未开始 |  |  |  | 诊断 agent 固定模型/提示；不报统计显著 |
 | R-E6-01 | 实例成本：2/5/10 用户，常驻 vs 按需，内存/CPU/唤醒/每任务成本 | E2、E3 | 未开始 |  |  |  | 装不下就 `SKIP_LOCAL` 该档，不报节省比例 |
 | R-TK-01 | 接入 token 台账：每候选独立 session、ledger、尾部 `reserved`/`client_disconnected`、cap | token 代理 | 未开始 |  |  |  | 不可观测的 agent 标 `INCONCLUSIVE` |
@@ -79,13 +79,13 @@
 
 ### R-E4-02 第三层门禁
 
-- 状态：
-- 候选：
-- 门禁结果：
-- 跳过原因（五要素）：
-- 证据路径：
-- 判定：
-- 备注：
+- 状态：部分（单用户能力门禁通过；多用户/服务门禁未做）
+- 候选：OpenHands、Pi Agent Core、Codex SDK
+- 门禁结果：tools 均 passed；OpenHands 8 次模型、Pi 5 次、Codex 7 次；各 3 笔写入
+- 跳过原因（五要素）：未跳过；多用户服务门禁未做，不能据此进入全量
+- 证据路径：`/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openhands/tools/i29-openhands-tools-101-001/`、`.../pi_agent_core/tools/i29-pi-tools-101-001/`、`.../codex_sdk/tools/i29-codex-tools-101-001/`
+- 判定：单用户工具任务成立；不证明多用户隔离/恢复/成本。
+- 备注：Tier3 仍不默认全量；只有门禁显示明显更优且预算允许才加做。
 
 ### R-E5-01 过程透明
 

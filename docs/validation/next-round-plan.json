@@ -411,10 +411,16 @@
     "status": "partial_single_user_gate",
     "adk_tools": "pass",
     "agents_sdk_tools": "pass",
+    "openhands_tools": "pass",
+    "pi_tools": "pass",
+    "codex_tools": "pass",
     "adk_trial": "i29-adk-tools-101-001",
     "agents_trial": "i29-agents-tools-101-001",
+    "openhands_trial": "i29-openhands-tools-101-001",
+    "pi_trial": "i29-pi-tools-101-001",
+    "codex_trial": "i29-codex-tools-101-001",
     "multi_user_gate": "not_started",
-    "note": "ADK/Agents SDK 单用户工具门禁通过；多用户服务门禁未做。",
+    "note": "五条候选单用户 tools 门禁通过；多用户服务门禁未做，不进入全量。",
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/"
   }
 }
