@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plan_id": "next-round-main-scenario-001",
   "created_at": "2026-10-28",
-  "status": "blocked_on_openclaw_worker_profile",
+  "status": "e2_e6_executed_with_documented_gaps",
   "baseline": {
     "report": "docs/report/README.md",
     "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
@@ -550,5 +550,17 @@
       "human diagnosis time"
     ],
     "note": "单用户故障诊断切片，不是多用户过程透明门禁；不报显著性。"
+  },
+  "summary": {
+    "status": "executed_with_gaps",
+    "path": "docs/validation/next-round-e2-e6-summary.md",
+    "judgment": "E2/E5/E6 部分通过；E3/E4 部分；无跨场景赢家。",
+    "gaps": [
+      "E2 shared backend/cross-user 403/live-peer/pause",
+      "E3 B page_size=100",
+      "E4 multi-user service gate",
+      "E5 multi-user/independent diagnosis agent",
+      "E6 resident and 5/10 users SKIP_LOCAL"
+    ]
   }
 }
