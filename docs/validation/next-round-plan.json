@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plan_id": "next-round-main-scenario-001",
   "created_at": "2026-10-28",
-  "status": "m0_m1_e1_complete_e2_e3_partial",
+  "status": "m0_m1_e1_complete_e2_e3_e4_partial",
   "baseline": {
     "report": "docs/report/README.md",
     "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
@@ -406,5 +406,15 @@
     "multi_user": "not_started",
     "note": "单用户 tools/cancel 通过；多用户 gateway worker profile 未接，暂停/恢复未验。",
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/"
+  },
+  "e4": {
+    "status": "partial_single_user_gate",
+    "adk_tools": "pass",
+    "agents_sdk_tools": "pass",
+    "adk_trial": "i29-adk-tools-101-001",
+    "agents_trial": "i29-agents-tools-101-001",
+    "multi_user_gate": "not_started",
+    "note": "ADK/Agents SDK 单用户工具门禁通过；多用户服务门禁未做。",
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/"
   }
 }
