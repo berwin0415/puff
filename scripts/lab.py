@@ -34,7 +34,9 @@ class Lab:
     def __init__(self):
         self.config = load_config(ROOT / 'configs/experiment.yaml')
         self.env = {**os.environ, 'HARNESS_LAB_DATA_ROOT': str(self.config.host_data_root)}
-        self.prefix = ['docker', 'compose', '--project-name', 'harness-lab', '-f', str(ROOT / 'compose/docker-compose.yml')]
+        # 允许并行 detailed 运行使用独立 compose project；默认保持原 project 名。
+        self.project = os.environ.get('LAB_PROJECT', 'harness-lab')
+        self.prefix = ['docker', 'compose', '--project-name', self.project, '-f', str(ROOT / 'compose/docker-compose.yml')]
 
     def call(self, args, *, capture=False, check=True, timeout=None):
         return subprocess.run(args, cwd=ROOT, env=self.env, text=True, capture_output=capture, check=check, timeout=timeout)
@@ -75,7 +77,7 @@ class Lab:
             print('清理时无法通过 Docker 确认以下对象：' + ', '.join(sorted(set(failures))), file=sys.stderr)
 
     def containers(self):
-        result = self.call(['docker', 'ps', '-aq', '--filter', 'label=com.docker.compose.project=harness-lab'], capture=True, timeout=5)
+        result = self.call(['docker', 'ps', '-aq', '--filter', 'label=com.docker.compose.project=' + self.project], capture=True, timeout=5)
         ids = result.stdout.split()
         if not ids:
             return []
@@ -102,7 +104,7 @@ class Lab:
 
     def infrastructure(self, run_id):
         if any(c['state']['Running'] for c in self.containers()):
-            raise RuntimeError('已有 harness-lab 容器运行，请先结束该轮实验')
+            raise RuntimeError('已有 ' + self.project + ' 容器运行，请先结束该轮实验')
         date = datetime.now(ZoneInfo('Asia/Shanghai')).date().isoformat()
         paths = self.config.paths_for('infrastructure', run_id, 'infrastructure', 'alice', 'main', run_id, case='browser', date=date)
         evidence = paths.run
@@ -118,7 +120,7 @@ class Lab:
         sampler = None
         active_ids = []
         passed = False
-        probe_name = 'harness-lab-browser-probe-' + run_id
+        probe_name = self.project + '-browser-probe-' + run_id
         try:
             self.compose('up', '-d', '--no-build', 'fixtures')
             self.wait_health('fixtures', 8080)
@@ -189,7 +191,7 @@ class Lab:
         day = paths.run.parent.parent.parent.name
         common = ['--run-id', run_id, '--candidate', candidate, '--seed', str(seed), '--date', day]
         candidate_service, container_prefix, profile, step = CANDIDATES[candidate]
-        container_name = 'harness-lab-' + container_prefix + '-' + run_id
+        container_name = self.project + '-' + container_prefix + '-' + run_id
         samples, records = [], []
         event = threading.Event()
         sampler = None
@@ -249,7 +251,7 @@ class Lab:
         while not event.is_set():
             at = time.time()
             try:
-                ids = self.call(['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project=harness-lab'], capture=True, timeout=5).stdout.split()
+                ids = self.call(['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project=' + self.project], capture=True, timeout=5).stdout.split()
                 data = self.call(['docker', 'stats', '--no-stream', '--format', '{{json .}}', *ids], capture=True, timeout=5).stdout if ids else ''
                 sample = {'unix_time': at, 'phase': getattr(self, 'sampling_phase', 'infrastructure'),
                           'containers': [json.loads(line) for line in data.splitlines()]}

@@ -11,7 +11,7 @@ def cancel_on_openclaw_activity(call, name, run, stop, run_id, scope):
 
     宿主与 Docker VM 的时钟相互独立。读取时钩子是否活跃由保留的前缀证明，不通过比较两者的墙上时钟判断。
     """
-    if scope.get("variant") != run_id or name != "harness-lab-detailed-openclaw-" + run_id:
+    if scope.get("variant") != run_id or not name.endswith("-detailed-openclaw-" + run_id):
         raise ValueError('取消 OpenClaw 必须绑定本次可信运行的确切容器')
     raw = run / "candidate/raw-events.jsonl"
     entrypoint = run / "candidate/entrypoint.json"

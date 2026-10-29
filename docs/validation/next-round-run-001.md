@@ -1,6 +1,6 @@
 # 下一轮实验运行记录 001
 
-日期：2026-10-28。状态：**M0、M1、E1 完成；E2 最小切片（单用户）完成，双用户/403/暂停列为明确缺口；E3/E4 部分；E5/E6 未执行。**
+日期：2026-10-28。状态：**M0、M1、E1 完成；E2 单用户与双容器并发切片已跑（B 通过、A cancel 未过）；403/暂停仍缺口；E3/E4 部分；E5/E6 未执行。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。
 
@@ -34,6 +34,7 @@
 | DA smoke 003 | 任务级 3/4：A 通过、A/B 取消通过、B 因 `page_size=100` 失败；重叠、host、资源、cleanup 通过；sampling 0 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-003/` |
 | OpenClaw tools 单用户 | `i29-openclaw-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/tools/i29-openclaw-tools-101-001/` |
 | OpenClaw cancel 单用户 | `i29-openclaw-cancel-101-001`：passed，3 次模型，原生 aborted 终态，取消后无新写入 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/cancel/i29-openclaw-cancel-101-001/` |
+| OpenClaw 双容器并发 | `i29-openclaw-e2b-tools-101` 通过（11 次模型、3 笔写入）；`i29-openclaw-e2a-cancel-101` 原生 aborted 但 detailed 取消检查失败；两容器独立 project/state/workspace | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/` |
 | ADK tools 单用户门禁 | `i29-adk-tools-101-001`：passed，7 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/google_adk/tools/i29-adk-tools-101-001/` |
 | Agents SDK tools 单用户门禁 | `i29-agents-tools-101-001`：passed，5 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openai_agents_sdk/tools/i29-agents-tools-101-001/` |
 | OpenHands tools 单用户门禁 | `i29-openhands-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openhands/tools/i29-openhands-tools-101-001/` |

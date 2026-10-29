@@ -174,7 +174,7 @@ class DetailedLab(Lab):
         if case != "tools" and candidate in CASE_OPTIONS_CANDIDATES and not self.detailed_override.is_file():
             raise RuntimeError('详细用例挂载未接通：缺少 compose/detailed.override.yml')
         if any(container["state"]["Running"] for container in self.containers()):
-            raise RuntimeError('另一项 harness-lab 实验仍在运行')
+            raise RuntimeError('另一项实验仍在运行')
         self.config.initialize_layout()
         paths = self.config.paths_for(experiment_id, run_id, candidate, "alice", "main", run_id, case=case)
         if any(path.exists() for path in (paths.run, paths.fixture, paths.state, paths.workspace, paths.budget)):
@@ -194,7 +194,7 @@ class DetailedLab(Lab):
         # Compose 解析 .env 引号，其中可能有真实密钥。该对象
         # 仅留在内存；提取非敏感模型名后立即丢弃。
         service, prefix, profile, _ = CANDIDATES[candidate]
-        name = "harness-lab-detailed-" + prefix + "-" + run_id
+        name = self.project + "-detailed-" + prefix + "-" + run_id
         resolved = json.loads(self.compose("--profile", "model", "--profile", service,
                                            "config", "--format", "json", capture=True).stdout)
         model = resolved["services"]["model-proxy"]["environment"].get("MODEL_NAME")

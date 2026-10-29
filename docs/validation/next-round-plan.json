@@ -433,7 +433,24 @@
         "reason": "depends on dual-user workers"
       }
     ],
-    "judgment": "partial_single_user_not_pass"
+    "judgment": "partial_single_user_and_concurrent_not_pass",
+    "concurrent_slice": {
+      "status": "partial",
+      "b_tools": "pass",
+      "b_trial": "i29-openclaw-e2b-tools-101",
+      "b_model_requests": 11,
+      "a_cancel": "fail_detailed_checks",
+      "a_trial": "i29-openclaw-e2a-cancel-101",
+      "a_native_terminal": "agent_end aborted; HTTP client_disconnected",
+      "a_failure": "native_running_cancel_confirmed/native_cancel_terminal_retained/no_new_writes_after_cancel_ack false",
+      "isolation": "separate compose projects/containers/state/workspaces; no shared product backend",
+      "not_run": [
+        "cross-user 403",
+        "live-peer/effective overlap",
+        "pause/resume",
+        "dual-user host/cleanup"
+      ]
+    }
   },
   "e4": {
     "status": "partial_single_user_gate",
