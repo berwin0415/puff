@@ -506,5 +506,49 @@
     "resident": "not_measured",
     "note": "2 用户按需可报；5/10 用户超过 8.3 GiB/4 CPU，SKIP_LOCAL；不报节省比例。",
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/"
+  },
+  "e5": {
+    "status": "partial_single_user",
+    "missing_file": {
+      "openclaw": {
+        "pass": true,
+        "calls": 5,
+        "seconds": 67.97
+      },
+      "dsh": {
+        "pass": true,
+        "calls": 2,
+        "seconds": 7.25
+      }
+    },
+    "model_timeout": {
+      "openclaw": {
+        "pass": false,
+        "calls": 7,
+        "seconds": 90.34,
+        "failed_check": "all_pages_read"
+      },
+      "dsh": {
+        "pass": true,
+        "calls": 9,
+        "seconds": 29.17
+      }
+    },
+    "cancel": {
+      "openclaw": {
+        "pass": true,
+        "calls": 3
+      },
+      "dsh": {
+        "pass": true,
+        "calls": 7
+      }
+    },
+    "not_run": [
+      "multi-user transparency",
+      "independent diagnosis agent",
+      "human diagnosis time"
+    ],
+    "note": "单用户故障诊断切片，不是多用户过程透明门禁；不报显著性。"
   }
 }

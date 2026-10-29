@@ -24,7 +24,7 @@
 | R-E3-01 | Deep Agents 同场景复测：主任务、取消、恢复、重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | `i29-da-smoke-101-003`：A 通过、B 分页失败；A/B 取消、重叠、host、资源通过 | B 仍 `page_size=100`，保留旧失败 |
 | R-E4-01 | 第二层门禁：ADK、Agents SDK；过门禁且预算允许最多 1 条全量 | M1、token 代理 | 部分 | 2026-10-29 |  | ADK tools `i29-adk-tools-101-001`、Agents SDK tools `i29-agents-tools-101-001` 均通过 | 单用户能力门禁通过；多用户服务门禁未做 |
 | R-E4-02 | 第三层门禁：OpenHands、Pi、Codex；只做门禁/跳过记录 | M1、token 代理 | 部分 | 2026-10-29 |  | OpenHands/Pi/Codex tools 均通过 | 单用户能力门禁通过；多用户/服务门禁未做 |
-| R-E5-01 | 过程透明：OpenClaw vs DSH，3 类注入故障，诊断时间/步骤/token/原生证据 | E2、E1 | 受阻 |  |  |  | 依赖 E2 多用户；当前只有 OpenClaw 单用户材料 |
+| R-E5-01 | 过程透明：OpenClaw vs DSH，3 类注入故障，诊断时间/步骤/token/原生证据 | E2、E1 | 部分 | 2026-10-29 |  | 缺文件、模型 timeout、取消三类单用户对比已跑 | 多用户/独立诊断 agent/人工时间未做 |
 | R-E6-01 | 实例成本：2/5/10 用户，常驻 vs 按需，内存/CPU/唤醒/每任务成本 | E2、E3 | 部分 | 2026-10-29 |  | 2 用户按需：A/B 峰值 2.28/2.19 GiB；5/10 用户 `SKIP_LOCAL`（8.3 GiB/4 CPU 装不下） | 常驻模式未测；不能报节省比例 |
 | R-TK-01 | 接入 token 台账：每候选独立 session、ledger、尾部 `reserved`/`client_disconnected`、cap | token 代理 | 未开始 |  |  |  | 不可观测的 agent 标 `INCONCLUSIVE` |
 | R-RP-01 | 更新分享报告与附录：E2–E6 结果、接入成本、跳过原因 | R-E2～R-E6 | 未开始 |  |  |  | 不把 baseline 当 E1；不跨批次加总 |
@@ -113,14 +113,17 @@
 
 ### R-E5-01 过程透明
 
-- 状态：
-- 批次：
-- 故障类型：
+- 状态：部分（单用户故障诊断切片）
+- 批次：`i29-openclaw-diagnostic-101-001`、`i29-dsh-diagnostic-101-001`、`i29-openclaw-timeout-101-001`、`i29-dsh-timeout-101-001`，取消用单用户 cancel
+- 故障类型：缺文件、模型 504 timeout、运行中取消
 - 根因定位时间/步骤/token：
-- 原生证据是否足够：
-- 证据路径：
-- 判定：
-- 备注：
+  - 缺文件：OpenClaw 5 次模型/68.0 秒，通过；DSH 2 次/7.3 秒，通过
+  - 模型 timeout：OpenClaw 7 次/90.3 秒，`all_pages_read` 失败；DSH 9 次/29.2 秒，通过；两者都保留 504 注入与原生重试
+  - 取消：OpenClaw 3 次模型，通过；DSH 7 次模型，通过
+- 原生证据是否足够：单用户够；多用户/独立诊断 agent 不够
+- 证据路径：`/Users/hanbowen01/harness-lab-data/runs/2026-10-29/{openclaw,deepseek_harness}/{diagnostic,diagnostic-timeout}/`
+- 判定：单用户故障诊断切片完成；不能当 E5 多用户过程透明门禁。
+- 备注：没有独立诊断 agent 的人工/自动定位时间，不报“谁更好”的显著性。
 
 ### R-E6-01 实例成本
 
