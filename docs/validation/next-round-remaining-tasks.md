@@ -1,6 +1,6 @@
 # 下一轮剩余任务与执行状态
 
-日期：2026-10-29。状态：**M0、M1、E1 完成；E2 最小双容器并发切片通过（A cancel + B tools，2.5 GiB）；共享后端/403/暂停仍缺口；E3/E4 部分；E5/E6 未执行。**
+日期：2026-10-29。状态：**M0、M1、E1 完成；E2 双容器并发切片通过（2.5 GiB）；E6 已测 2 用户按需成本、5/10 用户本机跳过；E3/E4 部分；E5 未执行。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。冻结计划：[next-round-plan.json](next-round-plan.json)。完成记录：[M0/M1/E1](next-round-m0-m1-close.md)。
 
@@ -25,7 +25,7 @@
 | R-E4-01 | 第二层门禁：ADK、Agents SDK；过门禁且预算允许最多 1 条全量 | M1、token 代理 | 部分 | 2026-10-29 |  | ADK tools `i29-adk-tools-101-001`、Agents SDK tools `i29-agents-tools-101-001` 均通过 | 单用户能力门禁通过；多用户服务门禁未做 |
 | R-E4-02 | 第三层门禁：OpenHands、Pi、Codex；只做门禁/跳过记录 | M1、token 代理 | 部分 | 2026-10-29 |  | OpenHands/Pi/Codex tools 均通过 | 单用户能力门禁通过；多用户/服务门禁未做 |
 | R-E5-01 | 过程透明：OpenClaw vs DSH，3 类注入故障，诊断时间/步骤/token/原生证据 | E2、E1 | 受阻 |  |  |  | 依赖 E2 多用户；当前只有 OpenClaw 单用户材料 |
-| R-E6-01 | 实例成本：2/5/10 用户，常驻 vs 按需，内存/CPU/唤醒/每任务成本 | E2、E3 | 受阻 |  |  |  | 依赖 E2/E3 主场景；不能只用 DA 旧数据代替 |
+| R-E6-01 | 实例成本：2/5/10 用户，常驻 vs 按需，内存/CPU/唤醒/每任务成本 | E2、E3 | 部分 | 2026-10-29 |  | 2 用户按需：A/B 峰值 2.28/2.19 GiB；5/10 用户 `SKIP_LOCAL`（8.3 GiB/4 CPU 装不下） | 常驻模式未测；不能报节省比例 |
 | R-TK-01 | 接入 token 台账：每候选独立 session、ledger、尾部 `reserved`/`client_disconnected`、cap | token 代理 | 未开始 |  |  |  | 不可观测的 agent 标 `INCONCLUSIVE` |
 | R-RP-01 | 更新分享报告与附录：E2–E6 结果、接入成本、跳过原因 | R-E2～R-E6 | 未开始 |  |  |  | 不把 baseline 当 E1；不跨批次加总 |
 | R-CM-01 | 分阶段提交：每阶段代码/材料/状态记录 | 各阶段 | 进行中 | 2026-10-29 |  | `8c3b07f` | M0/M1/E1 已提交；后续按阶段提交 |
@@ -124,15 +124,15 @@
 
 ### R-E6-01 实例成本
 
-- 状态：
-- 批次：
-- 用户档位：
-- 常驻/按需：
-- 内存/CPU/唤醒：
-- 采样是否完整：
-- 证据路径：
-- 判定：
-- 备注：
+- 状态：部分
+- 批次：`i29-openclaw-e2g-cancel-101` + `i29-openclaw-e2h-tools-101`
+- 用户档位：2 用户并发
+- 常驻/按需：按需；常驻未测
+- 内存/CPU/唤醒：A 峰值 2.28 GiB / CPU 200.94%；B 峰值 2.19 GiB / CPU 205.19%；两栈并发无 OOM；5/10 用户按 2.5 GiB/用户 + services 超过本机 8.3 GiB，`SKIP_LOCAL`
+- 采样是否完整：A 31/31，B 47 样本 1 次 grading 采样错误；candidate_active 0 错误
+- 证据路径：`/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/`
+- 判定：2 用户按需成本可报；5/10 用户不报，常驻/唤醒不报
+- 备注：采样含 services，不是纯候选内存；不能把峰值相加当常驻成本
 
 ### R-TK-01 接入 token
 

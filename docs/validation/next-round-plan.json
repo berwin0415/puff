@@ -481,5 +481,30 @@
       "跨用户 403/live-peer/重叠接入"
     ],
     "unblock": "需要决定：实现 OpenClaw gateway worker profile（多轮），或接受 E2/E5/E6 作为文档化缺口。"
+  },
+  "e6": {
+    "status": "partial",
+    "users_2": "measured_on_demand",
+    "users_5": "SKIP_LOCAL",
+    "users_10": "SKIP_LOCAL",
+    "memory_peak_gib": {
+      "a": 2.276,
+      "b": 2.192
+    },
+    "cpu_peak_percent": {
+      "a": 200.94,
+      "b": 205.19
+    },
+    "samples": {
+      "a": 31,
+      "b": 47
+    },
+    "sample_errors": {
+      "a": 0,
+      "b": 1
+    },
+    "resident": "not_measured",
+    "note": "2 用户按需可报；5/10 用户超过 8.3 GiB/4 CPU，SKIP_LOCAL；不报节省比例。",
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/"
   }
 }

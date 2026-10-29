@@ -1,6 +1,6 @@
 # 下一轮实验运行记录 001
 
-日期：2026-10-28。状态：**M0、M1、E1 完成；E2 双容器并发切片通过（2.5 GiB，A cancel + B tools）；403/共享后端/暂停仍缺口；E3/E4 部分；E5/E6 未执行。**
+日期：2026-10-28。状态：**M0、M1、E1 完成；E2 双容器并发切片通过；E6 2 用户按需成本已测、5/10 本机跳过；E3/E4 部分；E5 未执行。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。
 
@@ -35,6 +35,7 @@
 | OpenClaw tools 单用户 | `i29-openclaw-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/tools/i29-openclaw-tools-101-001/` |
 | OpenClaw cancel 单用户 | `i29-openclaw-cancel-101-001`：passed，3 次模型，原生 aborted 终态，取消后无新写入 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/cancel/i29-openclaw-cancel-101-001/` |
 | OpenClaw 双容器并发（2.5 GiB） | `i29-openclaw-e2g-cancel-101` 通过（A cancel，原生 aborted）；`i29-openclaw-e2h-tools-101` 通过（B tools，11 次模型、3 笔写入）；同一秒启动、无 OOM | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/` |
+| E6 2 用户按需成本 | A 峰值 2.28 GiB/200.94% CPU；B 峰值 2.19 GiB/205.19%；5/10 用户超过 8.3 GiB/4 CPU，`SKIP_LOCAL`；常驻未测 | 同上 `resource-metrics.json` |
 | ADK tools 单用户门禁 | `i29-adk-tools-101-001`：passed，7 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/google_adk/tools/i29-adk-tools-101-001/` |
 | Agents SDK tools 单用户门禁 | `i29-agents-tools-101-001`：passed，5 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openai_agents_sdk/tools/i29-agents-tools-101-001/` |
 | OpenHands tools 单用户门禁 | `i29-openhands-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openhands/tools/i29-openhands-tools-101-001/` |
