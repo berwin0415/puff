@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plan_id": "next-round-main-scenario-001",
   "created_at": "2026-10-28",
-  "status": "m0_m1_e1_complete_e3_partial",
+  "status": "m0_m1_e1_complete_e2_e3_partial",
   "baseline": {
     "report": "docs/report/README.md",
     "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
@@ -395,5 +395,16 @@
     "sampling_errors": 0,
     "note": "B 的分页失败是候选/模型侧问题；保留上一轮同类失败。",
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-003"
+  },
+  "e2": {
+    "status": "partial_single_user",
+    "date": "2026-10-29",
+    "tools": "pass",
+    "cancel": "pass",
+    "tools_trial": "i29-openclaw-tools-101-001",
+    "cancel_trial": "i29-openclaw-cancel-101-001",
+    "multi_user": "not_started",
+    "note": "单用户 tools/cancel 通过；多用户 gateway worker profile 未接，暂停/恢复未验。",
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/"
   }
 }

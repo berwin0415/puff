@@ -1,6 +1,6 @@
 # 下一轮剩余任务与执行状态
 
-日期：2026-10-29。状态：**M0、M1、E1 完成；E3 已跑出部分结果；E2/E4–E6 未开始。**
+日期：2026-10-29。状态：**M0、M1、E1 完成；E2 单用户 tools/cancel 通过、多用户未接；E3 部分；E4–E6 未开始。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。冻结计划：[next-round-plan.json](next-round-plan.json)。完成记录：[M0/M1/E1](next-round-m0-m1-close.md)。
 
@@ -19,7 +19,7 @@
 
 | ID | 任务 | 依赖 | 状态 | 开始 | 完成 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| R-E2-01 | OpenClaw 双用户主场景：A/B 主任务、跨用户拒绝、取消、live-peer/重叠、host/cleanup | M1、E1 | 未开始 |  |  |  | OpenClaw profile 目前标 unsupported，先接 gateway worker |
+| R-E2-01 | OpenClaw 双用户主场景：A/B 主任务、跨用户拒绝、取消、live-peer/重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | 单用户 tools `i29-openclaw-tools-101-001` 通过；cancel `i29-openclaw-cancel-101-001` 通过 | 多用户 gateway worker profile 仍未接；暂停/恢复未验 |
 | R-E2-02 | OpenClaw 业务定制：加 1 工具 + 1 规则 + 1 状态字段；规则执行层拦截；重试/恢复后仍生效 | R-E2-01 | 未开始 |  |  |  | 定制 token/迭代单独记 |
 | R-E3-01 | Deep Agents 同场景复测：主任务、取消、恢复、重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | `i29-da-smoke-101-003`：A 通过、B 分页失败；A/B 取消、重叠、host、资源通过 | B 仍 `page_size=100`，保留旧失败 |
 | R-E4-01 | 第二层门禁：ADK、Agents SDK；过门禁且预算允许最多 1 条全量 | M1、token 代理 | 未开始 |  |  |  | 4h/token 门禁；另一条 `NOT_TESTED` |
@@ -36,14 +36,14 @@
 
 ### R-E2-01 OpenClaw 主场景
 
-- 状态：
-- 批次/trial：
-- 开始/结束：
-- 命令：
-- 结果（scope/host/cleanup）：
-- 证据路径：
-- 判定：
-- 备注：
+- 状态：部分（单用户 tools/cancel 通过；多用户未接）
+- 批次/trial：`i29-openclaw-tools-101-001`、`i29-openclaw-cancel-101-001`
+- 开始/结束：2026-10-29
+- 命令：`scripts/run_detailed.py --candidate openclaw --case tools|cancel --seed 101`
+- 结果：tools 通过（8 次模型、3 笔写入、全部 16 项检查通过）；cancel 通过（3 次模型、原生 `assistant stopReason=aborted`、无取消后新写入）
+- 证据路径：`/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/tools/i29-openclaw-tools-101-001/`、`.../cancel/i29-openclaw-cancel-101-001/`
+- 判定：单用户接入成立；多用户隔离、重叠、暂停/恢复未验。
+- 备注：E2 双用户需要新的 OpenClaw gateway worker profile；当前 `candidate_profiles.openclaw.supported=false`。
 
 ### R-E2-02 OpenClaw 业务定制
 
