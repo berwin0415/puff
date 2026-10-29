@@ -437,19 +437,20 @@
     "concurrent_slice": {
       "status": "partial",
       "b_tools": "pass",
-      "b_trial": "i29-openclaw-e2b-tools-101",
+      "b_trial": "i29-openclaw-e2f-tools-101",
       "b_model_requests": 11,
-      "a_cancel": "fail_detailed_checks",
-      "a_trial": "i29-openclaw-e2a-cancel-101",
+      "a_cancel": "fail_oom",
+      "a_trial": "i29-openclaw-e2e-cancel-101",
       "a_native_terminal": "agent_end aborted; HTTP client_disconnected",
-      "a_failure": "native_running_cancel_confirmed/native_cancel_terminal_retained/no_new_writes_after_cancel_ack false",
+      "a_failure": "Docker OOMKilled=true; result runtime_error terminated",
       "isolation": "separate compose projects/containers/state/workspaces; no shared product backend",
       "not_run": [
         "cross-user 403",
         "live-peer/effective overlap",
         "pause/resume",
         "dual-user host/cleanup"
-      ]
+      ],
+      "local_resource_limit": "两个 2 GiB OpenClaw worker + services 在 8 GiB Docker 下发生 OOM"
     }
   },
   "e4": {

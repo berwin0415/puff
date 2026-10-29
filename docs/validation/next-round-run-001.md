@@ -34,7 +34,7 @@
 | DA smoke 003 | 任务级 3/4：A 通过、A/B 取消通过、B 因 `page_size=100` 失败；重叠、host、资源、cleanup 通过；sampling 0 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-003/` |
 | OpenClaw tools 单用户 | `i29-openclaw-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/tools/i29-openclaw-tools-101-001/` |
 | OpenClaw cancel 单用户 | `i29-openclaw-cancel-101-001`：passed，3 次模型，原生 aborted 终态，取消后无新写入 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/cancel/i29-openclaw-cancel-101-001/` |
-| OpenClaw 双容器并发 | `i29-openclaw-e2b-tools-101` 通过（11 次模型、3 笔写入）；`i29-openclaw-e2a-cancel-101` 原生 aborted 但 detailed 取消检查失败；两容器独立 project/state/workspace | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/` |
+| OpenClaw 双容器并发 | `i29-openclaw-e2f-tools-101` 通过；`i29-openclaw-e2e-cancel-101` 因 2 GiB OOM 失败（Docker `OOMKilled=true`）；两容器独立 project/state/workspace | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/` |
 | ADK tools 单用户门禁 | `i29-adk-tools-101-001`：passed，7 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/google_adk/tools/i29-adk-tools-101-001/` |
 | Agents SDK tools 单用户门禁 | `i29-agents-tools-101-001`：passed，5 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openai_agents_sdk/tools/i29-agents-tools-101-001/` |
 | OpenHands tools 单用户门禁 | `i29-openhands-tools-101-001`：passed，8 次模型、3 笔写入、16 项检查全过 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openhands/tools/i29-openhands-tools-101-001/` |

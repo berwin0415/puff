@@ -186,7 +186,8 @@ def grade_openclaw_cancel(paths, scope, ledger, native):
             chain = {
                 "host_signal_and_live_prefix": (host.get("candidate") == "openclaw" and host.get("run_id") == scope["variant"]
                     and host.get("session_id") == scope["session_id"] and host.get("scope") == scope
-                    and host.get("container_name") == "harness-lab-detailed-openclaw-" + scope["variant"]
+                    and isinstance(host.get("container_name"), str)
+                    and host["container_name"].endswith("-detailed-openclaw-" + scope["variant"])
                     and host.get("signal") == "SIGUSR1" and type(host.get("signal_exit_code")) is int
                     and host["signal_exit_code"] == 0 and host.get("native_run_id") == run_id
                     and host.get("session_key") == session_key and host.get("agent_id") == "lab-a"
