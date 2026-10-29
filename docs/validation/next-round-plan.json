@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plan_id": "next-round-main-scenario-001",
   "created_at": "2026-10-28",
-  "status": "m0_m1_e1_complete",
+  "status": "m0_m1_e1_complete_e3_partial",
   "baseline": {
     "report": "docs/report/README.md",
     "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
@@ -380,5 +380,20 @@
     "cleanup": "pass",
     "sampling_errors": 0,
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-011"
+  },
+  "e3": {
+    "status": "partial",
+    "completed_at": "2026-10-29",
+    "trial_id": "i29-da-smoke-101-003",
+    "task_a": "pass",
+    "task_a_cancel": "pass",
+    "task_b": "fail_page_size_100",
+    "task_b_cancel": "pass",
+    "overlap": "pass",
+    "host": "pass",
+    "cleanup": "pass",
+    "sampling_errors": 0,
+    "note": "B 的分页失败是候选/模型侧问题；保留上一轮同类失败。",
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-003"
   }
 }

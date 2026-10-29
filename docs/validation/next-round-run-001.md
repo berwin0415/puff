@@ -1,6 +1,6 @@
 # 下一轮实验运行记录 001
 
-日期：2026-10-28。状态：**M0、M1、E1 完成；E2/E3 尚未开始。** 详见[M0/M1/E1 完成记录](next-round-m0-m1-close.md)。
+日期：2026-10-28。状态：**M0、M1、E1 完成；E3 已跑出部分结果；E2/E4–E6 未开始。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。
 
@@ -30,6 +30,8 @@
 | DSH 双用户 smoke 008 | A/B 主任务、A/B 取消、live-peer/重叠全部通过；A 取消有原生 `turn/end`+idle；host 采样 flake、cleanup 空 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-008/` |
 | 采样/生命周期串行化 | `sample_once` 与 `retire` 共用 `sampling_lock`；surface 校准容器排除持续采样；消除 logout/removing 竞态 | `scripts/run_multi_user.py` |
 | DSH 双用户 smoke 011 | `scope=true`、`host=true`、`cleanup=true`；A/B 主任务、A/B 取消、live-peer/重叠、资源生命周期全部通过；sampling 0、容器 0 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-011/` |
+| DA smoke 001 | bench helper 与 DA worker staged helper 不一致；`image_bundled_helper_hash_mismatch`；未进入任务 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-001/` |
+| DA smoke 003 | 任务级 3/4：A 通过、A/B 取消通过、B 因 `page_size=100` 失败；重叠、host、资源、cleanup 通过；sampling 0 | `/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepagents_langgraph/scope/i29-da-smoke-101-003/` |
 | 真实非流式 smoke | 200；input 88 / output 20 / total 108；reasoning 18；ledger `reported` | `/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-001/{smoke.json,ledger.jsonl}` |
 | 真实流式 smoke | 200；input 88 / output 14 / total 102；reasoning 12；ledger `reported` | `/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-002/{smoke.json,ledger.jsonl}` |
 
