@@ -405,7 +405,35 @@
     "cancel_trial": "i29-openclaw-cancel-101-001",
     "multi_user": "not_started",
     "note": "单用户 tools/cancel 通过；多用户 gateway worker profile 未接，暂停/恢复未验。",
-    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/"
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/openclaw/",
+    "minimal_slice": {
+      "tools": "pass",
+      "cancel": "pass",
+      "scope": "single-user only"
+    },
+    "not_run": [
+      {
+        "item": "A/B concurrent dual-user",
+        "reason": "no worker_control_openclaw"
+      },
+      {
+        "item": "cross-user 403",
+        "reason": "no OpenClaw task ownership/product backend integration"
+      },
+      {
+        "item": "live-peer/effective overlap",
+        "reason": "depends on dual-user workers"
+      },
+      {
+        "item": "pause/resume",
+        "reason": "one-shot adapter has no pause/resume control plane"
+      },
+      {
+        "item": "dual-user host/cleanup",
+        "reason": "depends on dual-user workers"
+      }
+    ],
+    "judgment": "partial_single_user_not_pass"
   },
   "e4": {
     "status": "partial_single_user_gate",
