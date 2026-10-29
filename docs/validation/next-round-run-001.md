@@ -1,6 +1,6 @@
 # 下一轮实验运行记录 001
 
-日期：2026-10-28。状态：**M0、M1、E1 完成；E2/E3/E4 部分（E4 五条单用户门禁已跑）；E5/E6 未开始。**
+日期：2026-10-28。状态：**M0、M1、E1 完成；E2/E3/E4 部分；E5/E6 受阻于 OpenClaw gateway worker profile。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。
 

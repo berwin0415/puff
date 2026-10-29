@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plan_id": "next-round-main-scenario-001",
   "created_at": "2026-10-28",
-  "status": "m0_m1_e1_complete_e2_e3_e4_partial",
+  "status": "blocked_on_openclaw_worker_profile",
   "baseline": {
     "report": "docs/report/README.md",
     "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
@@ -422,5 +422,16 @@
     "multi_user_gate": "not_started",
     "note": "五条候选单用户 tools 门禁通过；多用户服务门禁未做，不进入全量。",
     "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/"
+  },
+  "blocker": {
+    "status": "blocked",
+    "task": "R-E2-01",
+    "reason": "OpenClaw 当前只有 one-shot detailed 入口；没有 worker control 的 describe/state/events/start/cancel，也没有 pause/resume 控制面。E2 无法进入 run_multi_user.py；E5/E6 依赖 E2/E3 主场景。",
+    "missing": [
+      "worker_control_openclaw 或等价 gateway worker 包装",
+      "pause/resume 语义（没有则明确记录缺口）",
+      "跨用户 403/live-peer/重叠接入"
+    ],
+    "unblock": "需要决定：实现 OpenClaw gateway worker profile（多轮），或接受 E2/E5/E6 作为文档化缺口。"
   }
 }
