@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "plan_id": "next-round-main-scenario-001",
+  "created_at": "2026-10-28",
+  "status": "m0_m1_e1_complete",
+  "baseline": {
+    "report": "docs/report/README.md",
+    "report_commit": "7be438188bce2fda69e80acf28534e65e0633b78",
+    "report_sha256": "ac1e1b5b71fcf317871066be1e33f701afb360d3d8d090ab460f49d9359fcaa7",
+    "design": "docs/validation/next-round-main-scenario-design.md",
+    "design_sha256": "3e962fd131032a1725909ec5b3616a66907a9bad9cdb2e4e3fac51037cb52e1e"
+  },
+  "main_scenario": "搬到云端持续服务多个用户；本机 Docker 模拟；任务在作用域和预算内自动执行，敏感操作直接拒绝。",
+  "environment": {
+    "runner": "local Docker linux/arm64",
+    "memory_bytes": 6442450944,
+    "cpus": 3,
+    "max_active_tasks": 2,
+    "task_budget": {
+      "max_model_calls": 20,
+      "active_timeout_seconds": 300
+    },
+    "seeds": [
+      101,
+      202,
+      303
+    ],
+    "smoke_seed": 101,
+    "cost_user_counts": [
+      2,
+      5,
+      10
+    ],
+    "soak_minutes": 20
+  },
+  "token_budget": {
+    "total_tokens": 500000000,
+    "gate_tokens": 10000000,
+    "gate_agent_iterations": 20,
+    "msc_min_tokens": 50000000,
+    "msc_full_tokens": 100000000,
+    "metric_tool": "execution/token_proxy.py",
+    "metric_tool_sha256": "d8919cd35d22cade7582842c421fb0c97922deb9747c41aeac1ca8171be3f5a7",
+    "provisional": false,
+    "calibration_rule": "DSH 基线出来后，绝对上限取 max(当前值, 1.5x DSH)，在候选运行前冻结；总量 500M 不变。",
+    "allocation": {
+      "full_integration": 400000000,
+      "gates": 50000000,
+      "evaluation": 50000000
+    },
+    "calibration_status": "budget_frozen_no_integration_token_sample",
+    "frozen_at": "2026-10-29"
+  },
+  "candidates": [
+    {
+      "name": "DeepSeek Harness",
+      "version": "0.1.2-alpha.3",
+      "tier": 1,
+      "stage": "E1",
+      "role": "客户端上云基线"
+    },
+    {
+      "name": "OpenClaw",
+      "version": "2026.10.5",
+      "tier": 1,
+      "stage": "E2",
+      "role": "现有云端业务基线"
+    },
+    {
+      "name": "Deep Agents + LangGraph",
+      "version": "0.7.28 / 1.2.16",
+      "tier": 1,
+      "stage": "E3",
+      "role": "替代路线，保留恢复/成本对照"
+    },
+    {
+      "name": "Google ADK",
+      "version": "2.12.0",
+      "tier": 2,
+      "stage": "E4",
+      "role": "会话服务对照，门禁后最多 1 条全量"
+    },
+    {
+      "name": "OpenAI Agents SDK",
+      "version": "0.24.0",
+      "tier": 2,
+      "stage": "E4",
+      "role": "轻量自建对照，门禁后最多 1 条全量"
+    },
+    {
+      "name": "OpenHands",
+      "version": "1.56.0 (SDK)",
+      "tier": 3,
+      "stage": "E4",
+      "role": "代码 Agent 对照，一般只做门禁/跳过记录"
+    },
+    {
+      "name": "Pi Agent Core",
+      "version": "1.3.0",
+      "tier": 3,
+      "stage": "E4",
+      "role": "最小 Core 对照，一般只做门禁/跳过记录"
+    },
+    {
+      "name": "Codex SDK",
+      "version": "rust-v0.163.0",
+      "tier": 3,
+      "stage": "E4",
+      "role": "编码路线对照，一般只做门禁/跳过记录"
+    }
+  ],
+  "stages": [
+    {
+      "id": "E0",
+      "purpose": "共享场景台泛化与无模型校准",
+      "status": "not_started"
+    },
+    {
+      "id": "E1",
+      "purpose": "DSH MSC-min -> MSC-full，回答第一问",
+      "status": "not_started"
+    },
+    {
+      "id": "E2",
+      "purpose": "OpenClaw 同场景 + 业务定制，回答第二问",
+      "status": "not_started"
+    },
+    {
+      "id": "E3",
+      "purpose": "Deep Agents 同场景，回答第三问",
+      "status": "not_started"
+    },
+    {
+      "id": "E4",
+      "purpose": "第二/三层门禁与条件全量",
+      "status": "not_started"
+    },
+    {
+      "id": "E5",
+      "purpose": "OpenClaw vs DSH 排障计时",
+      "status": "not_started"
+    },
+    {
+      "id": "E6",
+      "purpose": "2/5/10 用户成本与 soak",
+      "status": "not_started"
+    }
+  ],
+  "known_artifacts": {
+    "token_proxy_calibration": {
+      "status": "passed",
+      "non_stream": {
+        "input_tokens": 88,
+        "output_tokens": 20,
+        "total_tokens": 108,
+        "reasoning_tokens": 18,
+        "ledger_status": "reported",
+        "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-001"
+      },
+      "stream": {
+        "input_tokens": 88,
+        "output_tokens": 14,
+        "total_tokens": 102,
+        "reasoning_tokens": 12,
+        "ledger_status": "reported",
+        "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-28/token-proxy-smoke-002"
+      }
+    },
+    "no_model_calibration": {
+      "status": "passed",
+      "image": "harness-lab-bench:next-round-001",
+      "image_id": "sha256:e6bbd8661473d8b33459c2726dcc544787220fd4c7a505dde1c09499b0db9b36",
+      "tests": 186,
+      "network": "none",
+      "read_only": true,
+      "memory": "1g",
+      "cpus": 1,
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-28/next-round-cal-001/host.json"
+    },
+    "worker_dispatch": {
+      "status": "passed",
+      "entrypoint": "execution.worker_control.worker_class_for",
+      "candidates": [
+        "deepagents_langgraph",
+        "deepseek_harness"
+      ],
+      "tests": 3
+    },
+    "no_model_calibration_latest": {
+      "status": "passed",
+      "image": "harness-lab-bench:next-round-003",
+      "image_id": "sha256:76aa6efc99fd7b32eb5d31d99c414c346a28c5494d28fd18cba8adbd0a251a43",
+      "tests": 228,
+      "network": "none",
+      "read_only": true,
+      "memory": "1g",
+      "cpus": 1,
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/next-round-cal-003/host.json"
+    },
+    "dsh_baseline": {
+      "status": "passed",
+      "trial_id": "i29-dsh-baseline-101-001",
+      "candidate": "deepseek_harness",
+      "baseline_only": true,
+      "i24_capability_verified": false,
+      "bench_image_id": "sha256:1450a290e0d28903ee35c3f3ec7bd05c981d4e2f6032ab951657e96bf7c0055a",
+      "worker_image_id": "sha256:9ff8a3a596b822d080d88a6eb5f0950d6ecb10f23f77de2f29c4ecc4a3825ad6",
+      "services_image_id": "sha256:ae6f79fda70dbbbd49e90095e1d35c56607453a528cd8038eae4cfb8a17f02d7",
+      "model_calls": 9,
+      "actual_writes": 3,
+      "controller_elapsed_seconds": 34.292626647045836,
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-28/deepseek_harness/scope-baseline/i29-dsh-baseline-101-001"
+    },
+    "cancel_budget_fix": {
+      "status": "passed",
+      "function": "runner.pause_recovery.budget_snapshot(..., allow_inflight=True)",
+      "rule": "only trailing client_disconnected is allowed for cancel; prior calls must be forwarded 2xx",
+      "tests": 2
+    },
+    "dsh_dual_user_smoke": {
+      "status": "partial",
+      "trials": [
+        "i29-dsh-smoke-101-001",
+        "i29-dsh-smoke-101-002"
+      ],
+      "smoke_001": {
+        "main_a": true,
+        "main_b": true,
+        "cancel_a": false,
+        "cancel_b": false,
+        "host": true,
+        "cleanup": true,
+        "reason": "cancel budget rejected trailing client_disconnected"
+      },
+      "smoke_002": {
+        "main_a": true,
+        "main_b": true,
+        "cancel_a": false,
+        "cancel_b": true,
+        "overlap": false,
+        "host": true,
+        "cleanup": true,
+        "reason": "A cancel missing native turn/end+idle; effective tool overlap not hit"
+      },
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/"
+    },
+    "cancel_overlap_plan_a": {
+      "status": "passed",
+      "main_effective_overlap": true,
+      "cancel_live_peer": true,
+      "cancel_tool_completion_required": false,
+      "tests": [
+        "tests/test_cancel_live_peer.py",
+        "tests/test_pause_recovery.py::ModelBudgetTests"
+      ]
+    },
+    "dsh_dual_user_smoke_005_006": {
+      "status": "partial",
+      "smoke_005": {
+        "main": true,
+        "cancel_a": false,
+        "cancel_b": false,
+        "overlap": true,
+        "host": true,
+        "cleanup": true,
+        "reason": "A cancel trailing reserved; B cancel native terminal gap"
+      },
+      "smoke_006": {
+        "main": true,
+        "cancel_a": false,
+        "cancel_b": true,
+        "overlap": true,
+        "host": false,
+        "cleanup": true,
+        "reason": "A cancel native terminal gap; host sampling flake"
+      },
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/"
+    },
+    "dsh_cancel_cause_fix": {
+      "status": "passed",
+      "root_cause": "fetch adds non-enumerable stack to abort cause; DSH lossless JSON rejects turn/end",
+      "fix": "Proxy swallows stack defineProperty/set while preserving kind/reason",
+      "worker_image": "harness-lab-deepseek-harness:cancel-terminal-002",
+      "worker_image_id": "sha256:256f1d9a7cc05197e2786cd64ffa4b929680a58ee826b09651efb90ca7e4ca33",
+      "adapter_export_sha256": "c3c0fba8681dd43cc94b11a93a1538fde2a5647e872cba8084afeba006563bb1"
+    },
+    "dsh_smoke_008": {
+      "status": "task_checks_passed_host_sampling_flake",
+      "main_a": true,
+      "main_b": true,
+      "cancel_a": true,
+      "cancel_b": true,
+      "live_peer_overlap": true,
+      "host": false,
+      "cleanup": true,
+      "host_error": "sampling failure on short-lived surface container transition",
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-008"
+    },
+    "e1_smoke_011": {
+      "status": "passed",
+      "trial_id": "i29-dsh-smoke-101-011",
+      "task_a": true,
+      "task_a_cancel": true,
+      "task_b": true,
+      "task_b_cancel": true,
+      "product_boundary_overlap_reconnect": true,
+      "actual_container_resources_and_lifecycle": true,
+      "host": true,
+      "cleanup": true,
+      "sampling_errors": 0,
+      "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-011"
+    },
+    "sampling_lifecycle_lock": {
+      "status": "passed",
+      "fix": "sample_once and retire share a sampling_lock; short-lived worker transitions no longer sampled in removing state",
+      "file": "scripts/run_multi_user.py"
+    }
+  },
+  "verdict_labels": [
+    "PASS",
+    "FAIL_CAPABILITY",
+    "FAIL_INTEGRATION",
+    "FAIL_INTEGRATION_GATE",
+    "SKIP_LOCAL",
+    "SKIP_SCOPE",
+    "BLOCKED",
+    "NOT_TESTED",
+    "INCONCLUSIVE"
+  ],
+  "freeze": {
+    "frozen": true,
+    "frozen_at": "2026-10-28",
+    "scope": "基线、候选版本、任务集、种子、总 token 上限、阶段、判定标签",
+    "exceptions": "单候选绝对 token 上限在 DSH 基线后校准；任务集新增须升 plan 版本，不能静默改。"
+  },
+  "task_set": {
+    "config": "configs/experiment.yaml",
+    "config_sha256": "8ee4f24f75a94279d70e125a0e1f0659ede6ab834c334773576293b916458fb0",
+    "tasks": [
+      "configs/tasks/browser.yaml",
+      "configs/tasks/business-extension.yaml",
+      "configs/tasks/control-policy.yaml",
+      "configs/tasks/fault-recovery.yaml",
+      "configs/tasks/instance-cost.yaml",
+      "configs/tasks/pause-resume.yaml",
+      "configs/tasks/runtime.yaml",
+      "configs/tasks/scope.yaml",
+      "configs/tasks/tools.yaml"
+    ],
+    "seeds": [
+      101,
+      202,
+      303
+    ]
+  },
+  "m0": {
+    "status": "complete",
+    "completed_at": "2026-10-29",
+    "scope": "baseline, candidate versions, task set, seeds, total token cap, stage labels, token/time templates",
+    "note": "单候选 token 上限按预算冻结；没有 DSH 集成 token 实测样本，因此不是实测中位数。"
+  },
+  "m1": {
+    "status": "complete",
+    "completed_at": "2026-10-29",
+    "evidence": {
+      "token_proxy": "execution/token_proxy.py; 10 tests; real non-stream 108 / stream 102 token",
+      "profiles": "execution/candidate_profiles.py; 6 tests",
+      "worker_dispatch": "execution.worker_control.py worker_class_for; 3 tests",
+      "cancel_budget_and_live_peer": "runner/pause_recovery.py, runner/multi_user.py; 5 tests",
+      "docker_no_model": "harness-lab-bench:next-round-007 sha256:e95d...; 231 passed",
+      "dsh_baseline": "i29-dsh-baseline-101-001 passed; 9 calls, 3 writes",
+      "dsh_dual_user_task": "i29-dsh-smoke-101-010 all task checks pass; A/B cancel and overlap pass"
+    }
+  },
+  "e1": {
+    "status": "complete",
+    "completed_at": "2026-10-29",
+    "task_checks": "pass",
+    "host": "pass",
+    "cleanup": "pass",
+    "sampling_errors": 0,
+    "evidence": "/Users/hanbowen01/harness-lab-data/runs/2026-10-29/deepseek_harness/scope/i29-dsh-smoke-101-011"
+  }
+}

@@ -256,6 +256,11 @@ class ModelBudgetTests(Fixture):
             db.execute("INSERT INTO budget VALUES(1,?,20)", (p.sha(b"private-test-token"),))
             db.execute("INSERT INTO calls VALUES(1,?,?,?,?)", (stamp(1), "/chat/completions", outcome, 200 if outcome == "forwarded" else None))
 
+    def append_call(self, outcome, status=200):
+        with sqlite3.connect(self.paths.budget / "calls.sqlite") as db:
+            db.execute("INSERT INTO calls VALUES(2,?,?,?,?)",
+                       (stamp(2), "/chat/completions", outcome, status if outcome == "forwarded" else None))
+
     def test_budget_roundtrip_preserves_prefix_types_and_never_serializes_token(self):
         self.budget()
         before = p.budget_snapshot(self.paths.budget)
@@ -269,6 +274,23 @@ class ModelBudgetTests(Fixture):
         self.expect_failure("inflight_or_unknown_model_result", lambda: p.budget_snapshot(self.paths.budget))
         (self.paths.budget / "run.token").write_text("replacement-token\n")
         self.expect_failure("original_model_budget_binding_mismatch", lambda: p.budget_snapshot(self.paths.budget))
+
+    def test_cancel_budget_allows_a_trailing_client_disconnect(self):
+        self.budget("client_disconnected")
+        snapshot = p.budget_snapshot(self.paths.budget, allow_inflight=True)
+        assert snapshot["count"] == 1
+        self.expect_failure("inflight_or_unknown_model_result", lambda: p.budget_snapshot(self.paths.budget))
+
+    def test_cancel_budget_allows_a_trailing_reserved_call(self):
+        self.budget("reserved")
+        snapshot = p.budget_snapshot(self.paths.budget, allow_inflight=True)
+        assert snapshot["count"] == 1
+
+    def test_cancel_budget_rejects_disconnect_before_a_later_call(self):
+        self.budget("client_disconnected")
+        self.append_call("forwarded")
+        self.expect_failure("inflight_or_unknown_model_result",
+                            lambda: p.budget_snapshot(self.paths.budget, allow_inflight=True))
 
 
 class ProcessTests(Fixture):

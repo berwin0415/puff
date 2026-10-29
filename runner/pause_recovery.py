@@ -385,7 +385,7 @@ def validate_trigger(run, scope, candidate, trigger):
                 for line, name in active.values()), "pause_was_not_during_actual_native_activity")
 
 
-def budget_snapshot(budget, *, allow_empty=False):
+def budget_snapshot(budget, *, allow_empty=False, allow_inflight=False):
     token_hash = sha(regular(budget / "run.token").strip())
     database = budget / "calls.sqlite"
     regular(database)
@@ -397,8 +397,17 @@ def budget_snapshot(budget, *, allow_empty=False):
     require(binding == [(1, token_hash, CAP)], "original_model_budget_binding_mismatch")
     require((bool(rows) or allow_empty) and len(rows) <= CAP and all(row[0] == i for i, row in enumerate(rows, 1)),
             "model_call_reservation_history_invalid")
-    require(all(row[3] == "forwarded" and type(row[4]) is int and 200 <= row[4] < 300 for row in rows),
-            "inflight_or_unknown_model_result")
+    def forwarded(row):
+        return row[3] == "forwarded" and type(row[4]) is int and 200 <= row[4] < 300
+    if allow_inflight:
+        # 取消子试验故意在模型调用在途时停止；最后一行允许是客户端断连。
+        # 前面的调用仍必须是明确的 2xx，且断连只能出现在末尾。
+        require(all(forwarded(row) for row in rows[:-1]), "inflight_or_unknown_model_result")
+        if rows:
+            require(forwarded(rows[-1]) or rows[-1][3] in {"client_disconnected", "reserved"},
+                    "inflight_or_unknown_model_result")
+    else:
+        require(all(forwarded(row) for row in rows), "inflight_or_unknown_model_result")
     return {"token_sha256": token_hash, "cap": CAP, "count": len(rows),
             "rows_sha256": digest(rows), "rows": rows}
 

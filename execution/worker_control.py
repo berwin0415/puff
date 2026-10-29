@@ -22,10 +22,12 @@ from runner.shared_backend import AuditJournal, validate_journal_location
 from runner.shared_supervisor import (BoundaryError, OwnedAttempt, TaskSupervisor,
     _absolute, _fields, _identifier, linux_process_identity, read_bound_file, sha256, utc_now)
 
-
-DA_ARGV = ("/opt/venv/bin/python", "/opt/materials/harness-lab/entrypoint.py", "--request", "/config/request.json")
-ENVIRONMENT = frozenset({"MODEL_NAME", "MODEL_API_BASE_URL", "MODEL_RUN_TOKEN_FILE",
-    "LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", "PYTHONUNBUFFERED", "PYTHONDONTWRITEBYTECODE"})
+from execution.candidate_constants import (
+    DA_ARGV,
+    DA_CANDIDATE,
+    DA_ENVIRONMENT as ENVIRONMENT,
+    DSH_CANDIDATE,
+)
 
 
 def canonical(value):
@@ -273,6 +275,16 @@ class SingleAttemptWorker(TaskSupervisor):
         return 200, {**self.describe(), **getattr(self, action)(self.task.task_id)}
 
 
+def worker_class_for(candidate: str):
+    """按 candidate 选择固定 worker 实现；不启动容器，不做动态导入以外的分派。"""
+    if candidate == DA_CANDIDATE:
+        return SingleAttemptWorker
+    if candidate == DSH_CANDIDATE:
+        from execution.worker_control_dsh import DSHAttemptWorker
+        return DSHAttemptWorker
+    raise ValueError("unsupported worker candidate: " + str(candidate))
+
+
 class WorkerHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
 
@@ -324,6 +336,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--policy", default="/control/policy.json")
     parser.add_argument("--port", type=int, default=8092)
+    parser.add_argument("--candidate", choices=(DA_CANDIDATE, DSH_CANDIDATE), default=DA_CANDIDATE)
     args = parser.parse_args()
     data = immutable_bytes(args.policy)
     policy = json.loads(data)
@@ -331,7 +344,7 @@ def main():
     with_journal = AuditJournal(private_root / "worker-control.jsonl")
     worker = None
     try:
-        worker = SingleAttemptWorker(policy, sha256(data), with_journal)
+        worker = worker_class_for(args.candidate)(policy, sha256(data), with_journal)
         with WorkerHTTPServer(("0.0.0.0", args.port), worker) as server:
             server.serve_forever()
     finally:

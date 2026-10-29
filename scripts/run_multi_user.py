@@ -213,7 +213,13 @@ class MultiUserLab:
         # 本锁仅保护短时内存登记更新。Docker 的
         # inspect/start/stop/rm/stats/top 均在锁外执行。
         self.registry_lock = threading.RLock()
+        # 采样本与宿主容器 create/start/stop/rm 串行化，避免把过渡中的
+        # worker 当成无登记的 removing 对象。
+        self.sampling_lock = threading.RLock()
         self.registrations, self.retirements, self.bench_completions, self.inventory_absences = {}, {}, {}, []
+        # 零模型 surface 校准容器是一次性短命对象，不纳入持续资源采样；
+        # 否则 sampler 会与其 create/exit/rm 竞争，误报 transition 证据缺失。
+        self.sampling_excluded = set()
         self.network_registrations = {}
         self.phase, self.stop_sampling, self.sampler = "prepare", threading.Event(), None
         self.env = {**os.environ, "HARNESS_LAB_DATA_ROOT": str(self.config.host_data_root)}
@@ -235,9 +241,11 @@ class MultiUserLab:
         return ["--label", "com.docker.compose.project=harness-lab", "--label",
             "org.harness-lab.multi-user-trial=" + self.args.trial_id, "--label", "org.harness-lab.role=" + role]
 
-    def inventory(self):
+    def inventory(self, *, exclude_sampling=False):
         ids = self.call(["docker", "ps", "-aq", "--no-trunc", "--filter",
             "label=com.docker.compose.project=harness-lab"], timeout=5).stdout.split()
+        if exclude_sampling:
+            ids = [identity for identity in ids if identity not in self.sampling_excluded]
         if not ids:
             return []
         reply = self.call(["docker", "inspect", *ids], timeout=8, check=False)
@@ -351,7 +359,7 @@ class MultiUserLab:
         return ["--mount", "type=bind,src=" + str(source) + ",dst=" + str(target) + (",readonly" if readonly else "")]
 
     def create(self, role, suffix, network, alias, mounts, command, *, worker=False, env_file=None, second_network=None,
-               entrypoint=None, extra_env=None):
+               entrypoint=None, extra_env=None, sampling_excluded=False):
         name = "harness-lab-" + self.args.trial_id + "-" + suffix
         self.owned.append(name)
         argv = ["docker", "create", "--init", "--name", name, "--platform", "linux/arm64", *self.labels(role),
@@ -367,6 +375,8 @@ class MultiUserLab:
         argv += ["--entrypoint", entrypoint or (worker_python(self.args) if worker else "python"),
             self.image["worker" if worker else "services"], *command]
         identity = self.call(argv, timeout=30).stdout.strip()
+        if sampling_excluded:
+            self.sampling_excluded.add(identity)
         self.registered[identity] = role
         if second_network:
             self.call(["docker", "network", "connect", "--alias", alias, second_network, identity])
@@ -487,7 +497,7 @@ class MultiUserLab:
             mounts, ["--import", "tsx/esm", "/opt/materials/harness-lab/goal-surface-entrypoint.ts",
                      "--request", "/config/surface.json"], worker=True, entrypoint="/usr/local/bin/node",
             extra_env={"MODEL_NAME": self.pins["model_name"], "HARNESS_LIFECYCLE_IMAGE_ID": self.image["worker"],
-                       "TSX_TSCONFIG_PATH": "/opt/materials/sources/main/tsconfig.json"})
+                       "TSX_TSCONFIG_PATH": "/opt/materials/sources/main/tsconfig.json"}, sampling_excluded=True)
         with self.registry_lock:
             before = deepcopy(self.registrations[identity])
         waited = self.call(["docker", "wait", identity], check=False, timeout=90)
@@ -577,29 +587,31 @@ class MultiUserLab:
         before = self.observation(identity)
         if before is None or before["trial_id"] != self.args.trial_id:
             raise RuntimeError('不能回收非本实验拥有的容器')
-        with self.registry_lock:
-            if identity not in self.registrations:
-                raise RuntimeError('不能回收未登记的容器')
-            self.retirements[identity] = {"before_stop": before, "requested_monotonic": time.monotonic()}
-        self.call(["docker", "stop", "--time", "3", identity], timeout=15)
-        stopped = self.observation(identity)
-        with self.registry_lock:
-            self.retirements[identity].update({"after_stop": stopped, "removal_requested_monotonic": time.monotonic()})
-        self.call(["docker", "rm", identity])
-        deleted = self.observation(identity)
-        if deleted is not None:
-            raise RuntimeError('未观察到容器已不存在')
-        with self.registry_lock:
-            self.retirements[identity]["deleted"] = {"id": identity, "id_absent": True, "observed_at": now()}
-        self.records.append({"time": now(), "before_stop": before, "after_stop": stopped,
-            "deleted": {"id": identity, "id_absent": True, "observed_at": now()},
-            "claim": "wrapper_container_retirement_not_native_child_cancel_or_pause"})
+        with self.sampling_lock:
+            with self.registry_lock:
+                if identity not in self.registrations:
+                    raise RuntimeError('不能回收未登记的容器')
+                self.retirements[identity] = {"before_stop": before, "requested_monotonic": time.monotonic()}
+            self.call(["docker", "stop", "--time", "3", identity], timeout=15)
+            stopped = self.observation(identity)
+            with self.registry_lock:
+                self.retirements[identity].update({"after_stop": stopped, "removal_requested_monotonic": time.monotonic()})
+            self.call(["docker", "rm", identity])
+            deleted = self.observation(identity)
+            if deleted is not None:
+                raise RuntimeError('未观察到容器已不存在')
+            with self.registry_lock:
+                self.retirements[identity]["deleted"] = {"id": identity, "id_absent": True, "observed_at": now()}
+            self.records.append({"time": now(), "before_stop": before, "after_stop": stopped,
+                "deleted": {"id": identity, "id_absent": True, "observed_at": now()},
+                "claim": "wrapper_container_retirement_not_native_child_cancel_or_pause"})
 
     def sample_once(self):
         diagnostic = {"started_monotonic": time.monotonic(), "docker_observations": [],
             "docker_after_observations": [], "command_observations": {}}
         try:
-            return self._sample_once(diagnostic)
+            with self.sampling_lock:
+                return self._sample_once(diagnostic)
         except Exception as error:
             diagnostic["finished_monotonic"] = time.monotonic()
             if isinstance(error, SamplingFailure):
@@ -621,7 +633,7 @@ class MultiUserLab:
 
     def _sample_once(self, diagnostic):
         started = diagnostic["started_monotonic"]
-        observations = self.inventory()
+        observations = self.inventory(exclude_sampling=True)
         diagnostic["docker_observations"] = observations
         running = [row for row in observations if row["state"]["Running"]]
         memory, cpu = sum(row["memory_limit"] for row in running), sum(row["cpu_nano"] for row in running)
@@ -656,7 +668,7 @@ class MultiUserLab:
             futures = {identity: pool.submit(observe, identity) for identity in ids}
             replies = {identity: future.result() for identity, future in futures.items()}
         diagnostic["command_observations"] = {identity: value["commands"] for identity, value in replies.items()}
-        after_observations = self.inventory()
+        after_observations = self.inventory(exclude_sampling=True)
         after_observed_monotonic = time.monotonic()
         diagnostic["docker_after_observations"] = after_observations
         after = {row["id"]: row for row in after_observations}

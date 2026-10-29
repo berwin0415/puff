@@ -412,7 +412,8 @@ def exercise(args, global_paths, tasks):
             observation = {"time": p.now(), "monotonic": time.monotonic(), "tasks": samples}
             append(output / "overlap-observations.jsonl", observation)
             if previous and all(samples[key]["native_prefix_lines"] > previous["tasks"][key]["native_prefix_lines"]
-                    and samples[key]["successful_tools"] > previous["tasks"][key]["successful_tools"] for key in samples):
+                    for key in samples) and (args.kind == "cancel" or all(
+                    samples[key]["successful_tools"] > previous["tasks"][key]["successful_tools"] for key in samples)):
                 overlap = {"before": previous, "after": observation}
                 break
             if previous is None:
@@ -681,6 +682,25 @@ def validate_effective_overlap(tasks, record):
         for finish in finishes[task.task_id]) for task in tasks), "tool_progress_not_within_actual_native_overlap")
     return {"native_clock_domain": "same_Docker_VM_UTC", "overlapping_native_intervals": len(intersections),
         "both_tasks_have_actual_tool_success_within_overlap": True}
+
+
+def validate_cancel_live_peer(tasks, record):
+    """取消组只要求两方在观测窗口内真实活动，不要求成功工具完成。
+
+    取消本身会在工具/模型在途时打断，不能把主任务的“重叠内成功工具”
+    判据套到取消组；跨用户拒绝和原生取消终态由 cancel_native 单独检查。
+    """
+    p.require(len(tasks) == 2, "two_cancel_tasks_required")
+    for task in tasks:
+        before = record["before"]["tasks"][task.task_id]
+        after = record["after"]["tasks"][task.task_id]
+        p.require(after["native_prefix_lines"] > before["native_prefix_lines"],
+                  "cancel_task_not_live_during_peer_window")
+        p.reference(task.paths.run, after["activity_source"], required_hash=True)
+        tools = p.observed_prefix(task.paths.run, after["tools_source"], empty=True)
+        p.require(all(row.get("scope") == task.scope for _, _, row in tools),
+                  "cancel_overlap_foreign_tool_scope")
+    return {"cancel_peer_live": True, "requires_tool_completion": False}
 
 
 def same_container_observation(first, second):
@@ -1382,7 +1402,7 @@ def grade(args, global_paths, tasks):
                 p.control_integrity(paths, "worker-a")
                 cancellation = cancel_native(task, trigger, events, actual_ledger, seed=args.seed, global_paths=global_paths)
                 results[task.task_id] = {"passed": cancellation.get("passed", True), "native_cancel": cancellation,
-                    "model_calls": p.budget_snapshot(paths.budget)["count"]}
+                    "model_calls": p.budget_snapshot(paths.budget, allow_inflight=True)["count"]}
             checks.append({"name": task.task_id, "passed": results[task.task_id]["passed"]})
         except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as error:
             results[task.task_id] = {"passed": False, "error": type(error).__name__ + ":" + str(error)}
@@ -1391,7 +1411,11 @@ def grade(args, global_paths, tasks):
         for kind in KINDS:
             output = global_paths.run / "clients" / (kind + "-active")
             overlap = p.read(output / "overlap.json")
-            validate_effective_overlap([task for task in tasks if task.kind == kind], overlap)
+            selected = [task for task in tasks if task.kind == kind]
+            if kind == "main":
+                validate_effective_overlap(selected, overlap)
+            else:
+                validate_cancel_live_peer(selected, overlap)
             p.read(output / "finished.json")
             for operation in (("state", "events", "artifacts", "pause", "resume", "cancel") if kind == "main" else ("cancel",)):
                 probe = p.read(output / ("foreign-" + operation + ".json"))

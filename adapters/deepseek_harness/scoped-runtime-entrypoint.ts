@@ -14,6 +14,24 @@ const BROWSER_TOOLS = Object.freeze([
 ])
 const REQUIRED_BROWSER_TOOLS = ['browser_navigate', 'browser_snapshot', 'browser_click', 'browser_fill_form']
 const PREFIX = 'mcp__browser__'
+
+// Node fetch 会在 abort 原因对象上追加不可枚举 stack；用原型 setter 吞掉，
+// 保证原生 turn/end 的 reason 仍可被 DSH 的 lossless JSON 校验序列化。
+const CANCEL_CAUSE_TARGET = { kind: 'hook' as const, reason: '' }
+function cancelCause(reason: string): { kind: 'hook'; reason: string } {
+  // fetch 会用 defineProperty 往 abort reason 上补不可枚举 stack；代理吞掉它，
+  // 同时保持 kind/reason 仍是普通可枚举字段，供 turn/end 的 lossless JSON 校验。
+  return new Proxy({ ...CANCEL_CAUSE_TARGET, reason }, {
+    defineProperty(target, property, descriptor) {
+      if (property === 'stack') return true
+      return Reflect.defineProperty(target, property, descriptor)
+    },
+    set(target, property, value) {
+      if (property === 'stack') return true
+      return Reflect.set(target, property, value)
+    },
+  }) as { kind: 'hook'; reason: string }
+}
 type CancelControl = { requestId: string; requestedAt: string; turn: number; nativeStatusBefore: string;
   apiExecuted: boolean; requestSource: { path: string; line: number }; apiSource?: { path: string; line: number };
   turnEndReason?: any; turnEndSource?: { path: string; line: number }; idleLogged?: boolean }
@@ -105,7 +123,7 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       const control: CancelControl = { requestId, requestedAt, turn: activeTurn!, nativeStatusBefore: statusBefore, apiExecuted: false, requestSource }
       controls.push(control)
       apiAttempted = true
-      handle!.agent.cancel({ kind: 'hook', reason: 'experiment_cancel' })
+      handle!.agent.cancel(cancelCause('experiment_cancel'))
       control.apiExecuted = true
       apiExecuted = true
       control.apiSource = append('control-events.jsonl', { ...base, time: new Date().toISOString(), phase: 'native_api_returned',
@@ -414,7 +432,7 @@ export async function runScopedRuntime(request: RunRequest, provenance: unknown,
       deadlineTimer = setTimeout(() => {
         timedOut = true
         controller.abort()
-        handle?.agent.cancel({ kind: 'hook', reason: 'active_timeout' })
+        handle?.agent.cancel(cancelCause('active_timeout'))
         // 原生调用必须完全静止；启动或清理卡住时同样设置上限；
         // 独立 Docker 运行器也负责终止进程或容器。
         hardStopTimer = setTimeout(() => process.exit(1), 5_000)

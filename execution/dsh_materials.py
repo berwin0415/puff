@@ -7,22 +7,21 @@ from pathlib import Path
 import re
 import stat
 
+from execution.candidate_constants import (
+    DSH_ARGV as ARGV,
+    DSH_CANDIDATE as CANDIDATE,
+    DSH_CWD as CWD,
+    DSH_ENVIRONMENT as ENVIRONMENT,
+    DSH_SEMANTICS as SEMANTICS,
+    DSH_TOKEN as TOKEN,
+)
 from execution.worker_control import canonical, immutable_bytes, read_secret
 from runner.dsh_goal import fold_durable_goal, matches_live_view
 from runner.shared_supervisor import BoundaryError, read_bound_file, sha256
 
 
-CANDIDATE = "deepseek_harness"
-ARGV = ("/usr/local/bin/node", "--import", "tsx/esm",
-        "/opt/materials/harness-lab/goal-runtime-entrypoint.ts", "--request", "/config/request.json")
-CWD = "/opt/materials/sources/main"
-TOKEN = "/budget/run.token"
 HEX = re.compile(r"[0-9a-f]{64}")
 IMAGE = re.compile(r"sha256:[0-9a-f]{64}")
-SEMANTICS = {"pause": "native_goal_pause_at_empty_step_boundary",
-             "cancel": "public_Agent_cancel_immediate_terminal_requires_native_evidence"}
-ENVIRONMENT = frozenset({"MODEL_API_BASE_URL", "MODEL_NAME", "MODEL_RUN_TOKEN_FILE",
-    "HARNESS_LIFECYCLE_IMAGE_ID", "TSX_TSCONFIG_PATH", "DSH_TELEMETRY_DISABLED"})
 
 
 def need(value, code):
