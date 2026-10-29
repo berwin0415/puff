@@ -24,6 +24,8 @@ services:
   deepseek-harness:
     volumes: *detailed-volumes
   openclaw:
+    # E2 双容器并发：2 GiB 下 cancel 侧 OOMKilled；2.5 GiB 下 A cancel + B tools 同时通过。
+    mem_limit: 2560m
     volumes: *detailed-volumes
   deepagents-langgraph:
     volumes: *detailed-volumes

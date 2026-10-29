@@ -433,24 +433,26 @@
         "reason": "depends on dual-user workers"
       }
     ],
-    "judgment": "partial_single_user_and_concurrent_not_pass",
+    "judgment": "partial_concurrent_slice_pass_shared_backend_gap",
     "concurrent_slice": {
-      "status": "partial",
+      "status": "pass",
+      "a_trial": "i29-openclaw-e2g-cancel-101",
+      "a_cancel": "pass",
+      "b_trial": "i29-openclaw-e2h-tools-101",
       "b_tools": "pass",
-      "b_trial": "i29-openclaw-e2f-tools-101",
       "b_model_requests": 11,
-      "a_cancel": "fail_oom",
-      "a_trial": "i29-openclaw-e2e-cancel-101",
-      "a_native_terminal": "agent_end aborted; HTTP client_disconnected",
-      "a_failure": "Docker OOMKilled=true; result runtime_error terminated",
+      "b_writes": 3,
+      "memory_limit": "2560m",
+      "oom": "none",
+      "started_same_second": true,
       "isolation": "separate compose projects/containers/state/workspaces; no shared product backend",
       "not_run": [
         "cross-user 403",
         "live-peer/effective overlap",
         "pause/resume",
-        "dual-user host/cleanup"
+        "shared product backend"
       ],
-      "local_resource_limit": "两个 2 GiB OpenClaw worker + services 在 8 GiB Docker 下发生 OOM"
+      "note": "2 GiB 下 cancel 侧 OOMKilled；2.5 GiB 下并发通过。该结果只证明双容器并发，不是 E1 同口径双用户门禁。"
     }
   },
   "e4": {

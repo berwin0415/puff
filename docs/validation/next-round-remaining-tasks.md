@@ -1,6 +1,6 @@
 # 下一轮剩余任务与执行状态
 
-日期：2026-10-29。状态：**M0、M1、E1 完成；E2 已做最小双容器并发切片（B tools 通过、A cancel 未过）；E3/E4 部分；E5/E6 未执行。**
+日期：2026-10-29。状态：**M0、M1、E1 完成；E2 最小双容器并发切片通过（A cancel + B tools，2.5 GiB）；共享后端/403/暂停仍缺口；E3/E4 部分；E5/E6 未执行。**
 
 基线：[分享报告](../report/README.md)（提交 `7be4381`）。设计：[下一轮主场景实验设计](next-round-main-scenario-design.md)。冻结计划：[next-round-plan.json](next-round-plan.json)。完成记录：[M0/M1/E1](next-round-m0-m1-close.md)。
 
@@ -19,7 +19,7 @@
 
 | ID | 任务 | 依赖 | 状态 | 开始 | 完成 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| R-E2-01 | OpenClaw 双用户主场景：A/B 主任务、跨用户拒绝、取消、live-peer/重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | 双容器并发：B tools `i29-openclaw-e2f-tools-101` 通过；A cancel `i29-openclaw-e2e-cancel-101` 因 2 GiB OOM 失败 | 403/共享后端/暂停未接；本机 2×2 GiB OpenClaw 并发会 OOM |
+| R-E2-01 | OpenClaw 双用户主场景：A/B 主任务、跨用户拒绝、取消、live-peer/重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | 双容器并发 2.5 GiB：A cancel `i29-openclaw-e2g-cancel-101` + B tools `i29-openclaw-e2h-tools-101` 同时通过 | 403/共享后端/live-peer/暂停未接；不是同一产品后端 |
 | R-E2-02 | OpenClaw 业务定制：加 1 工具 + 1 规则 + 1 状态字段；规则执行层拦截；重试/恢复后仍生效 | R-E2-01 | 未开始 |  |  |  | 定制 token/迭代单独记 |
 | R-E3-01 | Deep Agents 同场景复测：主任务、取消、恢复、重叠、host/cleanup | M1、E1 | 部分 | 2026-10-29 |  | `i29-da-smoke-101-003`：A 通过、B 分页失败；A/B 取消、重叠、host、资源通过 | B 仍 `page_size=100`，保留旧失败 |
 | R-E4-01 | 第二层门禁：ADK、Agents SDK；过门禁且预算允许最多 1 条全量 | M1、token 代理 | 部分 | 2026-10-29 |  | ADK tools `i29-adk-tools-101-001`、Agents SDK tools `i29-agents-tools-101-001` 均通过 | 单用户能力门禁通过；多用户服务门禁未做 |
@@ -39,7 +39,8 @@
 | OpenClaw tools 单用户 | 通过 | `i29-openclaw-tools-101-001`：8 次模型、3 笔写入、16 项检查全过 |
 | OpenClaw cancel 单用户 | 通过 | `i29-openclaw-cancel-101-001`：3 次模型、原生 aborted 终态、取消后无新写入 |
 | 双容器并发 B tools | 通过 | `i29-openclaw-e2b-tools-101`：11 次模型、3 笔写入、16 项检查全过 |
-| 双容器并发 A cancel | 未通过 | `i29-openclaw-e2e-cancel-101`：Docker `OOMKilled=true`，`runtime_error: terminated`；并发下 2 GiB 候选被 OOM |
+| 双容器并发 A cancel | **通过** | `i29-openclaw-e2g-cancel-101`：2.5 GiB，原生 aborted，全部取消检查通过 |
+| 双容器并发 B tools | **通过** | `i29-openclaw-e2h-tools-101`：2.5 GiB，11 次模型、3 笔写入 |
 
 未执行、列为明确缺口：
 
