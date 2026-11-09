@@ -13,7 +13,7 @@
 在仓库根执行（`pnpm --filter @puff/api run <脚本>` 也可）：
 
 ```bash
-pnpm dev:api                                   # nest start --watch，:3000
+pnpm --filter @puff/api run dev               # nest start --watch，:3000
 pnpm --filter @puff/api typecheck              # tsc -p tsconfig.json --noEmit
 pnpm --filter @puff/api check                  # biome check .（格式 + lint + import 排序）
 pnpm --filter @puff/api check:fix              # 同上并写入修复
@@ -21,7 +21,7 @@ pnpm --filter @puff/api lint                   # 只跑 biome lint .
 pnpm --filter @puff/api test                   # 单元测试 src/**/*.spec.ts
 pnpm --filter @puff/api test:e2e               # e2e 测试 test/**/*.e2e-spec.ts
 pnpm --filter @puff/api build                  # nest build → dist/
-pnpm start:api                                 # 生产模式启动已构建产物
+pnpm --filter @puff/api run start:prod        # 生产模式启动已构建产物
 pnpm --filter @puff/api clean                  # 清理 dist
 pnpm exec nx run @puff/api:build               # 通过 Nx 执行
 ```

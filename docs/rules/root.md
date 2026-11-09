@@ -83,21 +83,28 @@
 
 ## 根脚本
 
-根脚本只做「批量转发」，不写死项目路径。
+根脚本只做与业务域无关的批量转发，不写死项目路径，也不放单业务域专用命令。
 
 | 命令                          | 作用                                        | 实现方式                              |
 | ----------------------------- | ------------------------------------------- | ------------------------------------- |
-| `pnpm dev`                    | 并行启动所有项目的 dev                      | `pnpm -r --parallel run dev`          |
-| `pnpm dev:api`                | 只启动服务端                                | `--filter @puff/api`                  |
-| `pnpm dev:web`                | 只启动前端                                  | `--filter @puff/web`                  |
-| `pnpm dev:desktop`            | 只启动桌面客户端                            | `--filter @puff/desktop`              |
-| `pnpm build`                  | 按依赖拓扑顺序构建全部（含类型检查）        | `pnpm -r run build`                   |
 | `pnpm check`                  | Biome 全仓库检查：格式 + lint + import 排序 | `biome check .`                       |
-| `pnpm test`                   | 全量测试                                    | `pnpm -r run test`                    |
-| `pnpm start:api`              | 以生产模式启动已构建的 API                  | `--filter @puff/api run start:prod`   |
-| `pnpm package:desktop:win`    | 构建 Windows x64 NSIS 安装包                | `--filter @puff/desktop run package:win` |
 
-只保留最少的全仓入口，更细的操作使用原生命令：
+单业务域命令直接用 `pnpm --filter` / `pnpm -r` 调用：
+
+| 需求 | 命令 |
+| --- | --- |
+| 启动 puff 域全部项目 | `pnpm -r --parallel run dev` |
+| 构建 puff 域全部项目 | `pnpm -r run build` |
+| 测试 puff 域全部项目 | `pnpm -r run test` |
+| 只启动服务端 | `pnpm --filter @puff/api run dev` |
+| 只启动前端 | `pnpm --filter @puff/web run dev` |
+| 只启动桌面客户端 | `pnpm --filter @puff/desktop run dev` |
+| 生产模式启动 API | `pnpm --filter @puff/api run start:prod` |
+| 构建 Windows 安装包 | `pnpm --filter @puff/desktop run package:win` |
+
+Windows 首次初始化使用 `powershell -ExecutionPolicy Bypass -File tools/bootstrap.ps1`；没有 mise 时两个 bootstrap 入口都会回退到 PATH 上的 `pnpm install`。
+
+更细的全仓操作也使用原生命令：
 
 | 需求 | 命令 |
 | --- | --- |
@@ -146,7 +153,7 @@ Biome 是例外：根目录只有 `pnpm check` 一个全仓入口，自动修复
 2. 包名 `@puff/<短名>`，设置 `"private": true`。
 3. 补齐脚本契约 `dev` / `build` / `lint` / `typecheck` / `clean`（必要时 `test`），并 `extends` 根 `tsconfig.base.json`。`domains/**` 下的项目路径深度为四层，写 `../../../../tsconfig.base.json`；`type:lab` 的 Python 项目不参与 workspace，可只提供自己的运行脚本。
 4. 新增 `project.json`，声明 `domain:*`、`type:*`、`lang:*` 标签和 `nx:run-script` targets。
-5. 在仓库根执行 `pnpm install`，然后跑 `pnpm check && pnpm build && node tools/checks/project-boundaries.mjs`。
+5. 在仓库根执行 `pnpm install`，然后跑 `pnpm check && pnpm -r run build && node tools/checks/project-boundaries.mjs`。
 6. 新增 `docs/rules/<name>.md` 规范文档，更新本文件与根 `README.md` 的目录结构；涉及路由时同时更新 [routing.md](./routing.md)。
 
 ## 新增一个共享包

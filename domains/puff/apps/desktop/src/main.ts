@@ -58,7 +58,7 @@ if (!gotSingleInstanceLock) {
     showMainWindow();
   });
   app.on('window-all-closed', () => {
-    // The tray owns the application lifecycle on Windows.
+    // Windows 上由托盘负责应用生命周期。
   });
   app.on('activate', () => {
     showMainWindow();
@@ -505,6 +505,6 @@ function writeDiagnostic(message: string): void {
       'utf8',
     );
   } catch {
-    // Diagnostics must never prevent the application from starting.
+    // 诊断日志失败不能阻止应用启动。
   }
 }

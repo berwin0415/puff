@@ -1,8 +1,8 @@
 import { defineConfig, loadEnv } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 
-// Reads .env / .env.local / .env.<mode> so the dev proxy target stays out of
-// source code. Only PUBLIC_* keys are inlined into the client bundle.
+// 读取 .env / .env.local / .env.<mode>，让开发代理目标不进入源码。
+// 只有 PUBLIC_* 前缀的变量会被内联到浏览器产物。
 const { parsed } = loadEnv();
 
 export default defineConfig({
@@ -15,8 +15,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      // Keeps the browser on a single origin during development: the API is
-      // reached through the dev server instead of cross-origin requests.
+      // 开发时让浏览器保持同源：API 请求通过 dev server 转发，而不是跨域直连。
       '/api': {
         target: parsed.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: true,

@@ -32,9 +32,9 @@ puff 是面向用户的业务域，包含 Web/桌面客户端与后端 API 服�
 在仓库根执行：
 
 ```bash
-pnpm dev                 # 并行启动三个项目
-pnpm dev:web             # 只启动 Web
-pnpm dev:desktop         # 只启动桌面端
-pnpm dev:api             # 只启动 API
+pnpm -r --parallel run dev                 # 并行启动三个项目
+pnpm --filter @puff/web run dev            # 只启动 Web
+pnpm --filter @puff/desktop run dev        # 只启动桌面端
+pnpm --filter @puff/api run dev            # 只启动 API
 pnpm exec nx affected -t lint typecheck test build
 ```

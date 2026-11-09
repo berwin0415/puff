@@ -45,13 +45,20 @@ domains/llm-lab/
 ## 运行
 
 ```bash
+# macOS / Linux
 cd domains/llm-lab/labs/mini-gpt
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python scripts/step01_check_env.py
 ```
 
-Windows 下把 `.venv/bin/python` 换成 `.venv\Scripts\python`。
+```powershell
+# Windows PowerShell
+cd domains\llm-lab\labs\mini-gpt
+py -3.11 -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python scripts\step01_check_env.py
+```
 
 ## 边界
 

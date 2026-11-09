@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Enforces the dependency rules from docs/monorepo-architecture-design.md (4.5).
-// The repo is TypeScript-only today, so workspace edges come from package.json
-// manifests instead of an Nx project graph. Revisit when a second language joins.
+// 校验 docs/monorepo-architecture-design.md（4.5 节）中的依赖规则。
+// 仓库目前只有 TypeScript 项目，因此依赖边来自 package.json 清单，
+// 而不是 Nx 项目图。等出现第二种语言后再改回项目图校验。
 
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';

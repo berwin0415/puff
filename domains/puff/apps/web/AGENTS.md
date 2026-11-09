@@ -13,7 +13,7 @@
 在仓库根执行（`pnpm --filter @puff/web run <脚本>` 也可）：
 
 ```bash
-pnpm dev:web                              # rsbuild dev，:5173，/api 代理到 :3000
+pnpm --filter @puff/web run dev           # rsbuild dev，:5173，/api 代理到 :3000
 pnpm --filter @puff/web typecheck         # tsc --noEmit
 pnpm --filter @puff/web check             # biome check .（格式 + lint + import 排序）
 pnpm --filter @puff/web check:fix         # 同上并写入修复
@@ -24,7 +24,7 @@ pnpm --filter @puff/web clean             # 清理 dist 与缓存
 pnpm exec nx run @puff/web:build          # 通过 Nx 执行
 ```
 
-本项目**没有** `test` 脚本，`pnpm test` 会跳过它；不要在任何回复里声称前端测试通过。
+本项目**没有** `test` 脚本，`pnpm -r run test` 会跳过它；不要在任何回复里声称前端测试通过。
 
 ## 目录约定
 
@@ -65,4 +65,4 @@ pnpm --filter @puff/web check
 pnpm --filter @puff/web build
 ```
 
-改到端口、代理或请求基地址 → 实际起 `pnpm dev` 验证一次请求链路，并同步 `docs/rules/routing.md`（若涉及路由）。
+改到端口、代理或请求基地址 → 实际起 `pnpm -r --parallel run dev` 验证一次请求链路，并同步 `docs/rules/routing.md`（若涉及路由）。

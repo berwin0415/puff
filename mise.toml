@@ -1,5 +1,5 @@
-# Pinned toolchain for local development and CI.
-# Keep these versions aligned with package.json (packageManager / engines).
+# 本地开发与 CI 使用的固定工具链。
+# 版本需与 package.json 的 packageManager / engines 保持一致。
 [tools]
 node = "24.22.0"
 pnpm = "11.2.2"

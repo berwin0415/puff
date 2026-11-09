@@ -315,7 +315,7 @@ characters outside the vocabulary have no id at all:
 
 - `notes/` 全部文档按四条规则返工，`01-环境.md` 重写。
 - `AGENTS.md` 增补上述四条规则，文档结构定为七项。
-- 10 个 Python 文件的注释与 docstring 改为中文——这是对仓库根规则（注释用英文）的明确例外，程序输出不在约定内。
+- 10 个 Python 文件的注释与 docstring 改为中文——当时仓库根规则要求注释用英文，这里作为例外使用中文；该规则现已调整为全仓库中文。程序输出不在约定内。
 
 **现在能回答的问题**
 

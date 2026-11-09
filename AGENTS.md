@@ -15,7 +15,7 @@
 ## 环境与安装
 
 - Node `>= 22.12`；包管理器由根 `package.json` 的 `packageManager` 固定（当前 `pnpm@11.2.2`），只用 pnpm。
-- 工具链版本固定在 `mise.toml`。首次初始化可执行 `tools/bootstrap`（需要本机已安装 mise），否则直接 `pnpm install` 也可以。
+- 工具链版本固定在 `mise.toml`。首次初始化可执行 `tools/bootstrap`；Windows 使用 `powershell -ExecutionPolicy Bypass -File tools/bootstrap.ps1`。没有 mise 时两个入口都会回退到 PATH 上的 pnpm。
 - 依赖只在仓库根执行 `pnpm install`。安装新依赖必须指明包：`pnpm --filter @puff/api add <pkg>`。
 - **第三方版本只能写在 `pnpm-workspace.yaml` 的 catalog 里**，各 `package.json` 一律写 `"catalog:"`。不要在项目里直接写版本号。
 - 不要手写或手工合并 `pnpm-lock.yaml`；不要新增第二个锁文件。
@@ -27,17 +27,23 @@
 
 | 命令                                 | 作用                                          |
 | ------------------------------------ | --------------------------------------------- |
-| `pnpm dev`                           | 并行启动全部项目的 dev                        |
-| `pnpm dev:api` / `pnpm dev:web`      | 只启动其中一端                                |
-| `pnpm dev:desktop`                   | 构建并启动 Electron 桌面客户端                |
-| `pnpm build`                         | 递归构建全部（包含各项目类型检查）            |
 | `pnpm check`                         | Biome 全仓库检查（格式 + lint + import 排序） |
-| `pnpm test`                          | 递归测试                                      |
-| `pnpm start:api`                     | 以生产模式启动已构建的 API                    |
-| `pnpm package:desktop:win`           | 构建 Windows x64 NSIS 安装包                  |
 | `node tools/checks/project-boundaries.mjs` | 检查项目标签与依赖边界                  |
 
-只保留最少的全仓入口；更细的操作直接用原生命令：
+根目录不提供单业务域的构建、测试或启动命令；这些命令直接用 `pnpm --filter` / `pnpm -r` 调用：
+
+```bash
+pnpm -r --parallel run dev                            # 启动 puff 域全部项目
+pnpm -r run build                                     # 构建 puff 域全部项目
+pnpm -r run test                                      # 测试 puff 域全部项目
+pnpm --filter @puff/api run dev                       # 只启动 API
+pnpm --filter @puff/web run dev                       # 只启动 Web
+pnpm --filter @puff/desktop run dev                   # 只启动桌面端
+pnpm --filter @puff/api run start:prod                # 生产模式启动 API
+pnpm --filter @puff/desktop run package:win           # 构建 Windows x64 安装包
+```
+
+更细的全仓操作也直接用原生命令：
 
 ```bash
 pnpm exec biome check --write .                       # 自动修复
@@ -56,12 +62,13 @@ pnpm exec nx affected -t lint typecheck test build    # 受影响项目
 
 ```bash
 pnpm check
-pnpm build
-pnpm test
+pnpm -r run build                          # 改到 puff 域代码时
+pnpm -r run test                           # 改到 puff 域代码时
 node tools/checks/project-boundaries.mjs   # 改到项目结构或依赖时必跑
 ```
 
 - 只改文档/配置时，至少跑 `pnpm check`（注意 Biome 不处理 Markdown 与 YAML，这类文件需自行保持整洁格式）。
+- llm-lab 是 Python 域，构建/测试按 `domains/llm-lab/README.md` 的方式执行，不受 pnpm 递归命令影响。
 - 改到 HTTP 行为时，额外跑 `pnpm --filter @puff/api test:e2e`。
 - 改到前后端联调（端口、代理、请求地址）时，实际起服务验证一次请求链路。
 
@@ -76,7 +83,7 @@ node tools/checks/project-boundaries.mjs   # 改到项目结构或依赖时必�
 - **行尾**：全仓库统一 UTF-8 + LF，由根 `.gitattributes`（`* text=auto eol=lf`）保证。新增或修改文件时保持 LF，不要写 CRLF；只有 `*.bat` / `*.cmd` 例外。
 - **格式与工具链**：格式化、风格校验与 import 排序统一用 Biome，配置只有根 `biome.json`（`@biomejs/biome` 也只在根 `package.json` 声明）；TS 严格模式来自根 `tsconfig.base.json`，各包通过 `extends` 继承。不要在包里新增 `.prettierrc*` / `.eslintrc*` / `.oxlintrc.json` / 本地 `biome.json`，也不要引入 Prettier、ESLint、oxlint。
 - **Biome 与 Nest 的注入类型**：`domains/*/services/**` 下 `style/useImportType` 已按目录关闭。**不要把构造注入的类型改成 `import type`**：类型检查会通过，但运行时会报 `Nest can't resolve dependencies of the AppController (?)`。
-- **语言**：文档与提交信息用中文，代码标识符与代码注释用英文。
+- **语言**：文档、提交信息与代码注释用中文，代码标识符用英文。
 - **不要在 Web 项目引入 Vite**，也不要手工添加 `index.html`（HTML 由 Rsbuild 按配置生成）。
 - **不要自作主张提交**：除非用户明确要求，不要 `git commit` / `git push` / 建分支；也不要删除用户已有的改动。
 

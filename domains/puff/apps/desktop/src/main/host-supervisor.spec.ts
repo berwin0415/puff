@@ -94,9 +94,9 @@ describe('HostSupervisor', () => {
     first.exitCode = 1;
     first.emit('exit', 1, null);
     await restarting;
-    await new Promise((resolve) => setTimeout(resolve, 25));
-
-    expect(spawnHost).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => {
+      expect(spawnHost).toHaveBeenCalledTimes(2);
+    });
     await supervisor.stop();
   });
 });

@@ -11,7 +11,7 @@
 
 ## 当前打包流水线
 
-`pnpm package:desktop:win` 不是直接对 `domains/puff/apps/desktop` 跑 electron-builder，流水线固定为：
+`pnpm --filter @puff/desktop run package:win` 不是直接对 `domains/puff/apps/desktop` 跑 electron-builder，流水线固定为：
 
 1. 执行 `tsc --noEmit && tsdown`，把 Electron main 构建到 `dist/`。
 2. 在系统临时目录创建独立的 runtime 工程，只声明 `@deepseek-ai/dsh@0.1.7-rc.2` 与 `pnpm@11.7.0`。
@@ -268,8 +268,8 @@ The modules directories will be removed and reinstalled from scratch. Proceed?
 ```bash
 pnpm check
 pnpm --filter @puff/desktop typecheck
-pnpm test
-pnpm build
+pnpm --filter @puff/desktop test
+pnpm --filter @puff/desktop build
 pnpm --filter @puff/desktop test:e2e
 pnpm --filter @puff/desktop package:win:dir
 ```

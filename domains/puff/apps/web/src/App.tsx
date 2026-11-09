@@ -35,12 +35,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // State only changes after an await, so this is the usual fetch-on-mount.
+    // 只有 await 之后才会改状态，因此这就是常规的挂载时请求。
     void checkHealth();
   }, [checkHealth]);
 
-  // Triggered by the button, so the loading hint only replaces the result when
-  // the user explicitly asks for a fresh check.
+  // 由按钮触发，因此只有用户明确要求重新检查时才用 loading 提示替换结果。
   const recheck = () => {
     setHealth({ state: 'loading' });
     void checkHealth();

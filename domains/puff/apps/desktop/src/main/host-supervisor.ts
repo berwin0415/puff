@@ -95,7 +95,7 @@ async function terminateProcessTree(pid: number): Promise<void> {
   try {
     process.kill(pid, 'SIGKILL');
   } catch {
-    // The process may have exited between the graceful signal and the force kill.
+    // 进程可能在优雅退出与强制终止之间已经结束。
   }
 }
 

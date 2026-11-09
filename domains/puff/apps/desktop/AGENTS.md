@@ -15,7 +15,7 @@
 在仓库根执行：
 
 ```bash
-pnpm dev:desktop                              # 构建并启动 Electron
+pnpm --filter @puff/desktop run dev            # 构建并启动 Electron
 pnpm --filter @puff/desktop build             # 类型检查 + tsdown + 静态页拷贝
 pnpm --filter @puff/desktop typecheck         # tsc --noEmit
 pnpm --filter @puff/desktop check             # Biome 检查

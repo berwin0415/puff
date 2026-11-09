@@ -35,5 +35,6 @@
       "cache": true
     }
   },
-  "maxCacheSize": "3GB"
+  "maxCacheSize": "3GB",
+  "analytics": true
 }

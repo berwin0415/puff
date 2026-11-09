@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // Resolves the path aliases declared in tsconfig.json, including the ones
-  // added by `nest g library`, without an extra plugin.
+  // 解析 tsconfig.json 中声明的路径别名（包括 `nest g library` 添加的），
+  // 不需要额外插件。
   resolve: {
     tsconfigPaths: true,
   },

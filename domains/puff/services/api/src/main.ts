@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
-// Loads domains/puff/services/api/.env when present. Node's built-in loader
-// keeps the API dependency-free; missing files are ignored so real env vars still apply.
+// 存在 domains/puff/services/api/.env 时加载它。使用 Node 内置加载器让 API
+// 不依赖额外包；文件不存在时忽略，真实环境变量仍然生效。
 try {
   process.loadEnvFile();
 } catch {
-  // No .env file next to the API package: nothing to load.
+  // API 包旁边没有 .env 文件：无需加载。
 }
 
 async function bootstrap() {

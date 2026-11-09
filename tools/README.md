@@ -5,7 +5,8 @@
 | 路径 | 用途 |
 | --- | --- |
 | `checks/project-boundaries.mjs` | 校验项目标签、路径与依赖方向，CI 每个 PR 都运行 |
-| `bootstrap` | 首次初始化：`mise install` + `pnpm install` |
+| `bootstrap` | macOS / Linux / Git Bash：`mise install`（缺失时回退 `pnpm install`）+ `pnpm install` |
+| `bootstrap.ps1` | Windows PowerShell：同上 |
 
 ## 依赖边界检查
 

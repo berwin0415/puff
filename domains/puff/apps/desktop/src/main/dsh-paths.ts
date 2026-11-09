@@ -36,8 +36,7 @@ export function resolveDefaultWorkspaceDir(options: DshPathOptions = {}): string
   const env = options.env ?? process.env;
   const platform = options.platform ?? process.platform;
   const home = selectedHomeDir(options);
-  // Use the join rules of the simulated platform so tests and callers can
-  // resolve Windows paths on any host.
+  // 使用被模拟平台的拼接规则，让测试和调用方可以在任意宿主上解析 Windows 路径。
   const pathJoin = platform === 'win32' ? win32.join : posix.join;
 
   if (platform === 'win32') {

@@ -92,7 +92,7 @@ src/components/StatusCard/
 
 | 命令                              | 说明                                       |
 | --------------------------------- | ------------------------------------------ |
-| `pnpm dev:web`                    | dev server，固定 `5173`（`strictPort`）    |
+| `pnpm --filter @puff/web run dev` | dev server，固定 `5173`（`strictPort`）    |
 | `pnpm --filter @puff/web build`   | `tsc --noEmit` + `rsbuild build` → `dist/` |
 | `pnpm --filter @puff/web preview` | 预览产物，`4173`                           |
 

@@ -40,44 +40,55 @@
 
 - Node `>= 22.12`（`mise.toml` 固定为 24.22.0）
 - pnpm `>= 10`（`packageManager` 已固定为 `pnpm@11.2.2`，执行 `corepack enable` 可自动切换版本）
-- 可选：mise（执行 `tools/bootstrap` 自动安装固定工具链）
+- 可选：mise（执行 `tools/bootstrap` 自动安装固定工具链；Windows 使用 `powershell -ExecutionPolicy Bypass -File tools/bootstrap.ps1`）
 
 ## 快速开始
 
 ```bash
 pnpm install
 
-# 可选：自定义端口
+# 可选：自定义端口（macOS / Linux）
 cp domains/puff/services/api/.env.example domains/puff/services/api/.env
 
-# 同时启动 API(:3000)、Web(:5173) 与桌面客户端
-pnpm dev
+# 可选：自定义端口（Windows PowerShell）
+Copy-Item domains/puff/services/api/.env.example domains/puff/services/api/.env
+
+# 同时启动 puff 域的 API(:3000)、Web(:5173) 与桌面客户端
+pnpm -r --parallel run dev
 ```
 
 打开 http://localhost:5173 ，页面会请求 `/api/health` 并显示后端状态，用来确认前后端已经打通。
 
 > 目前是脚手架状态：除了后端的探活/信息接口外没有任何业务功能。
 
-只启动其中一个：
+只启动 puff 域的其中一个项目：
 
 ```bash
-pnpm dev:api
-pnpm dev:web
-pnpm dev:desktop
+pnpm --filter @puff/api run dev
+pnpm --filter @puff/web run dev
+pnpm --filter @puff/desktop run dev
 ```
+
+根目录只保留与业务域无关的全仓命令；业务域专用命令用 `pnpm --filter` 或 `pnpm -r` 直接调用。
 
 ## 根目录脚本
 
 | 命令                                 | 作用                                                  |
 | ------------------------------------ | ----------------------------------------------------- |
-| `pnpm dev`                           | 并行启动所有项目的 dev                                |
-| `pnpm dev:api` / `pnpm dev:web`      | 只启动其中一个                                        |
-| `pnpm dev:desktop`                   | 只启动桌面客户端（Electron + DSH Host）               |
-| `pnpm build`                         | 递归构建（每个项目都先做类型检查）                    |
-| `pnpm check`                         | Biome 全仓库检查（格式 + lint + import 排序，CI 用）  |
-| `pnpm test`                          | 递归测试（API/桌面端用 vitest；没有 test 脚本的包跳过） |
-| `pnpm start:api`                     | 以生产模式启动已构建的 API                            |
-| `pnpm package:desktop:win`           | 构建 Windows x64 按用户安装包                         |
+| `pnpm check`                         | Biome 全仓库检查（格式 + lint + import 排序）          |
+
+根目录不提供业务域构建、测试或启动命令；各域用原生命令自行执行：
+
+```bash
+pnpm -r --parallel run dev                            # 启动 puff 域全部项目
+pnpm -r run build                                     # 构建 puff 域全部项目
+pnpm -r run test                                      # 测试 puff 域全部项目
+pnpm --filter @puff/api run dev                       # 只启动 API
+pnpm --filter @puff/web run dev                       # 只启动 Web
+pnpm --filter @puff/desktop run dev                   # 只启动桌面端
+pnpm --filter @puff/api run start:prod                # 生产模式启动 API
+pnpm --filter @puff/desktop run package:win           # 构建 Windows x64 安装包
+```
 
 只保留最少的全仓入口。需要更细的操作时直接用原生命令：
 
@@ -115,7 +126,7 @@ pnpm --filter @puff/desktop package:win:dir
 ## 桌面客户端
 
 - `domains/puff/apps/desktop` 固定随包分发 `@deepseek-ai/dsh@0.1.7-rc.2` 与 `pnpm@11.7.0`，不需要全局 Node/pnpm/dsh。
-- 首版面向 Windows x64，通过 `pnpm package:desktop:win` 生成按用户安装的 NSIS 包。
+- 首版面向 Windows x64，通过 `pnpm --filter @puff/desktop run package:win` 生成按用户安装的 NSIS 包。
 - 客户端启动 `dsh --profile puff --no-open --port 0`，从 stdout 读取带一次性 token 的 loopback URL 并交给 `BrowserWindow`。
 - DSH Home 默认沿用 `~/.dsh`，使用独立 `puff` profile；默认 workspace 为 `%LOCALAPPDATA%\puff\workspace`。
 - 托盘常驻，关闭窗口只隐藏；开机启动默认关闭，Host 崩溃按 1s/2s/4s 最多重启三次。

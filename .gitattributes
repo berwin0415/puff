@@ -25,3 +25,4 @@
 
 # Shell 脚本与容器/CI 里执行的文件保持 LF
 *.sh text eol=lf
+*.ps1 text eol=lf

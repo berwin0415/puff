@@ -1,41 +1,41 @@
-# dependencies
+# 依赖
 node_modules/
 
-# build output
+# 构建产物
 dist/
 build/
 release/
 *.tsbuildinfo
 
-# tests / coverage
+# 测试 / 覆盖率
 coverage/
 .vitest/
 
-# logs
+# 日志
 logs/
 *.log
 pnpm-debug.log*
 
-# env
+# 环境变量
 .env
 .env.*
 !.env.example
 
-# caches
+# 缓存
 .cache/
 .vite/
 .turbo/
 .nx/
 .rspack-profile-*/
 
-# python (llm-lab)
+# Python（llm-lab）
 .venv/
 __pycache__/
 *.py[cod]
 domains/llm-lab/labs/mini-gpt/data/raw/
 domains/llm-lab/labs/mini-gpt/checkpoints/
 
-# editors / os
+# 编辑器 / 操作系统
 .idea/
 .comate/
 .vscode/*
