@@ -2,7 +2,7 @@
 
 本目录是 puff Monorepo 的工程规范，按「中型应用」的长期可维护性编写：分层清晰、边界明确、能在半年后由新人接手。
 
-> 仓库按业务域组织：`domains/puff/` 下是 Web、桌面端与 API；`domains/llm-lab/` 是 Python 学习域（`type:lab`，不参与 workspace）；`platform/`、`contracts/`、`infra/` 目前是约定位置。除后端探活/信息接口外没有自研业务功能，桌面端主要复用官方 DeepSeek Harness Web UI。
+> 仓库按业务域组织：`domains/puff/` 下是 Web、桌面端与 API；`domains/llm-lab/` 是 Python 学习域（项目为 `type:lib`，学习属性由域本身表达，不参与 workspace）；`platform/`、`contracts/`、`infra/` 目前是约定位置。除后端探活/信息接口外没有自研业务功能，桌面端主要复用官方 DeepSeek Harness Web UI。
 > 规范里凡标注「➕」的目录与文件，都是**约定位置，需要时再创建**，不要提前建空包占位。
 
 | 文档                       | 覆盖范围                                                                          |

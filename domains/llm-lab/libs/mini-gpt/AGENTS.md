@@ -1,7 +1,7 @@
-# llm-lab（domains/llm-lab/labs/mini-gpt）
+# llm-lab（domains/llm-lab/libs/mini-gpt）
 
 本目录是 `llm-lab` 业务域下的学习/实验项目：从零手写一个最简易的 LLM（mini-GPT），目标是理解，不是交付产品。
-它是 `type:lab` 项目，不参与 pnpm workspace，也没有根 `dev` / `build` / `lint` / `typecheck` / `clean` 脚本契约。
+它是 `type:lib` 项目；学习/实验属性由 llm-lab 业务域本身表达。它不参与 pnpm workspace，也没有根 `dev` / `build` / `lint` / `typecheck` / `clean` 脚本契约。
 
 ## 定位
 
@@ -12,7 +12,7 @@
 ## 目录约定
 
 ```
-domains/llm-lab/labs/mini-gpt/
+domains/llm-lab/libs/mini-gpt/
 ├─ AGENTS.md        本文件：目录规范
 ├─ README.md        入口：当前进度、怎么跑
 ├─ ROADMAP.md       目标与步骤阶梯（含验收标准与状态）
@@ -77,7 +77,7 @@ domains/llm-lab/labs/mini-gpt/
 
 ## 环境与脚本
 
-- Python `3.11`，虚拟环境固定在 `domains/llm-lab/labs/mini-gpt/.venv`（不入库）。
+- Python `3.11`，虚拟环境固定在 `domains/llm-lab/libs/mini-gpt/.venv`（不入库）。
 - 首次安装：
 
   ```powershell
@@ -93,7 +93,7 @@ domains/llm-lab/labs/mini-gpt/
 
 - 临时的 `python -c "..."` 不会加载 `_bootstrap`，中文输出会变成乱码；这类一次性命令要加 `-X utf8`（或先设 `PYTHONUTF8=1`）。脚本内已经自动处理，不用管。
 
-- 本目录**没有** `package.json`，不实现根 `AGENTS.md` 里 `dev` / `build` / `lint` / `typecheck` / `clean` 的脚本契约——那是 `domains/*/apps/*`、`domains/*/services/*` 与 `platform/*` 下项目的约定；本目录只以 `type:lab` 参与边界检查。
+- 本目录**没有** `package.json`，不实现根 `AGENTS.md` 里 `dev` / `build` / `lint` / `typecheck` / `clean` 的脚本契约——那是 `domains/*/apps/*`、`domains/*/services/*` 与 `platform/*` 下项目的约定；本目录以 `type:lib` 参与边界检查。
 
 ## 命名
 

@@ -21,10 +21,10 @@
 
 ## 环境
 
-Python `3.11` + 独立虚拟环境 `domains/llm-lab/labs/mini-gpt/.venv`，不参与根仓库的 pnpm workspace。
+Python `3.11` + 独立虚拟环境 `domains/llm-lab/libs/mini-gpt/.venv`，不参与根仓库的 pnpm workspace。
 
 ```powershell
-cd domains/llm-lab/labs/mini-gpt
+cd domains/llm-lab/libs/mini-gpt
 py -3.11 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
@@ -49,7 +49,7 @@ py -3.11 -m venv .venv
 ## 目录
 
 ```
-domains/llm-lab/labs/mini-gpt/
+domains/llm-lab/libs/mini-gpt/
 ├─ AGENTS.md        目录规范（本目录的规则与约定）
 ├─ README.md        本文件：入口
 ├─ ROADMAP.md       目标与步骤阶梯

@@ -5,7 +5,7 @@
 | 编号 | 标题 | 状态 |
 | --- | --- | --- |
 | [0001](./0001-adopt-domain-first-monorepo.md) | 采用按业务域组织的 Monorepo | 已接受 |
-| [0002](./0002-model-learning-lab-as-domain.md) | 把学习区建模为 `type:lab` 业务域 | 已接受 |
+| [0002](./0002-model-learning-lab-as-domain.md) | 把学习区纳入业务域 | 已接受 |
 
 新增 ADR 时：
 

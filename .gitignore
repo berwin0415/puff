@@ -32,8 +32,8 @@ pnpm-debug.log*
 .venv/
 __pycache__/
 *.py[cod]
-domains/llm-lab/labs/mini-gpt/data/raw/
-domains/llm-lab/labs/mini-gpt/checkpoints/
+domains/llm-lab/libs/mini-gpt/data/raw/
+domains/llm-lab/libs/mini-gpt/checkpoints/
 
 # 编辑器 / 操作系统
 .idea/

@@ -595,6 +595,6 @@ grad_norm 全程约 0.3，远低于阈值 1.0，裁剪一次都没触发
 
 ## 2026-11-09 迁入业务域
 
-- `llm-lab/` 整体迁移到 `domains/llm-lab/labs/mini-gpt/`，作为 `type:lab` 项目纳入边界检查。
+- `llm-lab/` 整体迁移到 `domains/llm-lab/libs/mini-gpt/`，作为 `type:lib` 项目纳入边界检查；学习/实验属性由 llm-lab 业务域本身表达。
 - 内部相对路径（`scripts/`、`src/`、`data/`）保持不变，学习内容未修改。
 - 仍不参与 pnpm workspace，运行方式见本目录 README。

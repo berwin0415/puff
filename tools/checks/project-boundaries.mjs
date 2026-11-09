@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 校验 docs/monorepo-architecture-design.md（4.5 节）中的依赖规则。
-// 仓库目前只有 TypeScript 项目，因此依赖边来自 package.json 清单，
-// 而不是 Nx 项目图。等出现第二种语言后再改回项目图校验。
+// pnpm workspace 目前只有 TypeScript 项目，因此依赖边来自 package.json 清单，
+// 而不是 Nx 项目图。等出现第二种 workspace 语言后再改回项目图校验。
 
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
@@ -14,7 +14,6 @@ const DOMAIN_KINDS = {
   apps: 'app',
   services: 'service',
   libs: 'lib',
-  labs: 'lab',
 };
 
 const PLATFORM_KINDS = {
@@ -147,13 +146,6 @@ function isAllowed(dependent, dependency) {
     return dependency.domain === 'platform' && dependency.type === 'lib';
   }
 
-  if (dependent.type === 'lab') {
-    return (
-      dependency.type === 'lib' &&
-      (dependency.domain === dependent.domain || dependency.domain === 'platform')
-    );
-  }
-
   if (dependency.type === 'lib') {
     return dependency.domain === dependent.domain || dependency.domain === 'platform';
   }
@@ -193,10 +185,7 @@ async function main() {
         );
       }
 
-      if (
-        (dependency.type === 'app' || dependency.type === 'service' || dependency.type === 'lab') &&
-        project.type !== 'e2e'
-      ) {
+      if ((dependency.type === 'app' || dependency.type === 'service') && project.type !== 'e2e') {
         fail(project.name, `must not depend on ${dependency.type} ${dependency.name}`);
       }
 

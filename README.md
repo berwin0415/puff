@@ -15,7 +15,7 @@
 │  │  ├─ e2e/               域内跨应用 e2e（当前为空）
 │  │  └─ README.md
 │  └─ llm-lab/
-│     ├─ labs/
+│     ├─ libs/
 │     │  └─ mini-gpt/       llm-lab-mini-gpt  从零手写 mini-GPT（Python）
 │     └─ README.md
 ├─ platform/                跨域共享库与服务（当前为空）
@@ -153,4 +153,4 @@ pnpm --filter @puff/desktop package:win:dir
 - 前端环境变量由 Rsbuild 自动读取 `domains/puff/apps/web/.env*`：只有 `PUBLIC_` 前缀的变量会注入浏览器代码（`import.meta.env.PUBLIC_*`），`src/env.d.ts` 里开了 `strictImportMetaEnv`，没声明的键读不到。
 - 前端入口约定为 `src/index.tsx`，HTML 由 Rsbuild 按 `html.title` / `html.favicon` 生成，仓库里不再放 `index.html`。
 - 共享代码：只被 puff 域使用的放 `domains/puff/libs/`；跨域通用能力放 `platform/libs/`。源码直出的纯 TS 包对 Nest 的 `tsc` 构建不友好，推荐先构建出 `dist` 再被引用。
-- `domains/llm-lab` 是 Python 学习域（`type:lab`），不参与 pnpm workspace，也没有 Nx target；运行方式见 [domains/llm-lab/README.md](./domains/llm-lab/README.md)。
+- `domains/llm-lab` 是 Python 学习域（`type:lib` 项目），不参与 pnpm workspace，也没有 Nx target；学习/实验属性由域本身表达，运行方式见 [domains/llm-lab/README.md](./domains/llm-lab/README.md)。

@@ -1,6 +1,6 @@
 # 根目录规范
 
-仓库按**业务域**组织：`domains/<域>/{apps,services,libs,labs,e2e}` 放业务与实验项目，`platform/` 放跨域共享能力，`contracts/` 放接口契约。根目录只承担 workspace 编排、跨包治理与仓库级工具。
+仓库按**业务域**组织：`domains/<域>/{apps,services,libs,e2e}` 放业务项目，`platform/` 放跨域共享能力，`contracts/` 放接口契约。根目录只承担 workspace 编排、跨包治理与仓库级工具。
 
 ## 目录结构
 
@@ -17,7 +17,7 @@
 │  │  ├─ e2e/                    ➕ 域内跨应用 e2e
 │  │  └─ README.md               ✅ 负责团队、服务清单
 │  └─ llm-lab/
-│     ├─ labs/                   ✅ 学习/实验项目
+│     ├─ libs/                   ✅ 域内库（本域即学习项目）
 │     │  └─ mini-gpt/            ✅ llm-lab-mini-gpt（Python）
 │     └─ README.md               ✅ 域定位与运行方式
 ├─ platform/                     ➕ 跨域共享，平台团队维护
@@ -44,6 +44,8 @@
 └─ README.md                     ✅ 仓库入口文档
 ```
 
+学习/实验属性由业务域本身表达：不新增 `labs/` 目录，也不使用 `type:lab` 标签；项目按代码形态归入 `apps` / `services` / `libs`。
+
 ## 各层职责
 
 | 路径                        | 放什么                                             | 不放什么                                             |
@@ -51,7 +53,6 @@
 | `domains/<域>/apps/*`       | 客户端应用（Web、桌面、移动端）                    | 供别人 import 的业务逻辑（下沉到 libs）              |
 | `domains/<域>/services/*`   | 可独立部署的后端服务                               | 其他服务的私有代码（跨域只能走契约）                 |
 | `domains/<域>/libs/*`       | 只被本域依赖的共享库、类型、工具                   | 跨域通用能力（放 `platform/libs/`）                  |
-| `domains/<域>/labs/*`       | 学习、实验、研究项目（可不部署、不被依赖）         | 生产业务代码、被应用/服务引用的库                    |
 | `domains/<域>/e2e/*`        | 本域跨应用 e2e                                     | 单应用内部 e2e（留在该应用 `test/`）                 |
 | `platform/libs/*`           | 跨域通用能力，多语言实现用语言后缀区分             | 具体业务逻辑                                         |
 | `platform/services/*`       | 网关、鉴权等平台服务                               | 业务服务                                             |
@@ -61,13 +62,12 @@
 
 ## 依赖边界
 
-每个项目在 `project.json` 中声明三个标签：`domain:<域>`、`type:app|service|lib|lab|contract|e2e|tool`、`lang:<语言>`。
+每个项目在 `project.json` 中声明三个标签：`domain:<域>`、`type:app|service|lib|contract|e2e|tool`、`lang:<语言>`。
 
 | 项目类型                   | 允许依赖                                     |
 | -------------------------- | -------------------------------------------- |
 | `type:app` / `type:service` | 同域 lib、platform lib、任意 contract        |
 | 域内 `type:lib`            | 同域 lib、platform lib、任意 contract        |
-| `type:lab`                 | 同域 lib、platform lib、任意 contract        |
 | platform lib               | platform lib、platform contract              |
 | contract                   | contract（仅用于引用公共类型）               |
 | e2e                        | 任意应用、服务、contract、平台 lib           |
@@ -75,7 +75,7 @@
 
 补充：
 
-- 应用、服务和 lab 不能被任何项目依赖（e2e 除外）。
+- 应用和服务不能被任何项目依赖（e2e 除外）。
 - 一个域要复用另一个域的东西时：通用能力下沉到 `platform/`；业务逻辑通过调用对方服务的契约获得。
 - 每个服务独占自己的数据库 schema，其他服务不能直连。
 
@@ -149,9 +149,9 @@ Biome 是例外：根目录只有 `pnpm check` 一个全仓入口，自动修复
 
 ## 新增一个项目
 
-1. 选择位置：业务应用 `domains/<域>/apps/<name>`，业务服务 `domains/<域>/services/<name>`，域内库 `domains/<域>/libs/<name>`，学习/实验项目 `domains/<域>/labs/<name>`，平台项目 `platform/libs/<name>` 或 `platform/services/<name>`。
+1. 选择位置：业务应用 `domains/<域>/apps/<name>`，业务服务 `domains/<域>/services/<name>`，域内库 `domains/<域>/libs/<name>`，平台项目 `platform/libs/<name>` 或 `platform/services/<name>`。学习/实验属性由业务域本身表达，不新增 `labs/` 目录。
 2. 包名 `@puff/<短名>`，设置 `"private": true`。
-3. 补齐脚本契约 `dev` / `build` / `lint` / `typecheck` / `clean`（必要时 `test`），并 `extends` 根 `tsconfig.base.json`。`domains/**` 下的项目路径深度为四层，写 `../../../../tsconfig.base.json`；`type:lab` 的 Python 项目不参与 workspace，可只提供自己的运行脚本。
+3. 补齐脚本契约 `dev` / `build` / `lint` / `typecheck` / `clean`（必要时 `test`），并 `extends` 根 `tsconfig.base.json`。`domains/**` 下的项目路径深度为四层，写 `../../../../tsconfig.base.json`；Python 项目不参与 workspace，可只提供自己的运行脚本。
 4. 新增 `project.json`，声明 `domain:*`、`type:*`、`lang:*` 标签和 `nx:run-script` targets。
 5. 在仓库根执行 `pnpm install`，然后跑 `pnpm check && pnpm -r run build && node tools/checks/project-boundaries.mjs`。
 6. 新增 `docs/rules/<name>.md` 规范文档，更新本文件与根 `README.md` 的目录结构；涉及路由时同时更新 [routing.md](./routing.md)。

@@ -1,14 +1,14 @@
 # AGENTS.md（仓库根目录）
 
-本文件对**整个仓库**生效；`domains/*/apps/*`、`domains/*/services/*`、`domains/*/libs/*`、`domains/*/labs/*`、`platform/*` 下的项目还有各自的 `AGENTS.md`，只约束对应项目。规则冲突时，就近的文件优先。
+本文件对**整个仓库**生效；`domains/*/apps/*`、`domains/*/services/*`、`domains/*/libs/*`、`platform/*` 下的项目还有各自的 `AGENTS.md`，只约束对应项目。规则冲突时，就近的文件优先。
 
 ## 项目概览
 
 - 按业务域组织的 pnpm workspaces 单体仓库，用 Nx 编排任务、用 pnpm catalog 固定第三方版本。
 - 当前有两条业务线：
   - `puff`：`domains/puff/apps/web`（`@puff/web`，React 19 + Rsbuild 2）、`domains/puff/apps/desktop`（`@puff/desktop`，Electron + DeepSeek Harness）、`domains/puff/services/api`（`@puff/api`，NestJS 12）。
-  - `llm-lab`：`domains/llm-lab/labs/mini-gpt`（`llm-lab-mini-gpt`，Python），从零手写 mini-GPT 的学习/实验域。
-- llm-lab 不参与 pnpm workspace，也没有 dev/build/lint/typecheck/clean 脚本契约；它通过 `project.json` 的 `type:lab` 参与边界检查。
+  - `llm-lab`：`domains/llm-lab/libs/mini-gpt`（`llm-lab-mini-gpt`，Python），从零手写 mini-GPT 的学习/实验域。
+- llm-lab 不参与 pnpm workspace，也没有 dev/build/lint/typecheck/clean 脚本契约；项目以 `type:lib` 参与边界检查，学习/实验属性由业务域本身表达。
 - **puff 当前只有基础脚手架与 DSH 桌面薄壳**：除后端探活/信息接口（`GET /api`、`GET /api/health`）外没有自研业务功能。桌面端主要原样加载官方 DSH Web UI，不要假设存在自研聊天、鉴权、状态管理或路由。
 - 工程规范在 `docs/rules/`，架构决策在 `docs/adr/`，设计依据是 `docs/monorepo-architecture-design.md`。
 
@@ -76,7 +76,7 @@ node tools/checks/project-boundaries.mjs   # 改到项目结构或依赖时必�
 
 - **依赖边界**：项目只能按 `docs/monorepo-architecture-design.md` 4.5 的矩阵依赖。域内应用/服务只能依赖同域 lib、平台 lib 与契约；跨域只能通过 `contracts/`。禁止跨项目相对导入（如 API 里引用 `../../web/src/...`）。
 - **新共享代码的位置**：只被一个域使用的放 `domains/<域>/libs/`；跨域通用能力放 `platform/libs/`。不要恢复平铺的 `packages/`。
-- **项目标签**：每个项目必须有 `project.json`，声明唯一的 `domain:*`、`type:*`、`lang:*` 标签，否则边界检查失败。`type` 取 `app` / `service` / `lib` / `lab` / `contract` / `e2e` / `tool`。
+- **项目标签**：每个项目必须有 `project.json`，声明唯一的 `domain:*`、`type:*`、`lang:*` 标签，否则边界检查失败。`type` 取 `app` / `service` / `lib` / `contract` / `e2e` / `tool`。
 - **ESM 后缀**：`domains/puff/services/api` 使用 `nodenext`，相对导入必须带 `.js` 后缀（`./app.service.js`）；Web 端不写扩展名。
 - **环境变量**：`.env` 一律不入库，只提交 `.env.example`；新增变量必须同步对应项目的 `.env.example`；前端只有 `PUBLIC_` 前缀会进浏览器产物，密钥绝不能用该前缀。
 - **生成物**：`dist/`、`node_modules/`、`*.tsbuildinfo`、`coverage/`、`.rspack-profile-*/`、`.nx/` 一律不入库。
@@ -96,8 +96,8 @@ node tools/checks/project-boundaries.mjs   # 改到项目结构或依赖时必�
 
 ## 新增项目时
 
-- 业务应用：`domains/<域>/apps/<name>`；业务服务：`domains/<域>/services/<name>`；域内库：`domains/<域>/libs/<name>`；学习/实验项目：`domains/<域>/labs/<name>`；平台库/服务：`platform/libs/<name>`、`platform/services/<name>`。
-- 包名 `@puff/<短名>`，补齐 `dev` / `build` / `lint` / `typecheck` / `clean` 脚本契约（可选 `test`），并 `extends` 根 `tsconfig.base.json`。`type:lab` 的 Python 项目不参与 workspace，可只提供自己的运行脚本。
-- 新增 `project.json`，声明 `domain:<域>`、`type:app|service|lib|lab`、`lang:<语言>`。
+- 业务应用：`domains/<域>/apps/<name>`；业务服务：`domains/<域>/services/<name>`；域内库：`domains/<域>/libs/<name>`；平台库/服务：`platform/libs/<name>`、`platform/services/<name>`。学习/实验属性由业务域本身表达，不新增 `labs/` 目录。
+- 包名 `@puff/<短名>`，补齐 `dev` / `build` / `lint` / `typecheck` / `clean` 脚本契约（可选 `test`），并 `extends` 根 `tsconfig.base.json`。Python 项目不参与 workspace，可只提供自己的运行脚本。
+- 新增 `project.json`，声明 `domain:<域>`、`type:app|service|lib`、`lang:<语言>`。
 - 新建自己的 `AGENTS.md`，至少包含：项目定位、脚本清单、目录约定、验证命令、与根规则的差异点。
 - 跑 `node tools/checks/project-boundaries.mjs` 确认边界规则通过。

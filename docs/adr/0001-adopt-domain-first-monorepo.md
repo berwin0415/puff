@@ -30,4 +30,4 @@
 - 新增应用/服务必须落在 `domains/<域>/{apps,services}/`，并补齐 `project.json` 标签与脚本契约。
 - 第三方依赖版本只能改 catalog，不能在各项目里单独升级。
 - 跨域复用只能通过 `platform/` 或 `contracts/`，否则边界检查失败。
-- 2026-11-09 后续：`llm-lab` 已迁入 `domains/llm-lab`，作为 `type:lab` 业务域管理；仍不参与 pnpm workspace。见 [ADR 0002](./0002-model-learning-lab-as-domain.md)。
+- 2026-11-09 后续：`llm-lab` 已迁入 `domains/llm-lab`，作为独立业务域管理（项目使用 `type:lib`）；仍不参与 pnpm workspace。见 [ADR 0002](./0002-model-learning-lab-as-domain.md)。

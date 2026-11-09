@@ -21,8 +21,7 @@ node tools/checks/project-boundaries.mjs
 1. 每个项目必须有且只有一个 `domain:*`、`type:*`、`lang:*` 标签。
 2. 路径中的业务域与 `domain` 标签一致；目录类型与 `type` 标签一致。
 3. `package.json` 中的 workspace 依赖必须符合依赖矩阵。
-4. 应用、服务和 lab 不能被除 e2e 外的项目依赖。
+4. 应用和服务不能被除 e2e 外的项目依赖。
 5. 生产依赖不能指向 `type:tool` 项目。
-6. `type:lab` 只能依赖同域 lib、platform lib 与 contract；没有 `package.json` 的项目按 `project.json` 登记。
 
 新增业务域或项目类型时，同步修改脚本中的 `DOMAIN_KINDS` / `PLATFORM_KINDS` 与 `isAllowed`。
