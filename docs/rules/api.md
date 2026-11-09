@@ -1,4 +1,4 @@
-# 服务端目录规范（apps/api）
+# 服务端目录规范（domains/puff/services/api）
 
 技术栈：NestJS 12、ESM（`nodenext`）、Vitest、Biome（格式化 + lint）。所有接口统一挂在全局前缀 `/api` 下（见 [routing.md](./routing.md)）。
 
@@ -7,7 +7,7 @@
 ## 目录结构
 
 ```
-apps/api/
+domains/puff/services/api/
 ├─ src/
 │  ├─ main.ts                  ✅ 启动入口：环境变量、全局前缀、CORS、监听端口
 │  ├─ app.module.ts            ✅ 根模块：只做模块装配
@@ -31,7 +31,7 @@ apps/api/
 │  └─ database/                ➕ 数据访问层（ORM/连接/迁移），用到时再建
 ├─ test/                       ✅ e2e 测试（*e2e-spec.ts）
 ├─ nest-cli.json               ✅ Nest CLI 配置
-├─ tsconfig.json               ✅ 继承 ../../tsconfig.base.json
+├─ tsconfig.json               ✅ 继承 ../../../../tsconfig.base.json
 ├─ tsconfig.build.json         ✅ 构建用（排除 test 与 spec）
 ├─ vitest.config.ts            ✅ 单元测试
 ├─ vitest.config.e2e.ts        ✅ e2e 测试
@@ -67,8 +67,8 @@ pnpm --filter @puff/api exec nest generate resource modules/users
 
 ## 配置与环境变量
 
-- 启动时由 `src/main.ts` 用 Node 内置的 `process.loadEnvFile()` 加载 `apps/api/.env`，因此**无需引入 `@nestjs/config`**；文件不存在时静默跳过，真实环境变量优先。
-- 新变量必须同时更新 `apps/api/.env.example`，并在 [root.md](./root.md) 的脚本/部署说明或本文件里写清用途与默认值。
+- 启动时由 `src/main.ts` 用 Node 内置的 `process.loadEnvFile()` 加载 `domains/puff/services/api/.env`，因此**无需引入 `@nestjs/config`**；文件不存在时静默跳过，真实环境变量优先。
+- 新变量必须同时更新 `domains/puff/services/api/.env.example`，并在 [root.md](./root.md) 的脚本/部署说明或本文件里写清用途与默认值。
 - 业务代码**不要散读 `process.env`**：统一在 `src/config/`（➕）读取、给默认值、做校验后导出类型化对象；`main.ts` 只读启动必需的变量（如 `PORT`）。
 - 禁止把密钥、数据库口令写进入库文件或日志。
 
@@ -108,9 +108,9 @@ pnpm --filter @puff/api add @nestjs/swagger          # 生产依赖
 pnpm --filter @puff/api add -D @nestjs/testing       # 开发依赖
 ```
 
-- 不要在这里安装前端依赖；不要把后端依赖装到根目录。
+- 不要在这里安装前端依赖；不要把后端依赖装到根目录。新增依赖必须先写入 `pnpm-workspace.yaml` 的 `catalog`，再在项目 `package.json` 里引用 `"catalog:"`。
 - 保持 `typecheck`（`tsc -p tsconfig.json --noEmit`）与 `check`（Biome，`biome check .`）在提交前全绿；`pnpm --filter @puff/api check:fix` 可自动修复格式与 import 排序。
-- Biome 的 `style/useImportType` 在 `apps/api` 下被显式关闭（见根 `biome.json` 的 overrides）。原因：Nest 依赖 `emitDecoratorMetadata` 生成构造函数参数元数据，把 `AppService` 这类注入类型改成 `import type` 后类型检查仍然通过，但启动时会报 `Nest can't resolve dependencies of the AppController (?)`。**不要为了消警告把注入的类型改成 `import type`。**
+- Biome 的 `style/useImportType` 在 `domains/*/services/**` 下被显式关闭（见根 `biome.json` 的 overrides）。原因：Nest 依赖 `emitDecoratorMetadata` 生成构造函数参数元数据，把 `AppService` 这类注入类型改成 `import type` 后类型检查仍然通过，但启动时会报 `Nest can't resolve dependencies of the AppController (?)`。**不要为了消警告把注入的类型改成 `import type`。**
 
 ## 常见反例
 

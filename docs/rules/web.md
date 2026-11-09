@@ -1,4 +1,4 @@
-# 前端目录规范（apps/web）
+# 前端目录规范（domains/puff/apps/web）
 
 技术栈：React 19 + Rsbuild 2（Rspack）+ TypeScript 严格模式 + Biome（格式化 + lint）。
 
@@ -7,7 +7,7 @@
 ## 目录结构
 
 ```
-apps/web/
+domains/puff/apps/web/
 ├─ public/                     ✅ 原样拷贝到 dist 的静态资源（favicon 等）
 ├─ src/
 │  ├─ index.tsx                ✅ 唯一入口：createRoot + 全局样式 + 路由挂载
@@ -26,7 +26,7 @@ apps/web/
 │  ├─ types/                   ➕ 跨业务共享类型
 │  └─ assets/                  ➕ 需要经过构建处理的图片/字体
 ├─ rsbuild.config.ts           ✅ 构建/开发服务配置（端口、代理、HTML、插件）
-├─ tsconfig.json               ✅ 继承 ../../tsconfig.base.json
+├─ tsconfig.json               ✅ 继承 ../../../../tsconfig.base.json
 ├─ （无本地 lint/format 配置） ✅ 统一使用根目录 biome.json
 └─ .env.example                ✅ 环境变量样例（真实 .env 不入库）
 ```
@@ -75,7 +75,7 @@ src/components/StatusCard/
 
 ## 环境变量
 
-- Rsbuild 自动读取 `apps/web/.env`、`.env.local`、`.env.<mode>`；**只有 `PUBLIC_` 前缀的变量会注入浏览器代码**，通过 `import.meta.env.PUBLIC_XXX` 访问。
+- Rsbuild 自动读取 `domains/puff/apps/web/.env`、`.env.local`、`.env.<mode>`；**只有 `PUBLIC_` 前缀的变量会注入浏览器代码**，通过 `import.meta.env.PUBLIC_XXX` 访问。
 - 新增变量必须同时做三件事：更新 `.env.example`、在 `src/env.d.ts` 的 `ImportMetaEnv` 里声明（已开启 `strictImportMetaEnv`，未声明的键读不到）、在规范文档里说明用途。
 - 当前使用的变量：`PUBLIC_API_BASE_URL`（浏览器请求基地址，默认 `/api`）、`API_PROXY_TARGET`（dev 代理目标，仅构建配置使用，不会进浏览器）。
 - 任何密钥、token 都不得使用 `PUBLIC_` 前缀——它们会被打进前端产物。

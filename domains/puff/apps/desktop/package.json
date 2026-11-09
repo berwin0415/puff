@@ -1,0 +1,42 @@
+{
+  "name": "@puff/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "puff desktop client (Electron + DeepSeek Harness)",
+  "author": "puff",
+  "license": "UNLICENSED",
+  "main": "dist/main.mjs",
+  "scripts": {
+    "dev": "node scripts/copy-static.mjs && tsdown && concurrently -k \"tsdown --watch\" \"electronmon .\"",
+    "start": "electron .",
+    "build": "tsc --noEmit && tsdown && node scripts/copy-static.mjs",
+    "package:win": "pnpm run build && node scripts/package-win.mjs nsis",
+    "package:win:dir": "pnpm run build && node scripts/package-win.mjs dir",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts",
+    "clean": "rimraf dist release/desktop release/app release/runtime node_modules/.cache"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh": "catalog:",
+    "pnpm": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "concurrently": "catalog:",
+    "electron": "catalog:",
+    "electron-builder": "catalog:",
+    "electronmon": "catalog:",
+    "rimraf": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

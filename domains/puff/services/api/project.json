@@ -1,0 +1,18 @@
+{
+  "name": "@puff/api",
+  "tags": ["domain:puff", "type:service", "lang:ts"],
+  "targets": {
+    "build": { "executor": "nx:run-script", "options": { "script": "build" } },
+    "lint": { "executor": "nx:run-script", "options": { "script": "lint" } },
+    "typecheck": {
+      "executor": "nx:run-script",
+      "options": { "script": "typecheck" }
+    },
+    "test": { "executor": "nx:run-script", "options": { "script": "test" } },
+    "test:e2e": {
+      "executor": "nx:run-script",
+      "options": { "script": "test:e2e" }
+    },
+    "clean": { "executor": "nx:run-script", "options": { "script": "clean" } }
+  }
+}

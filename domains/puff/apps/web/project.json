@@ -1,0 +1,13 @@
+{
+  "name": "@puff/web",
+  "tags": ["domain:puff", "type:app", "lang:ts"],
+  "targets": {
+    "build": { "executor": "nx:run-script", "options": { "script": "build" } },
+    "lint": { "executor": "nx:run-script", "options": { "script": "lint" } },
+    "typecheck": {
+      "executor": "nx:run-script",
+      "options": { "script": "typecheck" }
+    },
+    "clean": { "executor": "nx:run-script", "options": { "script": "clean" } }
+  }
+}

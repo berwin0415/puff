@@ -1,0 +1,22 @@
+# CODEOWNERS
+#
+# The repository is not yet owned by a GitHub organization, so every rule stays
+# commented out. Replace the placeholder teams with real handles and uncomment
+# the relevant lines before enabling "Require review from Code Owners".
+
+# Build and orchestration configuration
+# /mise.toml                         @your-org/build-team
+# /nx.json                           @your-org/build-team
+# /tools/                            @your-org/build-team
+# /.github/                          @your-org/build-team
+
+# Third-party dependency versions
+# /pnpm-workspace.yaml               @your-org/dependency-reviewers
+
+# Shared platform code
+# /platform/                         @your-org/platform-team
+# /contracts/                        @your-org/platform-team
+
+# Business domains
+# /domains/puff/                     @your-org/puff-team
+# /domains/llm-lab/                  @your-org/llm-lab-team

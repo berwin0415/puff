@@ -14,7 +14,7 @@
       "!**/.rspack-profile-*",
       "!**/*.tsbuildinfo",
       "!pnpm-lock.yaml",
-      "!apps/web/public"
+      "!domains/*/apps/web/public"
     ]
   },
   "formatter": {
@@ -43,7 +43,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/api/**"],
+      "includes": ["domains/*/services/**"],
       "linter": {
         "rules": {
           "style": {

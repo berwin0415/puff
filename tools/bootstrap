@@ -1,0 +1,16 @@
+#!/bin/sh
+# One-time local setup: install pinned toolchain, then workspace dependencies.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if ! command -v mise >/dev/null 2>&1; then
+  echo "mise is required to install the pinned toolchain." >&2
+  echo "Install it from https://mise.jdx.dev/getting-started.html, then rerun tools/bootstrap." >&2
+  exit 1
+fi
+
+mise install
+mise exec -- pnpm install
+
+echo "Ready. Try 'pnpm dev', 'pnpm exec nx graph' or 'node tools/checks/project-boundaries.mjs'."

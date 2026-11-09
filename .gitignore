@@ -25,17 +25,19 @@ pnpm-debug.log*
 .cache/
 .vite/
 .turbo/
+.nx/
 .rspack-profile-*/
 
 # python (llm-lab)
 .venv/
 __pycache__/
 *.py[cod]
-llm-lab/data/raw/
-llm-lab/checkpoints/
+domains/llm-lab/labs/mini-gpt/data/raw/
+domains/llm-lab/labs/mini-gpt/checkpoints/
 
 # editors / os
 .idea/
+.comate/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json

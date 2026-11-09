@@ -1,4 +1,4 @@
-# 桌面端规范（apps/desktop）
+# 桌面端规范（domains/puff/apps/desktop）
 
 技术栈：Electron 44 + TypeScript 严格模式 + tsdown + electron-builder + Biome。
 
@@ -53,7 +53,7 @@
 
 ## 打包
 
-- electron-builder 输出目录为 `apps/desktop/release/desktop`。
+- electron-builder 输出目录为 `domains/puff/apps/desktop/release/desktop`。
 - `clean` 清理 `dist`、`release/desktop`、`release/app` 与 `release/runtime` 暂存目录。
 - Windows 目标为 x64 NSIS，按用户安装，不要求管理员权限。
 - 产物名：`puff-Setup-<version>-x64.exe`。

@@ -4,20 +4,20 @@
 
 相关实现：
 
-- [打包脚本](../apps/desktop/scripts/package-win.mjs)
-- [afterPack 钩子](../apps/desktop/scripts/after-pack.cjs)
-- [electron-builder 配置](../apps/desktop/electron-builder.yml)
+- [打包脚本](../domains/puff/apps/desktop/scripts/package-win.mjs)
+- [afterPack 钩子](../domains/puff/apps/desktop/scripts/after-pack.cjs)
+- [electron-builder 配置](../domains/puff/apps/desktop/electron-builder.yml)
 - [桌面端规范](./rules/desktop.md)
 
 ## 当前打包流水线
 
-`pnpm package:desktop:win` 不是直接对 `apps/desktop` 跑 electron-builder，流水线固定为：
+`pnpm package:desktop:win` 不是直接对 `domains/puff/apps/desktop` 跑 electron-builder，流水线固定为：
 
 1. 执行 `tsc --noEmit && tsdown`，把 Electron main 构建到 `dist/`。
 2. 在系统临时目录创建独立的 runtime 工程，只声明 `@deepseek-ai/dsh@0.1.7-rc.2` 与 `pnpm@11.7.0`。
 3. 在该临时目录执行 `pnpm install --prod --config.node-linker=hoisted`，得到包含 peer 依赖的扁平 runtime。
 4. 在另一个系统临时目录创建最小 app 工程，只放 `dist/`、最小 `package.json` 和本地 `pnpm` shim。
-5. 对临时 app 工程执行 electron-builder，绝对输出到 `apps/desktop/release/desktop`。
+5. 对临时 app 工程执行 electron-builder，绝对输出到 `domains/puff/apps/desktop/release/desktop`。
 6. `afterPack` 把临时 runtime 复制到 `resources/dsh-runtime`。
 7. 打包后的主进程从 `resources/dsh-runtime` 解析 dsh 与 pnpm，不再依赖 `app.asar` 中的 `node_modules`。
 
@@ -101,7 +101,7 @@ supported Electron versions: 43.0.0, 44.0.0, 45.0.0-alpha.6
 
 处理：
 
-- 将 `apps/desktop/package.json` 的 Electron 固定为精确版本 `44.0.0`，不要写 `^44.0.0`。
+- 将 `domains/puff/apps/desktop/package.json` 的 Electron 固定为精确版本 `44.0.0`，不要写 `^44.0.0`。
 - 修改后重新执行 `pnpm install`。
 - 必须重新跑 `pnpm --filter @puff/desktop test:e2e` 和 `package:win:dir`；不能只看 `electron --version`。
 
@@ -129,7 +129,7 @@ overrides:
 
 现象：打包中途出现 `fetch failed`，或下载 NSIS/7zip/Electron 压缩包极慢。
 
-处理：[打包脚本](../apps/desktop/scripts/package-win.mjs) 默认在未显式设置时使用 npmmirror：
+处理：[打包脚本](../domains/puff/apps/desktop/scripts/package-win.mjs) 默认在未显式设置时使用 npmmirror：
 
 ```text
 ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
@@ -149,7 +149,7 @@ imported from .../app.asar/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js
 
 根因：DSH 使用 Cordis 的 peer 依赖组合。pnpm 的隔离布局会把部分 peer 放在虚拟 store 的共享层，electron-builder 自己的依赖扫描不会完整收集这些包。
 
-处理：不要把 `apps/desktop` 的 workspace `node_modules` 直接交给 electron-builder。改为：
+处理：不要把 `domains/puff/apps/desktop` 的 workspace `node_modules` 直接交给 electron-builder。改为：
 
 1. 在临时目录写一个只含 `@deepseek-ai/dsh` 与 `pnpm` 的 `package.json`。
 2. 在同一临时目录写只含所需 `allowBuilds` 的 `pnpm-workspace.yaml`。
@@ -184,7 +184,7 @@ Cannot compute electron version from installed node modules
 
 根因：临时 app staging 只放 `dist/` 和最小 `package.json`，没有 Electron 依赖。
 
-处理：在 [electron-builder.yml](../apps/desktop/electron-builder.yml) 固定：
+处理：在 [electron-builder.yml](../domains/puff/apps/desktop/electron-builder.yml) 固定：
 
 ```yaml
 electronVersion: 44.0.0
@@ -213,14 +213,14 @@ shim 使用当前 Node 可执行文件运行仓库已解析到的 pnpm CLI，不
 
 现象：`app.asar` 约 443 MB、`app.asar.unpacked` 约 1 GB，同时 `resources/dsh-runtime` 还有约 470 MB。
 
-根因：electron-builder 的 projectDir 如果位于 `apps/desktop` 子树内，会回溯到 workspace 的 `node_modules`，把生产依赖再收进 asar。
+根因：electron-builder 的 projectDir 如果位于 `domains/puff/apps/desktop` 子树内，会回溯到 workspace 的 `node_modules`，把生产依赖再收进 asar。
 
 处理：
 
 - staging app 放到系统临时目录，不放在仓库内。
 - runtime 也放到另一个系统临时目录。
 - electron-builder 通过 `--projectDir <临时 app>` 打包。
-- 通过 `--config.directories.output <绝对路径>` 把最终产物写回 `apps/desktop/release/desktop`。
+- 通过 `--config.directories.output <绝对路径>` 把最终产物写回 `domains/puff/apps/desktop/release/desktop`。
 
 打包后应检查 `app.asar` 大小；若它又变成几百 MB，说明 staging 路径或 projectDir 又回到了仓库依赖树。
 
@@ -267,7 +267,7 @@ The modules directories will be removed and reinstalled from scratch. Proceed?
 
 ```bash
 pnpm check
-pnpm typecheck
+pnpm --filter @puff/desktop typecheck
 pnpm test
 pnpm build
 pnpm --filter @puff/desktop test:e2e

@@ -1,0 +1,5 @@
+# Pinned toolchain for local development and CI.
+# Keep these versions aligned with package.json (packageManager / engines).
+[tools]
+node = "24.22.0"
+pnpm = "11.2.2"

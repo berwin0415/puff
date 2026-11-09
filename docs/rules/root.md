@@ -1,106 +1,158 @@
 # 根目录规范
 
-仓库根目录只承担两件事：**workspace 编排** 与 **跨包治理**。任何只被单个应用使用的东西都不属于根目录。
+仓库按**业务域**组织：`domains/<域>/{apps,services,libs,labs,e2e}` 放业务与实验项目，`platform/` 放跨域共享能力，`contracts/` 放接口契约。根目录只承担 workspace 编排、跨包治理与仓库级工具。
 
 ## 目录结构
 
 ```
 .
-├─ apps/                 ✅ 可独立构建、部署的应用
-│  ├─ api/               ✅ @puff/api  NestJS 服务端
-│  ├─ web/               ✅ @puff/web  React + Rsbuild 前端
-│  └─ desktop/           ✅ @puff/desktop  Electron + DeepSeek Harness 桌面薄壳
-├─ packages/             ➕ 跨应用共享的库/类型包（当前为空）
-├─ llm-lab/              ➕ 个人学习区：从零手写 mini-GPT（独立 Python 环境，不在 workspace 内）
-├─ docs/                 ✅ 文档
-│  ├─ rules/             ✅ 工程规范（本目录）
-│  └─ *.md               ➕ 设计与方案文档
-├─ scripts/              ➕ 被多个包复用的根级脚本（CI、代码生成、发布）
-├─ package.json          ✅ 根脚本、packageManager、engines
-├─ pnpm-workspace.yaml   ✅ workspace 成员与 pnpm 设置
-├─ pnpm-lock.yaml        ✅ 唯一的锁文件
-├─ tsconfig.base.json    ✅ 各包共享的 TS 严格模式基线
-├─ .npmrc                ✅ pnpm 行为配置
-├─ biome.json            ✅ 唯一的格式化 + lint 配置（Biome）
-├─ .vscode/              ✅ 只提交 extensions.json 与 settings.json（默认格式化器指向 Biome）
-├─ .gitattributes        ✅ 行尾统一 LF（二进制与 Windows 脚本单独声明）
-├─ .editorconfig         ✅ 编辑器换行/缩进统一
-├─ .gitignore            ✅
-└─ README.md             ✅ 仓库入口文档
+├─ domains/                      ✅ 业务域，一个业务线一个目录
+│  ├─ puff/
+│  │  ├─ apps/                   ✅ 客户端应用（可独立构建/分发）
+│  │  │  ├─ web/                 ✅ @puff/web
+│  │  │  └─ desktop/             ✅ @puff/desktop
+│  │  ├─ services/               ✅ 后端服务（可独立部署）
+│  │  │  └─ api/                 ✅ @puff/api
+│  │  ├─ libs/                   ➕ 域内共享库
+│  │  ├─ e2e/                    ➕ 域内跨应用 e2e
+│  │  └─ README.md               ✅ 负责团队、服务清单
+│  └─ llm-lab/
+│     ├─ labs/                   ✅ 学习/实验项目
+│     │  └─ mini-gpt/            ✅ llm-lab-mini-gpt（Python）
+│     └─ README.md               ✅ 域定位与运行方式
+├─ platform/                     ➕ 跨域共享，平台团队维护
+│  ├─ libs/                      ➕ 日志、追踪、配置、RPC、鉴权、UI 组件
+│  └─ services/                  ➕ 网关、鉴权中心等
+├─ contracts/                    ➕ protobuf / OpenAPI 契约
+├─ e2e/                          ➕ 跨域端到端测试
+├─ tools/                        ✅ 边界检查、初始化脚本
+├─ infra/                        ➕ 基础镜像、Helm chart、Terraform
+├─ docs/                         ✅ 规范、ADR、设计文档
+├─ .github/                      ✅ CI 与 CODEOWNERS
+├─ nx.json                       ✅ Nx 编排配置
+├─ mise.toml                     ✅ 固定工具链版本
+├─ package.json                  ✅ 根脚本、packageManager、engines
+├─ pnpm-workspace.yaml           ✅ workspace 成员与 pnpm catalog
+├─ pnpm-lock.yaml                ✅ 唯一的锁文件
+├─ tsconfig.base.json            ✅ 各包共享的 TS 严格模式基线
+├─ .npmrc                        ✅ pnpm 行为配置
+├─ biome.json                    ✅ 唯一的格式化 + lint 配置（Biome）
+├─ .vscode/                      ✅ 只提交 extensions.json 与 settings.json
+├─ .gitattributes                ✅ 行尾统一 LF
+├─ .editorconfig                 ✅ 编辑器换行/缩进统一
+├─ .gitignore                    ✅
+└─ README.md                     ✅ 仓库入口文档
 ```
 
 ## 各层职责
 
-| 路径         | 放什么                                            | 不放什么                                                 |
-| ------------ | ------------------------------------------------- | -------------------------------------------------------- |
-| `apps/*`     | 可独立运行/部署的应用（服务端、前端、桌面端、worker） | 供别人 `import` 的业务逻辑（应下沉到 packages）        |
-| `packages/*` | 被两个以上应用复用的库、类型、工具                | 只有单个消费方的代码（先放应用内，出现第二个使用方再抽） |
-| `docs/`      | 规范、设计、决策记录                              | 生成物、截图大文件、临时笔记                             |
-| `scripts/`   | 跨包复用的自动化脚本（Node/pwsh 脚本 + 说明文档） | 单个应用的构建脚本（放该应用的 `package.json`）          |
-| `llm-lab/`   | 个人学习与实验（Python），自带虚拟环境与依赖      | 业务代码、被 `apps/*` 引用的代码、参与 workspace 的包    |
+| 路径                        | 放什么                                             | 不放什么                                             |
+| --------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| `domains/<域>/apps/*`       | 客户端应用（Web、桌面、移动端）                    | 供别人 import 的业务逻辑（下沉到 libs）              |
+| `domains/<域>/services/*`   | 可独立部署的后端服务                               | 其他服务的私有代码（跨域只能走契约）                 |
+| `domains/<域>/libs/*`       | 只被本域依赖的共享库、类型、工具                   | 跨域通用能力（放 `platform/libs/`）                  |
+| `domains/<域>/labs/*`       | 学习、实验、研究项目（可不部署、不被依赖）         | 生产业务代码、被应用/服务引用的库                    |
+| `domains/<域>/e2e/*`        | 本域跨应用 e2e                                     | 单应用内部 e2e（留在该应用 `test/`）                 |
+| `platform/libs/*`           | 跨域通用能力，多语言实现用语言后缀区分             | 具体业务逻辑                                         |
+| `platform/services/*`       | 网关、鉴权等平台服务                               | 业务服务                                             |
+| `contracts/**`              | 服务间接口定义与生成代码                           | 手写消费方客户端                                     |
+| `tools/`                    | 仓库级检查、生成器、CI 辅助脚本                    | 单个应用的构建脚本（放该应用 `package.json`）        |
+| `infra/`                    | 基础镜像、基础 Helm chart、Terraform 模块          | 单个服务的 Dockerfile/values（放服务目录）           |
+
+## 依赖边界
+
+每个项目在 `project.json` 中声明三个标签：`domain:<域>`、`type:app|service|lib|lab|contract|e2e|tool`、`lang:<语言>`。
+
+| 项目类型                   | 允许依赖                                     |
+| -------------------------- | -------------------------------------------- |
+| `type:app` / `type:service` | 同域 lib、platform lib、任意 contract        |
+| 域内 `type:lib`            | 同域 lib、platform lib、任意 contract        |
+| `type:lab`                 | 同域 lib、platform lib、任意 contract        |
+| platform lib               | platform lib、platform contract              |
+| contract                   | contract（仅用于引用公共类型）               |
+| e2e                        | 任意应用、服务、contract、平台 lib           |
+| tool                       | 任意项目；生产代码不能依赖 tool              |
+
+补充：
+
+- 应用、服务和 lab 不能被任何项目依赖（e2e 除外）。
+- 一个域要复用另一个域的东西时：通用能力下沉到 `platform/`；业务逻辑通过调用对方服务的契约获得。
+- 每个服务独占自己的数据库 schema，其他服务不能直连。
+
+规则由 `node tools/checks/project-boundaries.mjs` 检查，CI 每个 PR 都运行。
 
 ## 根脚本
 
-根脚本只做「批量转发」，不写死路径，保证新增应用后自动纳入。
+根脚本只做「批量转发」，不写死项目路径。
 
-| 命令                | 作用                                        | 实现方式                              |
-| ------------------- | ------------------------------------------- | ------------------------------------- |
-| `pnpm dev`          | 并行启动所有应用的 dev                      | `pnpm --parallel --filter "./apps/*"` |
-| `pnpm dev:api`      | 只启动服务端                                | `--filter @puff/api`                  |
-| `pnpm dev:web`      | 只启动前端                                  | `--filter @puff/web`                  |
-| `pnpm dev:desktop`  | 只启动桌面客户端                            | `--filter @puff/desktop`              |
-| `pnpm build`        | 按依赖拓扑顺序构建全部                      | `pnpm -r run build`                   |
-| `pnpm typecheck`    | 全量类型检查                                | `pnpm -r run typecheck`               |
-| `pnpm check`        | Biome 全仓库检查：格式 + lint + import 排序 | `biome check .`                       |
-| `pnpm check:fix`    | 同上并写入修复                              | `biome check --write .`               |
-| `pnpm lint`         | 只跑 Biome lint                             | `biome lint .`                        |
-| `pnpm format`       | 只跑 Biome 格式化（写入）                   | `biome format --write .`              |
-| `pnpm format:check` | 只校验格式                                  | `biome format .`                      |
-| `pnpm test`         | 全量测试（没有 `test` 脚本的包自动跳过）    | `pnpm -r run test`                    |
-| `pnpm clean`        | 清理构建产物                                | `pnpm -r run clean`                   |
-| `pnpm start:api`    | 以生产模式启动已构建的 API                  | `--filter @puff/api run start:prod`   |
-| `pnpm package:desktop:win` | 构建 Windows x64 NSIS 安装包        | `--filter @puff/desktop run package:win` |
+| 命令                          | 作用                                        | 实现方式                              |
+| ----------------------------- | ------------------------------------------- | ------------------------------------- |
+| `pnpm dev`                    | 并行启动所有项目的 dev                      | `pnpm -r --parallel run dev`          |
+| `pnpm dev:api`                | 只启动服务端                                | `--filter @puff/api`                  |
+| `pnpm dev:web`                | 只启动前端                                  | `--filter @puff/web`                  |
+| `pnpm dev:desktop`            | 只启动桌面客户端                            | `--filter @puff/desktop`              |
+| `pnpm build`                  | 按依赖拓扑顺序构建全部（含类型检查）        | `pnpm -r run build`                   |
+| `pnpm check`                  | Biome 全仓库检查：格式 + lint + import 排序 | `biome check .`                       |
+| `pnpm test`                   | 全量测试                                    | `pnpm -r run test`                    |
+| `pnpm start:api`              | 以生产模式启动已构建的 API                  | `--filter @puff/api run start:prod`   |
+| `pnpm package:desktop:win`    | 构建 Windows x64 NSIS 安装包                | `--filter @puff/desktop run package:win` |
 
-### 应用必须对齐的脚本契约
+只保留最少的全仓入口，更细的操作使用原生命令：
 
-根脚本依赖以下约定：每个 `apps/*` 都应实现 `dev`、`build`、`lint`、`typecheck`、`clean`，可选 `test`。
-缺少某个脚本不会报错（递归执行会跳过），但会静默漏检查——所以新增应用时必须补齐。
+| 需求 | 命令 |
+| --- | --- |
+| 自动修复格式/lint | `pnpm exec biome check --write .` |
+| 只做类型检查 | `pnpm exec nx run-many -t typecheck` |
+| 只跑 lint | `pnpm exec nx run-many -t lint` |
+| 递归清理 | `pnpm -r run clean` |
+| 项目图 | `pnpm exec nx graph` |
+| 只跑受影响项目 | `pnpm exec nx affected -t lint typecheck test build` |
 
-Biome 是例外：`pnpm check` / `pnpm format` / `pnpm format:check` 由根脚本一次性扫描整个仓库（配置只有根 `biome.json`，不随包分裂）。各包内的 `lint` / `check` / `format` 脚本是同样的 Biome 命令、只作用于本包目录，方便用 `pnpm --filter <包> run check` 只查一个应用。
+### 项目必须对齐的脚本契约
 
-## workspace 配置
+每个可构建项目都应实现 `dev`、`build`、`lint`、`typecheck`、`clean`，可选 `test` / `test:e2e`。缺少某个脚本不会报错（递归执行会跳过），但 Nx affected 和 CI 会静默漏检查。
 
-- `pnpm-workspace.yaml` 的 `packages` 固定为 `apps/*` 与 `packages/*`，新增应用/包只要落在对应目录即可被识别。
-- `minimumReleaseAgeExclude`：pnpm 默认会等待一段时间才信任刚发布的版本（供应链保护）。当前只有 `@rsbuild/plugin-react@2.1.1` 需要豁免；今后安装依赖被该策略拦下时，**先确认版本来源可信**，再把具体版本加进这个列表，不要整体关掉保护。
-- `allowBuilds`：桌面端依赖中的 `@deepseek-ai/dsh-subprocess-local`、`esbuild`、`koffi`、`node-pty`、`protobufjs`、`electron` 需要执行安装脚本；`@google/genai` 与 `electron-winstaller` 明确不执行。新增依赖被拦下时先确认脚本用途和来源，再按包精确放行，禁止 `--all` 式整体放行。
-- `overrides`：`@electron/get` 固定到 `5.1.0`，以匹配 electron-builder 26 实际使用的 cache-mode API，避免打包阶段因缺失 `ElectronDownloadCacheMode` 失败。
-- `.npmrc` 中 `engine-strict=true` 会让 Node 版本不满足 `engines` 时直接安装失败；`save-workspace-protocol=rolling` 让 `pnpm add` 自动写成 `workspace:` 协议。
-- 根 `package.json` 的 `packageManager` 与 `engines` 是唯一的版本声明处，用 corepack 保证团队一致，不要在文档里另写一套版本号。
-- **全仓库只有一个 `pnpm-lock.yaml`**：应用目录里不允许出现 `package-lock.json`、`yarn.lock` 或第二个 `pnpm-lock.yaml`。
+Biome 是例外：根目录只有 `pnpm check` 一个全仓入口，自动修复用 `pnpm exec biome check --write .`；各项目内的 `lint` / `check` / `format` 是同样的 Biome 命令、只作用于本项目目录。
+
+## workspace 与依赖版本
+
+- `pnpm-workspace.yaml` 的 `packages` 固定为 `domains/*/{apps,services,libs}/*` 与 `platform/{libs,services}/*`。
+- 第三方依赖统一写在 `catalog` 中，所有 `package.json` 使用 `"catalog:"`。同一依赖在仓库内只有一个版本。
+- `minimumReleaseAgeExclude`：pnpm 默认会等待一段时间才信任刚发布的版本。当前只有 `@rsbuild/plugin-react@2.1.1` 需要豁免；被策略拦下时先确认版本来源可信，再加具体版本，不要整体关掉保护。
+- `allowBuilds`：只有明确需要的依赖才允许执行安装脚本（`nx`、`electron`、`koffi`、`node-pty` 等）；新增依赖被拦下时先确认脚本用途和来源，再按包精确放行，禁止 `--all`。
+- `overrides`：`@electron/get` 固定到 `5.1.0`，匹配 electron-builder 26 的 cache-mode API。
+- **全仓库只有一个 `pnpm-lock.yaml`**：项目目录里不允许出现 `package-lock.json`、`yarn.lock` 或第二个 `pnpm-lock.yaml`。
+
+## Nx
+
+- `nx.json` 只声明输入、缓存和任务默认值；具体任务通过各项目 `project.json` 的 `nx:run-script` 调用原生脚本。
+- 项目标签只写在 `project.json`，用于边界检查与统计。
+- 本地常用：`pnpm exec nx graph`、`pnpm exec nx run <项目>:<target>`、`pnpm exec nx affected -t lint typecheck test build`。
+- 远程缓存暂不接入；先使用 GitHub Actions 的 `.nx/cache` 缓存。
 
 ## 根目录禁止出现的内容
 
-- ❌ 业务代码与页面/接口实现（属于 `apps/*`）
-- ❌ 应用专属依赖（`react`、`@nestjs/*` 等写进应用 `package.json`）
-- ❌ 应用的 `tsconfig.json`、构建配置（前端 `rsbuild.config.ts`、后端 `nest-cli.json`）
-- ❌ 第二套格式化/lint 配置（`.prettierrc*`、`.eslintrc*`、`.oxlintrc.json`、包内 `biome.json`）：配置只有根 `biome.json`
+- ❌ 业务代码、页面或接口实现（属于 `domains/`）
+- ❌ 应用专属依赖（写进对应项目 `package.json`）
+- ❌ 项目的 `tsconfig.json`、构建配置（`rsbuild.config.ts`、`nest-cli.json`、`tsdown.config.ts`）
+- ❌ 第二套格式化/lint 配置（`.prettierrc*`、`.eslintrc*`、`.oxlintrc.json`、包内 `biome.json`）
 - ❌ `.env` 等真实环境变量文件
-- ❌ 构建产物与缓存（`dist/`、`node_modules/`、`*.tsbuildinfo`、`.rspack-profile-*/`）
-- ❌ 为了「方便」在根目录新建的散装示例代码、调试脚本（用 `scripts/` 或应用内目录，并配套说明）
-- ✅ 例外：`llm-lab/` 是个人学习区，自带 `AGENTS.md` 与专属文档，独立环境、不参与 workspace，不属于上述禁止项
+- ❌ 构建产物与缓存（`dist/`、`node_modules/`、`*.tsbuildinfo`、`.rspack-profile-*/`、`.nx/`）
+- ❌ 散装示例代码、调试脚本（放 `tools/` 或项目内目录，并配套说明）
 
-## 新增一个应用
+## 新增一个项目
 
-1. 用官方脚手架生成到目标目录，并跳过安装与 git 初始化，例如前端：`pnpm create rsbuild apps/<name> --template react-ts --no-git`。
-2. 把 `package.json` 的 `name` 改成 `@puff/<name>`，设置 `"private": true`。
-3. 删除脚手架自带的 `.gitignore`、`README.md`、锁文件，以及自带的格式化/lint 配置（不要引入第二套工具链，统一用根 `biome.json`），改为复用根配置（`biome.json`、`tsconfig.base.json`、`.gitignore`）。
-4. 补齐脚本契约 `dev` / `build` / `lint` / `typecheck` / `clean`（必要时 `test`），并在应用 `tsconfig.json` 里 `extends: "../../tsconfig.base.json"`。
-5. 在仓库根执行 `pnpm install`，然后跑 `pnpm check && pnpm typecheck && pnpm build`。
+1. 选择位置：业务应用 `domains/<域>/apps/<name>`，业务服务 `domains/<域>/services/<name>`，域内库 `domains/<域>/libs/<name>`，学习/实验项目 `domains/<域>/labs/<name>`，平台项目 `platform/libs/<name>` 或 `platform/services/<name>`。
+2. 包名 `@puff/<短名>`，设置 `"private": true`。
+3. 补齐脚本契约 `dev` / `build` / `lint` / `typecheck` / `clean`（必要时 `test`），并 `extends` 根 `tsconfig.base.json`。`domains/**` 下的项目路径深度为四层，写 `../../../../tsconfig.base.json`；`type:lab` 的 Python 项目不参与 workspace，可只提供自己的运行脚本。
+4. 新增 `project.json`，声明 `domain:*`、`type:*`、`lang:*` 标签和 `nx:run-script` targets。
+5. 在仓库根执行 `pnpm install`，然后跑 `pnpm check && pnpm build && node tools/checks/project-boundaries.mjs`。
 6. 新增 `docs/rules/<name>.md` 规范文档，更新本文件与根 `README.md` 的目录结构；涉及路由时同时更新 [routing.md](./routing.md)。
 
-## 新增一个共享包（packages/*）
+## 新增一个共享包
 
-1. 目录命名 kebab-case，包名 `@puff/<短名>`，`"private": true`，并在 `package.json` 中用 `exports` 声明对外入口。
-2. 只放**无框架耦合**的内容（纯类型、工具函数、常量、DTO 契约）起步；带 UI 或带 Nest 依赖的包单独评估。
-3. 引用方用 `--workspace` 安装：`pnpm --filter @puff/web add @puff/shared --workspace`。
-4. 注意后端消费方：Nest 用 `tsc` 构建，直接引用「源码直出的 TS 包」会因为 `rootDir` 之外的文件而报错。推荐让共享包产出 `dist` 再被引用；若坚持源码直连，需要在 `apps/api/tsconfig.json` 里配 `paths` **并**解决运行时解析，属于需要专门评审的改动。
+1. 只被一个域使用 → `domains/<域>/libs/`；跨域通用 → `platform/libs/`。不要恢复平铺的 `packages/`。
+2. 目录命名 kebab-case，包名 `@puff/<短名>`，在 `package.json` 中用 `exports` 声明对外入口。
+3. 只放无框架耦合的内容（纯类型、工具函数、常量、DTO 契约）起步；带 UI 或带 Nest 依赖的包单独评估。
+4. 引用方用 workspace 协议安装：`pnpm --filter @puff/web add @puff/shared --workspace`。
+5. 注意后端消费方：Nest 用 `tsc` 构建，直接引用源码直出的 TS 包会因 `rootDir` 之外的文件报错。推荐让共享包产出 `dist` 再被引用。
