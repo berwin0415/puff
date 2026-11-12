@@ -1,8 +1,8 @@
 # 前端目录规范（domains/puff/apps/web）
 
-技术栈：React 19 + Rsbuild 2（Rspack）+ TypeScript 严格模式 + Biome（格式化 + lint）。
+技术栈：React 19 + Rsbuild 2（Rspack）+ TypeScript 严格模式 + Biome（格式化 + lint）+ Three.js。
 
-> 当前只有脚手架页面（调用 `/api/health` 的自检卡片），**没有业务页面，也没有路由**。`routes/`、`components/`、`features/`、`api/` 等目录按下面的约定在需要时创建。
+> 当前唯一页面是 **NEON VEIL** 第一人称射击垂直切片：React 负责 HUD 与菜单，Three.js 负责场景、武器、敌人和后处理。**没有路由**；`routes/`、`api/` 等目录按下面的约定在需要时创建。
 
 ## 目录结构
 
@@ -16,8 +16,12 @@ domains/puff/apps/web/
 │  ├─ env.d.ts                 ✅ import.meta.env 严格类型声明
 │  ├─ routes/                  ➕ 路由表与页面组件（见 routing.md）
 │  ├─ components/              ➕ 跨业务复用的展示型组件
-│  ├─ features/                ➕ 按业务域组织的功能模块
-│  │  └─ <feature>/            （内部可含 components/、hooks/、api.ts）
+│  ├─ features/                ✅ 按业务域组织的功能模块
+│  │  └─ neon-veil/            ✅ 当前 FPS 垂直切片（React 外壳 + engine/ 纯 TS 引擎）
+│  │     ├─ NeonVeil.tsx       入口壳、引擎生命周期、HUD 状态桥接
+│  │     ├─ Hud.tsx / StartScreen.tsx / StatusScreen.tsx
+│  │     ├─ NeonVeil.module.css
+│  │     └─ engine/            Three.js 场景、武器、敌人、后处理、音效
 │  ├─ api/                     ➕ 请求封装与后端接口定义
 │  │  └─ client.ts             ➕ 统一 fetch 客户端（baseURL、错误处理、序列化）
 │  ├─ hooks/                   ➕ 跨业务复用的 Hook
@@ -38,6 +42,7 @@ domains/puff/apps/web/
 | `routes/`     | 路由定义、页面级组件、布局组件              | 业务逻辑与请求细节                          |
 | `components/` | 与业务无关的通用组件（按钮、表格、空状态）  | 只有单个页面用的组件（放 `features/`）      |
 | `features/`   | 一个业务域的全部实现（组件 + hooks + 请求） | 跨业务复用的东西（上提到 components/hooks） |
+| `features/neon-veil/engine/` | 纯 TypeScript 游戏引擎，不依赖 React | React 组件、HUD 状态 |
 | `api/`        | 请求客户端、接口函数、请求/响应类型         | React 组件、状态管理逻辑                    |
 | `hooks/`      | 可复用的行为逻辑（`useXxx`）                | 只服务单个组件的 Hook（就近放在组件旁）     |
 | `stores/`     | 跨页面共享的全局状态（如登录态）            | 组件局部状态、服务端数据缓存                |
@@ -100,6 +105,17 @@ src/components/StatusCard/
 - dev 与 preview 都通过 `/api` 代理到后端，浏览器只访问同源地址，因此不依赖后端 CORS。
 - dev server 默认对未知路径回退到 HTML（SPA 行为）；**生产部署必须自己配置 history fallback**（如 Nginx `try_files $uri $uri/ /index.html;`），否则刷新子路由会 404。
 - 产物只依赖静态文件，可由 Nginx/CDN 托管；涉及接口地址时通过构建期 `PUBLIC_*` 变量注入。
+
+## NEON VEIL / 3D 场景约定
+
+- **分层**：`NeonVeil.tsx` 只负责挂载容器、创建/销毁 `GameEngine`、把快照与事件转成 React 状态。引擎通过 `GameSnapshot` 向上推送 8–12Hz 的状态，通过 `GameEvent` 推送命中/击杀/波次等瞬时事件；不要在 React 组件里直接改 Three.js 对象。
+- **依赖**：`three` 与 `@types/three` 是 catalog 依赖，项目里必须写 `"catalog:"`。不要引入 React Three Fiber、Babylon.js 或第二套渲染器。
+- **资源**：所有纹理、几何、天空、武器、敌人、雨与音效均程序化生成，不新增外部贴图/模型/音频二进制文件。新增视觉元素时优先用 `CanvasTexture`、几何体组合与 ShaderMaterial。
+- **后处理**：固定顺序 `RenderPass → HDR 净化（sanitize）→ UnrealBloomPass → OutputPass → 电影调色 ShaderPass → SMAAPass`。HDR 净化 pass 必须保留，它负责清除 Bloom 链中的 NaN/Inf；删除后在某些视角会黑屏。新增后处理 pass 时同步更新 `AGENTS.md` 与本节。
+- **画质预设**：`GameEngine.setQuality('cinematic' | 'performance')` 统一控制像素比、反射、雨量、雾与 Bloom 强度；UI 只能调用这个方法。
+- **指针锁**：必须在用户手势（开始/继续按钮）里请求；`pointerlockchange` 失锁时自动暂停。`?capture=1` 仅用于无头截图验证，会跳过指针锁，不是正式入口。
+- **性能**：默认电影级会开启平面反射、三张阴影贴图与全量雨；性能级关闭反射并降低雨量与像素比。新增逐帧系统时避免每帧分配大对象，粒子/弹道/弹壳都要设上限并复用几何或及时 dispose。
+- **调试**：开发环境会把引擎实例挂到 `window.__neonEngine`，仅用于本地排查；不要在生产代码路径依赖它。
 
 ## 测试
 

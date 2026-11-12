@@ -57,9 +57,23 @@ Copy-Item domains/puff/services/api/.env.example domains/puff/services/api/.env
 pnpm -r --parallel run dev
 ```
 
-打开 http://localhost:5173 ，页面会请求 `/api/health` 并显示后端状态，用来确认前后端已经打通。
+打开 http://localhost:5173 进入 **NEON VEIL / 霓虹帷幕**：一个可直接游玩的浏览器第一人称射击垂直切片，背景是雨夜第七区反应堆天台。Web 端不再依赖 API 才能游玩；API 仍保留探活/信息接口。
 
-> 目前是脚手架状态：除了后端的探活/信息接口外没有任何业务功能。
+> 射击、移动、波次与结算都在浏览器内完成；后端接口只用于工程链路验证。
+
+### 游戏操作
+
+- `WASD` 移动、`Shift` 疾跑、`Space` 跳跃、`Ctrl` / `C` 蹲伏
+- 鼠标左键射击、右键瞄准、`R` 换弹、`Q` 投掷脉冲手雷
+- `Esc` 退出指针锁并暂停；点击画面可重新锁定鼠标
+
+画面预设可在开始界面切换「电影级 / 性能」。所有场景、武器、材质与音效均为程序化生成，不依赖外部美术资源。
+
+### 视觉预览
+
+![NEON VEIL 开始界面](docs/screenshots/neon-veil-start.jpg)
+
+![NEON VEIL 战斗画面](docs/screenshots/neon-veil-combat.jpg)
 
 只启动 puff 域的其中一个项目：
 

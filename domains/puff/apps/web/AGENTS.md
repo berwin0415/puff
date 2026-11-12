@@ -5,7 +5,9 @@
 ## 包定位与现状
 
 - React 19 + Rsbuild 2（Rspack）+ TypeScript 严格模式 + Biome（格式化 + lint）。dev server 固定 `5173`，静态预览 `4173`。
-- **当前只有一个脚手架页面**（调用 `/api/health` 的自检卡片）：没有路由、没有状态管理、没有请求层、没有测试框架。不要假装这些已经存在。
+- **当前是 NEON VEIL 第一人称射击垂直切片**：React 19 负责 HUD、开始/暂停/结算界面，Three.js 负责场景、武器、敌人、雨夜灯光与后处理。没有路由、没有全局状态管理、没有请求层、没有测试框架；不要假装这些已经存在。
+- 游戏引擎代码集中在 `src/features/neon-veil/engine/`，UI 与引擎通过 `GameSnapshot` / `GameEvent` 解耦；除调试外不要让 React 直接操作 Three.js 对象。
+- 运行游戏不需要后端；`/api` 代理配置保留给后续接口。
 - 详细目录与样式规范见 `docs/rules/web.md`；前端路由约定见 `docs/rules/routing.md`。
 
 ## 命令
@@ -25,6 +27,15 @@ pnpm exec nx run @puff/web:build          # 通过 Nx 执行
 ```
 
 本项目**没有** `test` 脚本，`pnpm -r run test` 会跳过它；不要在任何回复里声称前端测试通过。
+
+## 3D / 游戏约定
+
+- 3D 依赖只有 `three` 与 `@types/three`，版本写在根 `pnpm-workspace.yaml` 的 catalog，项目里写 `"catalog:"`。
+- 游戏资源全部程序化生成（Canvas 纹理、程序化几何、WebAudio），不要新增外部贴图/模型/音频二进制文件。
+- 后处理链固定为 `RenderPass → HDR 净化 → Bloom → OutputPass → 电影调色 → SMAA`；HDR 净化 pass 不能删，Bloom 遇到 NaN/Inf 会把整屏染黑。
+- 画质预设通过 `GameEngine.setQuality('cinematic' | 'performance')` 切换，不要在组件里直接改 renderer 设置。
+- 指针锁必须由用户手势触发（开始/继续按钮）；失焦或退出指针锁时游戏应暂停。
+- 开始界面的 `?capture=1` 只用于自动截图验证，不要把它当正式入口。
 
 ## 目录约定
 

@@ -8,7 +8,7 @@ const { parsed } = loadEnv();
 export default defineConfig({
   plugins: [pluginReact()],
   html: {
-    title: 'puff',
+    title: 'NEON VEIL // 霓虹帷幕',
     favicon: './public/favicon.svg',
   },
   server: {

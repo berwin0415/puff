@@ -9,7 +9,7 @@
   - `puff`：`domains/puff/apps/web`（`@puff/web`，React 19 + Rsbuild 2）、`domains/puff/apps/desktop`（`@puff/desktop`，Electron + DeepSeek Harness）、`domains/puff/services/api`（`@puff/api`，NestJS 12）。
   - `llm-lab`：`domains/llm-lab/libs/mini-gpt`（`llm-lab-mini-gpt`，Python），从零手写 mini-GPT 的学习/实验域。
 - llm-lab 不参与 pnpm workspace，也没有 dev/build/lint/typecheck/clean 脚本契约；项目以 `type:lib` 参与边界检查，学习/实验属性由业务域本身表达。
-- **puff 当前只有基础脚手架与 DSH 桌面薄壳**：除后端探活/信息接口（`GET /api`、`GET /api/health`）外没有自研业务功能。桌面端主要原样加载官方 DSH Web UI，不要假设存在自研聊天、鉴权、状态管理或路由。
+- **puff 的 Web 端目前是一个可游玩的浏览器 FPS 垂直切片（NEON VEIL）**，由 React 外壳 + Three.js 程序化引擎组成；除后端探活/信息接口（`GET /api`、`GET /api/health`）外，后端没有自研业务功能。桌面端主要原样加载官方 DSH Web UI，不要假设存在自研聊天、鉴权、状态管理或路由。
 - 工程规范在 `docs/rules/`，架构决策在 `docs/adr/`，设计依据是 `docs/monorepo-architecture-design.md`。
 
 ## 环境与安装
