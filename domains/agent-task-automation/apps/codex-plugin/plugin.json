@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "agent-task-automation",
+  "version": "0.1.0",
+  "description": "为 Codex 工作区绑定已有任务、交付与通知能力，支持手动和定时工作流。",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/setup/SKILL.md"
+    }
+  }
+}

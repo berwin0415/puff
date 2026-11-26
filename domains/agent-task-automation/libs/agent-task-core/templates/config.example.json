@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "workspaces": [
+    {
+      "id": "example-workspace",
+      "rootPath": "/absolute/path/to/workspace",
+      "host": { "type": "host-type", "adapterVersion": "adapter-version" },
+      "capabilities": [
+        {
+          "role": "task-source",
+          "ref": "user-selected-task-skill",
+          "kind": "skill",
+          "operations": ["list", "read"],
+          "enabled": true
+        }
+      ],
+      "execution": {
+        "automaticEnabled": false,
+        "maxActiveRuns": 1,
+        "workspaceMode": "worktree",
+        "taskScope": "用户确认的任务范围",
+        "allowedPaths": [],
+        "allowedActions": ["list", "read"],
+        "timezone": "Asia/Shanghai",
+        "windows": [{ "days": [1, 2, 3, 4, 5], "startMinute": 540, "endMinute": 1080 }]
+      }
+    }
+  ]
+}

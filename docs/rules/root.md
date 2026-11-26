@@ -16,6 +16,10 @@
 │  │  ├─ libs/                   ➕ 域内共享库
 │  │  ├─ e2e/                    ➕ 域内跨应用 e2e
 │  │  └─ README.md               ✅ 负责团队、服务清单
+│  ├─ agent-task-automation/
+│  │  ├─ apps/codex-plugin/       ✅ @puff/codex-plugin
+│  │  ├─ libs/agent-task-core/    ✅ @puff/agent-task-core
+│  │  └─ README.md               ✅ 域定位和安装入口
 │  └─ llm-lab/
 │     ├─ libs/                   ✅ 域内库（本域即学习项目）
 │     │  └─ mini-gpt/            ✅ llm-lab-mini-gpt（Python）

@@ -1,0 +1,30 @@
+{
+  "name": "@puff/agent-task-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./skills/*": "./skills/*",
+    "./references/*": "./references/*",
+    "./templates/*": "./templates/*"
+  },
+  "scripts": {
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "puff-local",
+  "plugins": [
+    {
+      "name": "agent-task-automation",
+      "source": {
+        "source": "local",
+        "path": "./domains/agent-task-automation/apps/codex-plugin/dist/plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    }
+  ]
+}

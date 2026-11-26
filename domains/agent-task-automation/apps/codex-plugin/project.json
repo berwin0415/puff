@@ -1,0 +1,16 @@
+{
+  "name": "@puff/codex-plugin",
+  "tags": ["domain:agent-task-automation", "type:app", "lang:ts"],
+  "targets": {
+    "build": {
+      "inputs": ["default", "^default"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["default", "^default"]
+    }
+  }
+}

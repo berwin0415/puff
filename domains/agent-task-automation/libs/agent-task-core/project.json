@@ -1,0 +1,4 @@
+{
+  "name": "@puff/agent-task-core",
+  "tags": ["domain:agent-task-automation", "type:lib", "lang:ts"]
+}

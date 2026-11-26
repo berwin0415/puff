@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | [0001](./0001-adopt-domain-first-monorepo.md) | 采用按业务域组织的 Monorepo | 已接受 |
 | [0002](./0002-model-learning-lab-as-domain.md) | 把学习区纳入业务域 | 已接受 |
+| [0003](./0003-agent-task-automation-local-plugin.md) | Agent 任务自动化采用通用核心、宿主适配和外部能力绑定 | 已接受 |
 
 新增 ADR 时：
 

@@ -1,0 +1,24 @@
+{
+  "name": "@puff/codex-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @puff/agent-task-core run build && pnpm run build && tsdown --watch",
+    "build": "tsc --noEmit && tsdown && node scripts/package-plugin.mjs",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@puff/agent-task-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

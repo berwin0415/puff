@@ -5,8 +5,9 @@
 ## 项目概览
 
 - 按业务域组织的 pnpm workspaces 单体仓库，用 Nx 编排任务、用 pnpm catalog 固定第三方版本。
-- 当前有两条业务线：
+- 当前业务域：
   - `puff`：`domains/puff/apps/web`（`@puff/web`，React 19 + Rsbuild 2）、`domains/puff/apps/desktop`（`@puff/desktop`，Electron + DeepSeek Harness）、`domains/puff/services/api`（`@puff/api`，NestJS 12）。
+  - `agent-task-automation`：Codex 插件 `@puff/codex-plugin` 和同域核心库 `@puff/agent-task-core`。
   - `llm-lab`：`domains/llm-lab/libs/mini-gpt`（`llm-lab-mini-gpt`，Python），从零手写 mini-GPT 的学习/实验域。
 - llm-lab 不参与 pnpm workspace，也没有 dev/build/lint/typecheck/clean 脚本契约；项目以 `type:lib` 参与边界检查，学习/实验属性由业务域本身表达。
 - **puff 的 Web 端目前是一个可游玩的浏览器 FPS 垂直切片（NEON VEIL）**，由 React 外壳 + Three.js 程序化引擎组成；除后端探活/信息接口（`GET /api`、`GET /api/health`）外，后端没有自研业务功能。桌面端主要原样加载官方 DSH Web UI，不要假设存在自研聊天、鉴权、状态管理或路由。
@@ -33,9 +34,9 @@
 根目录不提供单业务域的构建、测试或启动命令；这些命令直接用 `pnpm --filter` / `pnpm -r` 调用：
 
 ```bash
-pnpm -r --parallel run dev                            # 启动 puff 域全部项目
-pnpm -r run build                                     # 构建 puff 域全部项目
-pnpm -r run test                                      # 测试 puff 域全部项目
+pnpm -r --filter './domains/puff/**' --parallel run dev # 启动 puff 域全部项目
+pnpm -r run build                                     # 构建 workspace 项目
+pnpm -r run test                                      # 测试 workspace 项目
 pnpm --filter @puff/api run dev                       # 只启动 API
 pnpm --filter @puff/web run dev                       # 只启动 Web
 pnpm --filter @puff/desktop run dev                   # 只启动桌面端

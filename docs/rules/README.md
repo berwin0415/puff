@@ -12,6 +12,7 @@
 | [web.md](./web.md)         | `domains/puff/apps/web`：Rsbuild + React 目录结构、命名、样式、环境变量、请求封装  |
 | [desktop.md](./desktop.md) | `domains/puff/apps/desktop`：Electron 薄宿主、DSH Host 生命周期、安全、打包与测试  |
 | [routing.md](./routing.md) | 路由：后端 URL 规范与新增流程、前端路由约定、两端对应关系                         |
+| [agent-task-automation.md](./agent-task-automation.md) | 任务插件工程规范，涵盖通用核心、Codex 适配、工作区规则与能力绑定 |
 
 架构决策记录见 [docs/adr](../adr/README.md)。
 

@@ -1,6 +1,6 @@
 # puff
 
-按业务域组织的 Monorepo：**puff** 业务域（Web、桌面客户端与 NestJS API）与 **llm-lab** 学习域（Python mini-GPT），使用 pnpm workspaces 管理依赖、Nx 编排任务、Biome 统一格式与 lint。
+按业务域组织的 Monorepo，包含 **puff**（Web、桌面客户端与 NestJS API）、**agent-task-automation**（Codex 插件与通用核心库）和 **llm-lab**（Python mini-GPT）。使用 pnpm workspaces 管理依赖、Nx 编排任务、Biome 统一格式与 lint。
 
 ```
 .
@@ -14,6 +14,10 @@
 │  │  ├─ libs/              域内共享库（当前为空）
 │  │  ├─ e2e/               域内跨应用 e2e（当前为空）
 │  │  └─ README.md
+│  ├─ agent-task-automation/
+│  │  ├─ apps/codex-plugin/      @puff/codex-plugin
+│  │  ├─ libs/agent-task-core/   @puff/agent-task-core
+│  │  └─ README.md
 │  └─ llm-lab/
 │     ├─ libs/
 │     │  └─ mini-gpt/       llm-lab-mini-gpt  从零手写 mini-GPT（Python）
@@ -26,6 +30,10 @@
 ├─ docs/
 │  ├─ rules/                工程规范
 │  ├─ adr/                  架构决策记录
+│  ├─ agent-task-automation/  Agent 任务自动化插件产品文档
+│  │  ├─ features.md        全局功能版本与状态清单
+│  │  ├─ v0.1/             Codex 适配与工作区绑定设计
+│  │  └─ v0.2/             后续公开与通用化草案
 │  └─ monorepo-architecture-design.md
 ├─ .github/                 CI 与 CODEOWNERS
 ├─ nx.json                  Nx 编排配置
@@ -54,7 +62,7 @@ cp domains/puff/services/api/.env.example domains/puff/services/api/.env
 Copy-Item domains/puff/services/api/.env.example domains/puff/services/api/.env
 
 # 同时启动 puff 域的 API(:3000)、Web(:5173) 与桌面客户端
-pnpm -r --parallel run dev
+pnpm -r --filter './domains/puff/**' --parallel run dev
 ```
 
 打开 http://localhost:5173 进入 **NEON VEIL / 霓虹帷幕**：一个可直接游玩的浏览器第一人称射击垂直切片，背景是雨夜第七区反应堆天台。Web 端不再依赖 API 才能游玩；API 仍保留探活/信息接口。
@@ -157,6 +165,7 @@ pnpm --filter @puff/desktop package:win:dir
 
 ## 约定
 
+- Agent 任务自动化插件面向 Codex，用户安装后选择工作区和任务、交付及通知能力。见[构建与本地安装](./domains/agent-task-automation/apps/codex-plugin/README.md)、[产品文档](./docs/agent-task-automation/README.md)和[全局功能清单](./docs/agent-task-automation/features.md)。
 - 目录、命名、分层与依赖边界见 [docs/rules](./docs/rules/README.md)：[根目录](./docs/rules/root.md)、[服务端](./docs/rules/api.md)、[前端](./docs/rules/web.md)、[桌面端](./docs/rules/desktop.md)、[路由](./docs/rules/routing.md)。
 - 架构决策记录见 [docs/adr](./docs/adr/README.md)。
 - 面向 AI 编码助手的仓库级指令见根 [AGENTS.md](./AGENTS.md)，各项目另有 `AGENTS.md`。
